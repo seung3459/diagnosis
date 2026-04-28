@@ -1378,7 +1378,6 @@ function buildSummarySheet(wb, projectInfo, allUnits){
 function buildUnitSheet(wb, sheetName, u, projectInfo){
   const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: false }] });
 
-  // 컬럼 너비 (A~V 22개)
   const colWidths = [3.5, 14, 7, 30, 12, 14, 12, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13];
   colWidths.forEach((w, i) => ws.getColumn(i+1).width = w);
 
@@ -1421,75 +1420,100 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     ws.getRow(r).height = 22;
   });
 
-  // ========== 우측 사진 영역 헤더 (I4) ==========
-  ws.mergeCells('I4:V4');
-  const photoTitle = ws.getCell('I4');
-  photoTitle.value = '📸 현장 사진';
-  photoTitle.font = { name:'맑은 고딕', bold:true, size:13, color:{argb:'FFFFFFFF'} };
-  photoTitle.alignment = { vertical:'middle', horizontal:'center' };
-  photoTitle.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
-  ws.getRow(4).height = 24;
+  // ========== 우측 사진 영역 헤더 (사진이 1장이라도 있을 때만) ==========
+  const validPhotos = (u.photos || []).map((p,i)=>({photo:p, idx:i})).filter(x=>x.photo && x.photo.img);
+  
+  if(validPhotos.length > 0){
+    ws.mergeCells('I4:V4');
+    const photoTitle = ws.getCell('I4');
+    photoTitle.value = '📸 현장 사진';
+    photoTitle.font = { name:'맑은 고딕', bold:true, size:13, color:{argb:'FFFFFFFF'} };
+    photoTitle.alignment = { vertical:'middle', horizontal:'center' };
+    photoTitle.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
+    ws.getRow(4).height = 24;
 
-  // ========== 사진 영역 (4개씩 2열로 배치) ==========
-  const photoLayout = [
-    { descRow: 5,  imgStartRow: 6,  leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' },
-    { descRow: 13, imgStartRow: 14, leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' },
-    { descRow: 21, imgStartRow: 22, leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' },
-    { descRow: 29, imgStartRow: 30, leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' }
-  ];
+    // 사진 있는 것만 좌우 번갈아 배치 (2개씩)
+    const photoLayout = [
+      { descRow: 5,  imgStartRow: 6 },
+      { descRow: 13, imgStartRow: 14 },
+      { descRow: 21, imgStartRow: 22 },
+      { descRow: 29, imgStartRow: 30 }
+    ];
 
-  photoLayout.forEach((layout, layoutIdx) => {
-    const photoIdxLeft = layoutIdx * 2;
-    const photoIdxRight = layoutIdx * 2 + 1;
+    // 유효한 사진을 2개씩 묶어서 배치
+    for(let row = 0; row < Math.ceil(validPhotos.length / 2); row++){
+      const layout = photoLayout[row];
+      const leftPhoto = validPhotos[row * 2];
+      const rightPhoto = validPhotos[row * 2 + 1];
 
-    // 좌측 사진 설명
-    ws.mergeCells(`${layout.leftCol}${layout.descRow}:${layout.leftEnd}${layout.descRow}`);
-    const leftDesc = ws.getCell(`${layout.leftCol}${layout.descRow}`);
-    leftDesc.value = `📷 사진${photoIdxLeft+1}: ${u.photos[photoIdxLeft]?.desc || ''}`;
-    leftDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
-    leftDesc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
-    leftDesc.alignment = { vertical:'middle', horizontal:'left', indent:1 };
-    leftDesc.border = border;
+      // 좌측 사진
+      if(leftPhoto){
+        // 설명 셀
+        ws.mergeCells(`I${layout.descRow}:O${layout.descRow}`);
+        const leftDesc = ws.getCell(`I${layout.descRow}`);
+        leftDesc.value = `📷 사진${leftPhoto.idx+1}: ${leftPhoto.photo.desc || ''}`;
+        leftDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
+        leftDesc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
+        leftDesc.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+        leftDesc.border = border;
 
-    // 우측 사진 설명
-    ws.mergeCells(`${layout.rightCol}${layout.descRow}:${layout.rightEnd}${layout.descRow}`);
-    const rightDesc = ws.getCell(`${layout.rightCol}${layout.descRow}`);
-    rightDesc.value = `📷 사진${photoIdxRight+1}: ${u.photos[photoIdxRight]?.desc || ''}`;
-    rightDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
-    rightDesc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
-    rightDesc.alignment = { vertical:'middle', horizontal:'left', indent:1 };
-    rightDesc.border = border;
+        // 좌측 사진 영역 테두리
+        for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
+          ['I','J','K','L','M','N','O'].forEach(col => {
+            ws.getCell(`${col}${r}`).border = border;
+          });
+        }
 
-    ws.getRow(layout.descRow).height = 20;
-
-    // 사진 영역 셀 테두리
-    for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
-      ws.getRow(r).height = 22;
-      ['I','J','K','L','M','N','O','P','Q','R','S','T','U','V'].forEach(col => {
-        ws.getCell(`${col}${r}`).border = border;
-      });
-    }
-
-    // 사진 임베드 (모두 동일 크기 350x230)
-    [photoIdxLeft, photoIdxRight].forEach((pIdx, side) => {
-      const photo = u.photos[pIdx];
-      if(!photo || !photo.img) return;
-      try{
-        const imgId = wb.addImage({
-          buffer: dataURLToArrayBuffer(photo.img),
-          extension: 'jpeg'
-        });
-        const colStart = side === 0 ? 8 : 15;
-        ws.addImage(imgId, {
-          tl: { col: colStart + 0.1, row: layout.imgStartRow - 1 + 0.1 },
-          ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
-          editAs: 'oneCell'
-        });
-      }catch(e){
-        console.error(`이미지 ${pIdx+1} 임베드 실패:`, e);
+        // 사진 임베드
+        try{
+          const imgId = wb.addImage({
+            buffer: dataURLToArrayBuffer(leftPhoto.photo.img),
+            extension: 'jpeg'
+          });
+          ws.addImage(imgId, {
+            tl: { col: 8 + 0.1, row: layout.imgStartRow - 1 + 0.1 },
+            ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
+            editAs: 'oneCell'
+          });
+        }catch(e){ console.error(`이미지 임베드 실패:`, e); }
       }
-    });
-  });
+
+      // 우측 사진
+      if(rightPhoto){
+        ws.mergeCells(`P${layout.descRow}:V${layout.descRow}`);
+        const rightDesc = ws.getCell(`P${layout.descRow}`);
+        rightDesc.value = `📷 사진${rightPhoto.idx+1}: ${rightPhoto.photo.desc || ''}`;
+        rightDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
+        rightDesc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
+        rightDesc.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+        rightDesc.border = border;
+
+        for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
+          ['P','Q','R','S','T','U','V'].forEach(col => {
+            ws.getCell(`${col}${r}`).border = border;
+          });
+        }
+
+        try{
+          const imgId = wb.addImage({
+            buffer: dataURLToArrayBuffer(rightPhoto.photo.img),
+            extension: 'jpeg'
+          });
+          ws.addImage(imgId, {
+            tl: { col: 15 + 0.1, row: layout.imgStartRow - 1 + 0.1 },
+            ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
+            editAs: 'oneCell'
+          });
+        }catch(e){ console.error(`이미지 임베드 실패:`, e); }
+      }
+
+      // 행 높이 설정 (사진이 있는 행만)
+      ws.getRow(layout.descRow).height = 20;
+      for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
+        ws.getRow(r).height = 22;
+      }
+    }
+  }
 
   // ========== 진단 체크리스트 (A9 부터) ==========
   const checkStartRow = 9;
@@ -1501,17 +1525,13 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   checkTitle.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
   ws.getRow(checkStartRow).height = 24;
 
-  // 진단 헤더
   const headerRow = checkStartRow + 1;
   ws.mergeCells(`D${headerRow}:E${headerRow}`);
   ws.mergeCells(`F${headerRow}:G${headerRow}`);
   
   const headers = [
-    {col:'A', text:'번호'},
-    {col:'B', text:'인자'},
-    {col:'C', text:'평가'},
-    {col:'D', text:'주요 내용'},
-    {col:'F', text:'조사 대상'}
+    {col:'A', text:'번호'}, {col:'B', text:'인자'}, {col:'C', text:'평가'},
+    {col:'D', text:'주요 내용'}, {col:'F', text:'조사 대상'}
   ];
   headers.forEach(h => {
     const cell = ws.getCell(`${h.col}${headerRow}`);
@@ -1528,12 +1548,10 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   });
   ws.getRow(headerRow).height = 26;
 
-  // 진단 데이터 행
   turboDiagItems.forEach((item, idx) => {
     const r = headerRow + 1 + idx;
     ws.getRow(r).height = 30;
 
-    // 번호
     const numCell = ws.getCell(`A${r}`);
     numCell.value = idx + 1;
     numCell.font = { name:'맑은 고딕', bold:true, size:11 };
@@ -1541,7 +1559,6 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     numCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
     numCell.border = border;
 
-    // 인자
     const factorCell = ws.getCell(`B${r}`);
     factorCell.value = item.factor;
     factorCell.font = { name:'맑은 고딕', bold:true, size:10 };
@@ -1549,7 +1566,6 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     factorCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF9FAFB'} };
     factorCell.border = border;
 
-    // 평가 (A/B/C)
     const rateCell = ws.getCell(`C${r}`);
     const rate = u.diag[item.key]?.rate || '';
     rateCell.value = rate;
@@ -1568,7 +1584,6 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     }
     rateCell.border = border;
 
-    // 주요 내용 (D~E 병합)
     ws.mergeCells(`D${r}:E${r}`);
     const contentCell = ws.getCell(`D${r}`);
     contentCell.value = u.diag[item.key]?.content || '';
@@ -1577,7 +1592,6 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     contentCell.border = border;
     ws.getCell(`E${r}`).border = border;
 
-    // 조사 대상 (F~G 병합)
     ws.mergeCells(`F${r}:G${r}`);
     const targetCell = ws.getCell(`F${r}`);
     targetCell.value = item.target;
@@ -1598,7 +1612,6 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   opTitle.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
   ws.getRow(opinionTitleRow).height = 24;
 
-  // 검토 의견 내용
   const opStartRow = opinionTitleRow + 1;
   const opEndRow = opStartRow + 6;
   ws.mergeCells(`A${opStartRow}:G${opEndRow}`);
@@ -1611,16 +1624,13 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     ws.getRow(r).height = 22;
   }
 
-  // 페이지 설정
   ws.pageSetup = {
-    paperSize: 9,
-    orientation: 'landscape',
-    fitToPage: true,
-    fitToWidth: 1,
-    fitToHeight: 0,
+    paperSize: 9, orientation: 'landscape',
+    fitToPage: true, fitToWidth: 1, fitToHeight: 0,
     margins: { left:0.4, right:0.4, top:0.5, bottom:0.5, header:0.3, footer:0.3 }
   };
 }
+
 
 async function exportToExcel(){
   if(typeof ExcelJS === 'undefined'){
@@ -1736,10 +1746,11 @@ function exportToPDF(){
     bodyHTML += `</tbody></table>`;
     bodyHTML += `</div></div>`;
 
-    // === 호기별 페이지 ===
+    // === 호기별 페이지 (호기당 2페이지: 검토결과 + 사진) ===
     allUnits.forEach(u => {
+      // ===== 페이지 A: 검토 결과 =====
       bodyHTML += `<div class="page">`;
-      bodyHTML += `<div class="unit-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기</div>`;
+      bodyHTML += `<div class="unit-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기 <span class="page-tag">[검토 결과]</span></div>`;
       bodyHTML += `<div class="unit-sub">상태: ${escapeHtml(u.statusText)} | 종합 등급: <strong class="grade-${u.grade}">${u.grade}</strong></div>`;
 
       bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
@@ -1760,10 +1771,15 @@ function exportToPDF(){
       bodyHTML += `</tbody></table>`;
 
       bodyHTML += `<div class="section-h">📝 주요 검토 의견</div>`;
-      bodyHTML += `<div class="opinion-box">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
+      bodyHTML += `<div class="opinion-box-large">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
+      bodyHTML += `</div>`;
 
+      // ===== 페이지 B: 현장 사진 (사진이 있을 때만) =====
       const validPhotos = (u.photos||[]).map((p,i)=>({...p, idx:i})).filter(p=>p.img);
       if(validPhotos.length > 0){
+        bodyHTML += `<div class="page">`;
+        bodyHTML += `<div class="unit-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기 <span class="page-tag">[현장 사진]</span></div>`;
+        bodyHTML += `<div class="unit-sub">총 ${validPhotos.length}장의 현장 사진</div>`;
         bodyHTML += `<div class="section-h">📸 현장 사진</div>`;
         bodyHTML += `<div class="photo-grid">`;
         validPhotos.forEach(p=>{
@@ -1773,9 +1789,8 @@ function exportToPDF(){
           bodyHTML += `</div>`;
         });
         bodyHTML += `</div>`;
+        bodyHTML += `</div>`;
       }
-
-      bodyHTML += `</div>`;
     });
 
     const fullHTML = `<!DOCTYPE html>
@@ -1814,10 +1829,12 @@ function exportToPDF(){
   .grade-B { color: #d97706; }
   .grade-C { color: #dc2626; }
   .opinion-box { background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; padding: 14px; font-size: 12px; color: #111827; line-height: 1.7; min-height: 70px; white-space: pre-wrap; border-radius: 0 0 6px 6px; }
-  .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-  .photo-card { border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; background: #fff; }
-  .photo-desc { background: #eff6ff; color: #1e40af; padding: 6px 10px; font-size: 11px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
-  .photo-img { width: 100%; height: 230px; object-fit: cover; display: block; background: #f3f4f6; }
+  .opinion-box-large { background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; padding: 18px; font-size: 13px; color: #111827; line-height: 1.8; min-height: 280px; white-space: pre-wrap; border-radius: 0 0 6px 6px; }
+  .page-tag { font-size: 14px; font-weight: 600; color: #2563eb; background: #dbeafe; padding: 4px 10px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
+  .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
+  .photo-card { border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; background: #fff; break-inside: avoid; page-break-inside: avoid; }
+  .photo-desc { background: #eff6ff; color: #1e40af; padding: 7px 10px; font-size: 11px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
+  .photo-img { width: 100%; height: 260px; object-fit: cover; display: block; background: #f3f4f6; }
 
   @media print {
     body { background: #fff; }
