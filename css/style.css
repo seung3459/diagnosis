@@ -23,48 +23,34 @@ body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#ee
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:30px;
+  gap:24px;
   animation:introFadeIn 0.8s ease-out;
+  padding:30px;
 }
 @keyframes introFadeIn{
   from{opacity:0;transform:translateY(20px);}
   to{opacity:1;transform:translateY(0);}
 }
 .intro-logo-wrap{
-  position:relative;
-  cursor:pointer;
   padding:30px 60px;
   border-radius:24px;
-  background:rgba(255,255,255,.6);
+  background:rgba(255,255,255,.7);
   backdrop-filter:blur(10px);
   box-shadow:0 20px 60px rgba(30,58,138,.15);
-  transition:all .3s ease;
   border:1px solid rgba(255,255,255,.5);
-}
-.intro-logo-wrap:hover{
-  transform:translateY(-6px) scale(1.02);
-  box-shadow:0 30px 80px rgba(30,58,138,.3);
-  background:rgba(255,255,255,.85);
 }
 .intro-logo-img{
   max-width:380px;
   width:100%;
   height:auto;
   display:block;
-  transition:all .3s ease;
 }
-.intro-logo-wrap:hover .intro-logo-img{
-  filter:brightness(0.4) blur(2px);
-}
-
-/* 텍스트 로고 (이미지 없을 때 fallback) */
 .text-logo{
   font-size:80px;
   font-weight:900;
   letter-spacing:6px;
   font-family:'Pretendard','Malgun Gothic',sans-serif;
   display:flex;
-  transition:all .3s ease;
 }
 .text-logo .tl-h{color:#dc2626;}
 .text-logo .tl-rest{
@@ -73,44 +59,14 @@ body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#ee
   background-clip:text;
   color:transparent;
 }
-.intro-logo-wrap:hover .text-logo{filter:brightness(0.4) blur(2px);}
-
-.intro-logo-overlay{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  opacity:0;
-  transition:opacity .3s ease;
-  pointer-events:none;
-  gap:8px;
-}
-.intro-logo-wrap:hover .intro-logo-overlay{opacity:1;}
-.overlay-text{
-  font-size:32px;
-  font-weight:800;
-  color:#fff;
-  text-shadow:0 4px 12px rgba(0,0,0,.5);
-  letter-spacing:2px;
-}
-.overlay-sub{
-  font-size:13px;
-  color:#fff;
-  opacity:.85;
-  letter-spacing:1px;
-  font-weight:600;
-}
 .intro-tagline{
   text-align:center;
-  margin-top:10px;
 }
 .intro-title{
   font-size:24px;
   font-weight:700;
   color:#1e3a8a;
-  margin-bottom:4px;
+  margin-bottom:6px;
   letter-spacing:-0.5px;
 }
 .intro-subtitle{
@@ -119,7 +75,62 @@ body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#ee
   letter-spacing:0.5px;
 }
 
-/* ========== 🆕 프로젝트 목록 페이지 ========== */
+/* 🆕 프로젝트 보기 버튼 */
+.intro-project-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 32px;
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:10px;
+  box-shadow:0 10px 25px rgba(37,99,235,.35);
+  transition:all .25s ease;
+  letter-spacing:0.5px;
+  font-family:inherit;
+  position:relative;
+  overflow:hidden;
+}
+.intro-project-btn::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.2) 0%, transparent 60%);
+  opacity:0;
+  transition:opacity .25s;
+}
+.intro-project-btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 16px 32px rgba(37,99,235,.45);
+  background:linear-gradient(135deg,#1d4ed8,#2563eb);
+}
+.intro-project-btn:hover::before{opacity:1;}
+.intro-project-btn:active{
+  transform:translateY(-1px);
+  box-shadow:0 8px 18px rgba(37,99,235,.4);
+}
+.intro-project-btn .ipb-icon{
+  font-size:18px;
+}
+.intro-project-btn .ipb-text{
+  position:relative;
+  z-index:1;
+}
+.intro-project-btn .ipb-arrow{
+  font-size:18px;
+  transition:transform .2s ease;
+  display:inline-block;
+}
+.intro-project-btn:hover .ipb-arrow{
+  transform:translateX(5px);
+}
+
+/* ========== 프로젝트 목록 페이지 ========== */
 .projects-page{
   min-height:100vh;
   padding:30px 20px;
@@ -210,6 +221,7 @@ body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#ee
   letter-spacing:0.5px;
 }
 .projects-table thead th:first-child{text-align:center;}
+.projects-table thead th:last-child{text-align:center;}
 .projects-table tbody tr{
   border-bottom:1px solid #f1f5f9;
   transition:all .15s;
@@ -258,10 +270,9 @@ body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#ee
 }
 .project-action{
   text-align:center;
+  white-space:nowrap;
 }
 .project-action button{
-  background:#fee2e2;
-  color:#dc2626;
   border:none;
   border-radius:8px;
   padding:6px 10px;
@@ -269,10 +280,25 @@ body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#ee
   font-weight:700;
   cursor:pointer;
   transition:all .15s;
+  margin:0 2px;
 }
-.project-action button:hover{
+.project-action .action-edit{
+  background:#dbeafe;
+  color:#1e40af;
+}
+.project-action .action-edit:hover{
+  background:#2563eb;
+  color:#fff;
+  transform:scale(1.1);
+}
+.project-action .action-delete{
+  background:#fee2e2;
+  color:#dc2626;
+}
+.project-action .action-delete:hover{
   background:#dc2626;
   color:#fff;
+  transform:scale(1.1);
 }
 .projects-info{
   margin-top:20px;
@@ -294,11 +320,13 @@ body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#ee
 @media (max-width:600px){
   .text-logo{font-size:60px;letter-spacing:4px;}
   .intro-logo-img{max-width:280px;}
-  .overlay-text{font-size:24px;}
+  .intro-logo-wrap{padding:20px 30px;}
   .intro-title{font-size:18px;}
+  .intro-project-btn{padding:12px 24px;font-size:14px;}
   .projects-title{font-size:22px;}
   .projects-table{font-size:12px;}
   .projects-table thead th, .projects-table tbody td{padding:10px 10px;}
+  .project-action button{padding:5px 8px;font-size:11px;}
 }
 
 /* ========== 기존 스타일 그대로 ========== */
