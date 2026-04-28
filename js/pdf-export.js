@@ -31,7 +31,6 @@ function exportToPDF(){
     bodyHTML += `<div class="cover-box">`;
     bodyHTML += `<div class="cover-title">📊 기계설비 노후화 진단 보고서</div>`;
     bodyHTML += `<div class="cover-sub">Mechanical Facility Aging Diagnosis Report</div>`;
-    // 과업시작일, 점검기간 제거
     bodyHTML += `<table class="info-table">
       <tr><th>프로젝트명</th><td>${escapeHtml(projectInfo.projectName)||'-'}</td></tr>
       <tr><th>건물명</th><td>${escapeHtml(projectInfo.buildingName)||'-'}</td></tr>
@@ -40,13 +39,11 @@ function exportToPDF(){
 
     bodyHTML += `<div class="section-h">📊 냉열원 진단 종합 요약</div>`;
     bodyHTML += `<table class="data-table summary-table"><thead><tr>`;
-    // "종류 / 호기" 통합 컬럼 + 가중치(%) 제거
     bodyHTML += `<th style="width:90px;">종류 / 호기</th><th style="width:55px;">상태</th>`;
     turboDiagItems.forEach(it => bodyHTML += `<th>${it.short}</th>`);
     bodyHTML += `<th style="width:42px;">점수</th><th style="width:42px;">종합</th></tr></thead><tbody>`;
     allUnits.forEach(u => {
       bodyHTML += `<tr>`;
-      // 종류 / 호기를 한 셀에 줄바꿈으로 표시
       bodyHTML += `<td class="unit-info"><div class="unit-type">${escapeHtml(u.subtypeLabel)}</div><div class="unit-num">${u.unitNum}호기</div></td>`;
       bodyHTML += `<td>${escapeHtml(u.statusText)}</td>`;
       u.diagRates.forEach(r => {
@@ -78,14 +75,16 @@ function exportToPDF(){
 
       bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
       bodyHTML += `<table class="data-table check-table"><thead><tr>`;
-      bodyHTML += `<th style="width:32px;">번호</th><th style="width:140px;">인자 (가중치)</th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
+      // 헤더에서 "(가중치)" 제거
+      bodyHTML += `<th style="width:32px;">번호</th><th style="width:130px;">인자</th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
       turboDiagItems.forEach((it, idx)=>{
         const d = u.diag[it.key] || {};
         const r = d.rate || '-';
         const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
         bodyHTML += `<tr>`;
         bodyHTML += `<td>${idx+1}</td>`;
-        bodyHTML += `<td class="left factor-cell"><strong>${escapeHtml(it.factor)}</strong> <span class="weight-tag">(${Math.round(it.weight*100)}%)</span></td>`;
+        // (가중치 %) 표시 제거
+        bodyHTML += `<td class="left factor-cell"><strong>${escapeHtml(it.factor)}</strong></td>`;
         bodyHTML += `<td class="${cls}"><strong>${r}</strong></td>`;
         bodyHTML += `<td class="left content-cell">${escapeHtml(d.content||'')}</td>`;
         bodyHTML += `<td class="target-cell">${escapeHtml(it.target)}</td>`;
@@ -153,19 +152,18 @@ function exportToPDF(){
   .summary-table th, .summary-table td { padding: 8px 6px; line-height: 1.4; }
   .summary-table th { font-size: 11px; word-break: keep-all; }
   
-  /* 종류/호기 통합 셀 (가운데 정렬, 두 줄 표시) */
+  /* 종류/호기 통합 셀 */
   .summary-table .unit-info { padding: 8px 4px; line-height: 1.4; text-align: center; vertical-align: middle; }
   .summary-table .unit-info .unit-type { font-size: 11px; font-weight: 700; color: #1f2937; word-break: keep-all; }
   .summary-table .unit-info .unit-num { font-size: 10.5px; color: #4b5563; font-weight: 600; margin-top: 2px; }
 
   /* 호기별 진단 체크리스트 표 */
-  .check-table { font-size: 10.5px; }
-  .check-table th, .check-table td { padding: 6px 7px; line-height: 1.4; }
-  .check-table .factor-cell { font-size: 10.5px; word-break: keep-all; }
-  .check-table .factor-cell strong { font-size: 10.5px; }
-  .check-table .weight-tag { color: #6b7280; font-size: 9.5px; font-weight: 500; }
-  .check-table .content-cell { font-size: 10px; line-height: 1.4; word-break: keep-all; }
-  .check-table .target-cell { font-size: 10px; color: #4b5563; line-height: 1.35; word-break: keep-all; }
+  .check-table { font-size: 11px; }
+  .check-table th, .check-table td { padding: 7px 8px; line-height: 1.4; }
+  .check-table .factor-cell { font-size: 11px; word-break: keep-all; }
+  .check-table .factor-cell strong { font-size: 11px; }
+  .check-table .content-cell { font-size: 10.5px; line-height: 1.4; word-break: keep-all; }
+  .check-table .target-cell { font-size: 10.5px; color: #4b5563; line-height: 1.4; word-break: keep-all; }
 
   .rate-A { background: #d1fae5; color: #059669; font-weight: 700; }
   .rate-B { background: #fed7aa; color: #d97706; font-weight: 700; }
