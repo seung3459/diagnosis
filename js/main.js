@@ -2,53 +2,45 @@
 // 🚀 초기화
 // =====================================
 
-window.onload = function(){
-  // 저장된 데이터 불러오기
-  const raw = localStorage.getItem('facilityReport');
-  let data = {};
-  try { data = raw ? JSON.parse(raw) : {}; } catch(e){ data = {}; }
+window.onload = async function(){
+  // 1. 인증 시도
+  const authOk = await initAuth();
   
-  if(data.projectName) document.getElementById('projectName').value = data.projectName;
-  if(data.buildingName) document.getElementById('buildingName').value = data.buildingName;
-  if(data.projectStartDate) document.getElementById('projectStartDate').value = data.projectStartDate;
-  if(data.dateRange) document.getElementById('dateRange').value = data.dateRange;
-  updateHeroBadge();
-
-  if(data.units){
-    Object.keys(data.units).forEach(type=>{
-      if(!fieldConfig[type]) return;
-      data.units[type].forEach((unitData)=>{
-        addUnit(type);
-        const id = unitCount[type];
-        setTimeout(()=>applyUnitData(type, id, unitData), 50);
-      });
-    });
-    setTimeout(()=>{
-      Object.keys(fieldConfig).forEach(type=>{
-        refreshCardLabels(type);
-        const container = document.getElementById(type+'Units');
-        if(container){ 
-          container.querySelectorAll('.card').forEach(card=>{ 
-            updateSummary(type, card.dataset.id); 
-          }); 
+  // 2. 인증 되었으면 프로젝트 로드
+  if(authOk){
+    await loadProjectsList();
+    
+    // 활성 프로젝트 복원 (재진입 시)
+    const activeId = localStorage.getItem('activeProjectId');
+    if(activeId){
+      const project = projectsList.find(p => p.id === activeId);
+      if(project){
+        currentProjectId = project.id;
+        currentProject = project;
+        try{
+          const data = await ghLoadProjectData(project.id);
+          if(data) applyProjectData(data);
+        } catch(e){
+          console.warn('활성 프로젝트 복원 실패:', e);
         }
-        renderGroupSummary(type);
-      });
-    }, 250);
+      }
+    }
   }
 
-  // 기본 탭 활성화
+  // 3. 기본 탭 활성화
   const firstMainBtn = document.querySelector('.main-tabs button[data-section="heatSection"]');
   if(firstMainBtn) firstMainBtn.classList.add('active');
   const firstSubBtn = document.querySelector('.sub-tabs button[data-sub="coldSourceSection"]');
   if(firstSubBtn) firstSubBtn.classList.add('active');
   
-  // 초기 요약 렌더링
-  ['coldSource','heatSource','coolingTower'].forEach(t=>renderGroupSummary(t));
+  // 4. 초기 요약 렌더링
+  setTimeout(() => {
+    ['coldSource','heatSource','coolingTower'].forEach(t=>renderGroupSummary(t));
+  }, 300);
   
-  // 캘린더 렌더링
+  // 5. 캘린더 렌더링
   renderCalendar();
   
-  // 시작 화면 표시
-  showStartView();
+  // 6. 시작 페이지를 intro로 설정
+  showPage('intro');
 };
