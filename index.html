@@ -8,7 +8,7 @@
 <!-- FileSaver: 다운로드 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <!-- html2pdf: PDF 내보내기 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <style>
   body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#eef2f7;}
   .topbar{background:#1f2937;padding:12px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:center;flex-wrap:wrap;gap:6px;}
@@ -292,7 +292,8 @@
   .loading-text{font-size:14px;font-weight:700;color:#1f2937;white-space:pre-line;}
 
   /* PDF 캡처용 영역 (오프스크린) */
-  .pdf-render-zone{position:fixed;left:-99999px;top:0;width:794px;background:#fff;padding:30px;font-family:'Pretendard','Malgun Gothic',sans-serif;}
+  .pdf-render-zone{position:absolute;left:0;top:0;width:794px;background:#fff;padding:30px;font-family:'Pretendard','Malgun Gothic',sans-serif;opacity:0;pointer-events:none;z-index:-1;}
+  .pdf-render-zone.show{opacity:1;z-index:9999;}
   .pdf-render-zone .pdf-page{page-break-after:always;background:#fff;}
   .pdf-render-zone .pdf-page:last-child{page-break-after:auto;}
   .pdf-title{font-size:22px;font-weight:800;color:#1f2937;margin-bottom:6px;}
@@ -1726,11 +1727,26 @@ async function exportToPDF(){
       });
     });
 
-    showLoading('PDF 콘텐츠 렌더링 중...');
-    buildPDFContent(allUnits, projectInfo);
+showLoading('PDF 콘텐츠 렌더링 중...');
+buildPDFContent(allUnits, projectInfo);
 
-    // 잠시 대기 (이미지 로딩 시간)
-    await new Promise(r=>setTimeout(r, 500));
+// 렌더 영역을 보이게 변경 (캡처를 위해)
+const renderZone = document.getElementById('pdfRenderZone');
+renderZone.classList.add('show');
+
+// 이미지 로딩 대기 (충분한 시간)
+await new Promise(r=>setTimeout(r, 1500));
+
+// 모든 이미지 로딩 완료 대기
+const imgs = renderZone.querySelectorAll('img');
+await Promise.all(Array.from(imgs).map(img => {
+  if(img.complete) return Promise.resolve();
+  return new Promise(resolve => {
+    img.onload = resolve;
+    img.onerror = resolve;
+  });
+}));
+
 
     showLoading(`PDF 파일 변환 중...\n(${allUnits.length}개 호기, 시간이 걸릴 수 있습니다)`);
 
@@ -1753,8 +1769,10 @@ async function exportToPDF(){
 
     await html2pdf().set(opt).from(document.getElementById('pdfRenderZone')).save();
 
-    // 클린업
-    document.getElementById('pdfRenderZone').innerHTML = '';
+// 클린업
+renderZone.classList.remove('show');
+renderZone.innerHTML = '';
+
 
     hideLoading();
     showToast(`✅ PDF 다운로드 완료 (${allUnits.length}개 호기)`);
