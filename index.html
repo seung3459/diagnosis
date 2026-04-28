@@ -22,22 +22,23 @@
 <!-- 🆕 인트로 페이지 -->
 <div id="intro" class="page active intro-page">
   <div class="intro-content">
-    <div class="intro-logo-wrap" onclick="goToProjects()">
+    <div class="intro-logo-wrap">
       <img src="assets/logo.png" class="intro-logo-img" alt="HIMEC" 
            onerror="this.outerHTML='<div class=&quot;text-logo&quot;><span class=&quot;tl-h&quot;>H</span><span class=&quot;tl-rest&quot;>IMEC</span></div>'">
-      <div class="intro-logo-overlay">
-        <div class="overlay-text">📂 프로젝트</div>
-        <div class="overlay-sub">클릭하여 진입</div>
-      </div>
     </div>
     <div class="intro-tagline">
       <div class="intro-title">기계설비 노후화 진단 시스템</div>
       <div class="intro-subtitle">Mechanical Facility Aging Diagnosis System</div>
     </div>
+    <button class="intro-project-btn" onclick="goToProjects()">
+      <span class="ipb-icon">📂</span>
+      <span class="ipb-text">프로젝트 보기</span>
+      <span class="ipb-arrow">→</span>
+    </button>
   </div>
 </div>
 
-<!-- 🆕 프로젝트 목록 페이지 -->
+<!-- 프로젝트 목록 페이지 -->
 <div id="projects" class="page projects-page">
   <div class="projects-container">
     <div class="projects-header">
@@ -57,17 +58,15 @@
             <th style="width:100px;">연도</th>
             <th>프로젝트명</th>
             <th style="width:200px;">비고</th>
-            <th style="width:80px;"></th>
+            <th style="width:120px;">관리</th>
           </tr>
         </thead>
-        <tbody id="projectsTableBody">
-          <!-- 프로젝트 행이 여기에 동적으로 생성됩니다 -->
-        </tbody>
+        <tbody id="projectsTableBody"></tbody>
       </table>
     </div>
 
     <div class="projects-info">
-      💡 <strong>프로젝트명을 클릭하면 진단 페이지로 이동합니다.</strong>
+      💡 <strong>프로젝트명을 클릭</strong>하면 진단 페이지로 이동합니다. <strong>✏️ 수정</strong> / <strong>🗑️ 삭제</strong> 버튼으로 관리할 수 있습니다.
     </div>
   </div>
 </div>
