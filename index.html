@@ -2,378 +2,224 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>기계설비 노후화 진단 어플리케이션</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏢 기계설비 노후화 진단</title>
 <link rel="stylesheet" href="css/style.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
 
-<div class="topbar" id="topbar" style="display:none;">
-  <button onclick="goToProjects()">📂 프로젝트 목록</button>
-  <button onclick="showPage('main')">메인</button>
-  <button onclick="showPage('diag')">설비 진단</button>
-  <button onclick="showPage('result')">종합 결과</button>
-  <button onclick="manualSave()">💾 저장</button>
-  <button class="export-btn" onclick="exportToExcel()">📊 엑셀</button>
-  <button class="pdf-btn" onclick="exportToPDF()">📄 PDF</button>
-  <div id="authStatus" class="auth-status"></div>
-</div>
-
-<!-- 인트로 페이지 -->
-<div id="intro" class="page active intro-page">
-  <div class="intro-content">
-    <div class="intro-logo-wrap">
-      <img src="assets/logo.png" class="intro-logo-img" alt="HIMEC" 
-           onerror="this.outerHTML='<div class=&quot;text-logo&quot;><span class=&quot;tl-h&quot;>H</span><span class=&quot;tl-rest&quot;>IMEC</span></div>'">
+<!-- ==================== 상단 바 ==================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <span class="topbar-logo">🏢</span>
+      <h1 class="topbar-title">기계설비 노후화 진단</h1>
     </div>
-    <div class="intro-tagline">
-      <div class="intro-title">기계설비 노후화 진단 시스템</div>
-      <div class="intro-subtitle">Mechanical Facility Aging Diagnosis System</div>
+    <div class="topbar-right">
+      <div id="authStatus" class="auth-status"></div>
     </div>
-    <button class="intro-project-btn" onclick="goToProjects()">
-      <span class="ipb-icon">📂</span>
-      <span class="ipb-text">프로젝트 보기</span>
-      <span class="ipb-arrow">→</span>
-    </button>
   </div>
-</div>
+</header>
 
-<!-- 프로젝트 목록 페이지 -->
-<div id="projects" class="page projects-page">
-  <div class="projects-container">
-    <div class="projects-header">
-      <div>
-        <button class="back-btn" onclick="showPage('intro')">← 처음으로</button>
-        <h1 class="projects-title">📂 프로젝트 목록</h1>
-        <div class="projects-subtitle">진단을 진행할 프로젝트를 선택하세요</div>
+<!-- ==================== 메인 컨텐츠 ==================== -->
+<main class="main-container">
+
+  <!-- 프로젝트 목록 섹션 -->
+  <section class="section" id="projectsSection">
+    <div class="section-header">
+      <h2 class="section-title">
+        <span class="section-icon">📋</span>
+        프로젝트 목록
+      </h2>
+      <div class="section-actions">
+        <button class="btn btn-primary" onclick="createNewProject()">
+          ➕ 새 프로젝트
+        </button>
+        <button class="btn btn-secondary" onclick="refreshProjects()">
+          🔄 새로고침
+        </button>
       </div>
-      <button class="add-project-btn" onclick="openProjectModal('add')">+ 새 프로젝트</button>
     </div>
 
-    <div class="projects-table-wrap">
-      <table class="projects-table">
+    <div class="search-bar">
+      <input 
+        type="text" 
+        id="searchInput" 
+        class="search-input" 
+        placeholder="🔍 프로젝트 검색 (이름, 주소 등)"
+        oninput="filterProjects()"
+      >
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
         <thead>
           <tr>
-            <th style="width:80px;">No</th>
-            <th style="width:100px;">연도</th>
+            <th style="width:50px;">#</th>
             <th>프로젝트명</th>
-            <th style="width:200px;">비고</th>
-            <th style="width:120px;">관리</th>
+            <th>주소</th>
+            <th style="width:120px;">최종 수정일</th>
+            <th style="width:200px;">작업</th>
           </tr>
         </thead>
-        <tbody id="projectsTableBody"></tbody>
+        <tbody id="projectsTableBody">
+          <tr>
+            <td colspan="5" class="empty-message">
+              <div class="empty-icon">📂</div>
+              <div class="empty-text">로그인이 필요합니다</div>
+              <div class="empty-subtext">우측 상단 [🔐 로그인] 버튼을 클릭해주세요</div>
+            </td>
+          </tr>
+        </tbody>
       </table>
     </div>
+  </section>
 
-    <div class="projects-info">
-      💡 <strong>프로젝트명을 클릭</strong>하면 진단 페이지로 이동합니다. <strong>✏️ 수정</strong> / <strong>🗑️ 삭제</strong> 버튼으로 관리할 수 있습니다.
-    </div>
-  </div>
-</div>
+</main>
 
-<div class="container">
-
-<div id="main" class="page">
-  <div class="main-hero">
-    <div class="logo-row">
-      <div class="hero-logo-box">
-        <img src="assets/logo.png" class="hero-logo-img" alt="HIMEC" 
-             onerror="this.outerHTML='<div class=&quot;himec-logo&quot;><span class=&quot;h&quot;>H</span><span class=&quot;rest&quot;>IMEC</span></div>'">
-      </div>
-      <div class="logo-divider"></div>
-      <div>
-        <div class="app-title">🏢 기계설비 노후화 진단 어플리케이션</div>
-        <div class="app-subtitle">Mechanical Facility Aging Diagnosis System</div>
-      </div>
-    </div>
-    <div class="hero-badge">📌 <span id="heroProjectBadge">프로젝트를 입력해주세요</span></div>
-  </div>
-
-  <div class="project-info-card">
-    <div class="info-card-title">📋 프로젝트 정보</div>
-    <div class="info-field-grid">
-      <div class="info-field"><label>프로젝트명</label><input type="text" id="projectName" placeholder="예: OO빌딩 설비 노후화 진단" oninput="updateHeroBadge()"></div>
-      <div class="info-field"><label>건물명</label><input type="text" id="buildingName" placeholder="예: OO타워"></div>
-      <div class="info-field"><label>과업 수행시작일</label><input type="date" id="projectStartDate" onchange="renderCalendar()"></div>
-      <div class="info-field"><label>점검 기간</label><input type="text" id="dateRange" placeholder="예: 2026.04.01 ~ 2026.04.30"></div>
-    </div>
-  </div>
-
-  <div class="calendar-card">
-    <div class="cal-header">
-      <div class="cal-title" id="calTitle">2026년 4월</div>
-      <div class="cal-nav">
-        <button onclick="calPrev()" title="이전 달">◀</button>
-        <button class="cal-today-btn" onclick="calToday()">오늘</button>
-        <button onclick="calNext()" title="다음 달">▶</button>
-      </div>
-    </div>
-    <div class="cal-grid" id="calGrid"></div>
-    <div class="cal-legend">
-      <div class="cal-legend-item"><div class="cal-dot today"></div> 오늘</div>
-      <div class="cal-legend-item"><div class="cal-dot start"></div> 과업 수행시작일 ⭐</div>
-    </div>
-  </div>
-</div>
-
-<div id="diag" class="page">
-  <div class="diag-page">
-  <h2 style="margin-top:0;">🔧 설비 진단</h2>
-  <div class="main-tabs">
-    <button data-section="heatSection" onclick="showSection('heatSection', this)"><span class="tab-icon">🔥</span><span>열원설비</span></button>
-    <button data-section="airSection" onclick="showSection('airSection', this)"><span class="tab-icon">💨</span><span>공조설비</span></button>
-    <button data-section="pumpSection" onclick="showSection('pumpSection', this)"><span class="tab-icon">⚙️</span><span>펌프설비</span></button>
-    <button data-section="pipeSection" onclick="showSection('pipeSection', this)"><span class="tab-icon">🔗</span><span>배관설비</span></button>
-  </div>
-
-  <div id="heatSection">
-    <div class="sub-tabs">
-      <button data-sub="coldSourceSection" onclick="showHeatType('coldSourceSection', this)">❄️ 냉열원</button>
-      <button data-sub="heatSourceSection" onclick="showHeatType('heatSourceSection', this)">🔥 온열원</button>
-      <button data-sub="coolingTowerSection" onclick="showHeatType('coolingTowerSection', this)">🗼 냉각탑</button>
-    </div>
-    <div id="coldSourceSection">
-      <div class="card-controls"><button class="btn" onclick="addUnit('coldSource')">+ 냉열원 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="coldSource_count">0 대</span><button class="toggle-all" onclick="toggleAll('coldSource', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('coldSource', false)">모두 접기</button></div></div>
-      <div id="coldSourceSummaryWrap" class="summary-wrap"></div>
-      <div id="coldSourceUnits"></div>
-    </div>
-    <div id="heatSourceSection" style="display:none;">
-      <div class="card-controls"><button class="btn" onclick="addUnit('heatSource')">+ 온열원 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="heatSource_count">0 대</span><button class="toggle-all" onclick="toggleAll('heatSource', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('heatSource', false)">모두 접기</button></div></div>
-      <div id="heatSourceSummaryWrap" class="summary-wrap"></div>
-      <div id="heatSourceUnits"></div>
-    </div>
-    <div id="coolingTowerSection" style="display:none;">
-      <div class="card-controls"><button class="btn" onclick="addUnit('coolingTower')">+ 냉각탑 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="coolingTower_count">0 대</span><button class="toggle-all" onclick="toggleAll('coolingTower', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('coolingTower', false)">모두 접기</button></div></div>
-      <div id="coolingTowerSummaryWrap" class="summary-wrap"></div>
-      <div id="coolingTowerUnits"></div>
-    </div>
-  </div>
-
-  <div id="airSection" style="display:none;">
-    <div class="sub-tabs"><button data-sub="ahuSection" onclick="showAirType('ahuSection', this)">공조기(AHU)</button><button data-sub="fanSection" onclick="showAirType('fanSection', this)">급·배기팬</button></div>
-    <div id="ahuSection"><div class="card-controls"><button class="btn" onclick="addUnit('ahu')">+ 공조기 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="ahu_count">0 대</span><button class="toggle-all" onclick="toggleAll('ahu', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('ahu', false)">모두 접기</button></div></div><div id="ahuUnits"></div></div>
-    <div id="fanSection" style="display:none;"><div class="card-controls"><button class="btn" onclick="addUnit('fan')">+ 급·배기팬 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="fan_count">0 대</span><button class="toggle-all" onclick="toggleAll('fan', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('fan', false)">모두 접기</button></div></div><div id="fanUnits"></div></div>
-  </div>
-
-  <div id="pumpSection" style="display:none;">
-    <div class="sub-tabs"><button data-sub="chilledPumpSection" onclick="showPumpType('chilledPumpSection', this)">냉수펌프</button><button data-sub="hotPumpSection" onclick="showPumpType('hotPumpSection', this)">온수펌프</button><button data-sub="coolingPumpSection" onclick="showPumpType('coolingPumpSection', this)">냉각수펌프</button></div>
-    <div id="chilledPumpSection"><div class="card-controls"><button class="btn" onclick="addUnit('chilled_pump')">+ 냉수펌프 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="chilled_pump_count">0 대</span><button class="toggle-all" onclick="toggleAll('chilled_pump', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('chilled_pump', false)">모두 접기</button></div></div><div id="chilled_pumpUnits"></div></div>
-    <div id="hotPumpSection" style="display:none;"><div class="card-controls"><button class="btn" onclick="addUnit('hot_pump')">+ 온수펌프 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="hot_pump_count">0 대</span><button class="toggle-all" onclick="toggleAll('hot_pump', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('hot_pump', false)">모두 접기</button></div></div><div id="hot_pumpUnits"></div></div>
-    <div id="coolingPumpSection" style="display:none;"><div class="card-controls"><button class="btn" onclick="addUnit('cooling_pump')">+ 냉각수펌프 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="cooling_pump_count">0 대</span><button class="toggle-all" onclick="toggleAll('cooling_pump', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('cooling_pump', false)">모두 접기</button></div></div><div id="cooling_pumpUnits"></div></div>
-  </div>
-
-  <div id="pipeSection" style="display:none;">
-    <div class="card-controls"><button class="btn" onclick="addUnit('pipe')">+ 배관 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="pipe_count">0 대</span><button class="toggle-all" onclick="toggleAll('pipe', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('pipe', false)">모두 접기</button></div></div>
-    <div id="pipeUnits"></div>
-  </div>
-  </div>
-</div>
-
-<div id="result" class="page">
-  <div class="diag-page">
-  <h2 style="margin-top:0;">📊 종합 결과</h2>
-  <div style="margin-bottom:20px;">
-    <button class="btn" onclick="loadSummary()">저장 데이터 보기</button>
-    <button class="btn" style="background:#059669;" onclick="exportToExcel()">📊 엑셀 내보내기</button>
-    <button class="btn" style="background:#dc2626;" onclick="exportToPDF()">📄 PDF 내보내기</button>
-  </div>
-  <pre id="summaryBox">[저장 데이터 보기] 버튼을 클릭하세요</pre>
-  </div>
-</div>
-
-</div>
-
-<!-- 모달들 -->
-<!-- 🔐 GitHub Token 로그인 모달 -->
+<!-- ==================== 🔐 토큰 로그인 모달 ==================== -->
 <div class="modal-backdrop" id="loginModal">
-  <div class="modal" style="max-width:500px;" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>🔐 GitHub 로그인</h3>
+  <div class="modal token-login-modal" onclick="event.stopPropagation()">
+    
+    <div class="token-login-header">
+      <div class="token-login-icon">🔐</div>
+      <h2 class="token-login-title">GitHub 로그인</h2>
+      <p class="token-login-subtitle">기계설비 노후화 진단 시스템</p>
     </div>
-    <div class="modal-body">
-      <div style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#374151;">
-        <p style="margin:0 0 6px 0;"><strong>🏢 기계설비 노후화 진단 시스템</strong></p>
-        <p style="margin:0;color:#6b7280;font-size:12px;">GitHub Personal Access Token을 입력해주세요</p>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">🔑 GitHub Token <span class="required">*</span></label>
-        <input type="password" id="tokenInput" class="form-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-        <div class="form-hint">한번 입력하면 이 PC에서는 자동 로그인됩니다</div>
-      </div>
-      
-      <div id="loginError" style="display:none;background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-top:10px;"></div>
-      
-      <details style="margin-top:14px;background:#fef3c7;border-radius:8px;padding:10px 14px;">
-        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:#92400e;">📖 토큰이 없으신가요?</summary>
-        <ol style="margin:10px 0 0 0;padding-left:20px;font-size:12px;color:#78350f;line-height:1.8;">
-          <li>github.com/settings/tokens 접속</li>
-          <li>Generate new token (classic)</li>
-          <li>권한: <strong>☑ repo</strong> 체크</li>
-          <li>Generate → 토큰 복사 (ghp_xxx...)</li>
-          <li>위 입력란에 붙여넣기</li>
-        </ol>
-      </details>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-primary" onclick="submitToken()" style="width:100%;">🔓 로그인</button>
-    </div>
-  </div>
-</div>
 
-
-<div class="modal-backdrop" id="gradeInfoModal" onclick="closeGradeInfoModal(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>📊 종합 등급 산정 기준</h3>
-      <button class="modal-close" onclick="closeGradeInfoModal()">×</button>
-    </div>
-    <div class="modal-body" id="gradeInfoBody"></div>
-  </div>
-</div>
-
-<!-- 프로젝트 추가/수정 모달 -->
-<div class="modal-backdrop" id="projectModal" onclick="closeProjectModal(event)">
-  <div class="modal project-modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3 id="projectModalTitle">📝 프로젝트 추가</h3>
-      <button class="modal-close" onclick="closeProjectModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="project-form">
-        <div class="form-group">
-          <label class="form-label">📅 연도 <span class="required">*</span></label>
-          <input type="text" id="pmYear" class="form-input" placeholder="예: 2026" maxlength="4">
-          <div class="form-hint">4자리 숫자로 입력해주세요</div>
+    <div class="token-login-body">
+      
+      <div class="token-info-card">
+        <div class="token-info-row">
+          <span class="token-info-label">📁 저장소</span>
+          <span class="token-info-value">seung3459/diagnosis</span>
         </div>
-        <div class="form-group">
-          <label class="form-label">📌 프로젝트명 <span class="required">*</span></label>
-          <input type="text" id="pmName" class="form-input" placeholder="예: 영락교회 노후화 진단">
-          <div class="form-hint">진단을 진행할 프로젝트의 이름을 입력하세요</div>
+        <div class="token-info-row">
+          <span class="token-info-label">💾 데이터</span>
+          <span class="token-info-value">GitHub에 자동 저장</span>
         </div>
-        <div class="form-group">
-          <label class="form-label">💬 비고 <span class="optional">(선택)</span></label>
-          <input type="text" id="pmNote" class="form-input" placeholder="추가 정보를 입력하세요">
-          <div class="form-hint">특이사항이나 메모를 입력할 수 있습니다</div>
+        <div class="token-info-row">
+          <span class="token-info-label">🔄 동기화</span>
+          <span class="token-info-value">다른 PC에서도 자동 동기화</span>
         </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeProjectModal()">취소</button>
-      <button class="btn-primary" id="pmSubmitBtn" onclick="submitProjectForm()">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 🆕 ID/PW 로그인 모달 -->
-<div class="modal-backdrop" id="loginModal">
-  <div class="modal login-modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>🔐 로그인</h3>
-    </div>
-    <div class="modal-body">
-      <div class="login-info">
-        <div class="login-info-title">🏢 기계설비 노후화 진단 시스템</div>
-        <div class="login-info-sub">접속하려면 ID와 비밀번호를 입력하세요</div>
+      
+      <div class="token-input-section">
+        <label class="token-input-label">
+          🔑 Personal Access Token
+          <span class="token-input-required">*</span>
+        </label>
+        <input 
+          type="password" 
+          id="tokenInput" 
+          class="token-input-field" 
+          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <div class="token-input-hint">
+          💡 한번 입력하면 이 PC에서는 자동 로그인됩니다
+        </div>
       </div>
       
-      <div class="form-group">
-        <label class="form-label">👤 ID <span class="required">*</span></label>
-        <input type="text" id="loginId" class="form-input" placeholder="ID 입력" autocomplete="off">
-      </div>
+      <div id="loginError" class="token-error-msg"></div>
       
-      <div class="form-group">
-        <label class="form-label">🔑 비밀번호 <span class="required">*</span></label>
-        <input type="password" id="loginPw" class="form-input" placeholder="비밀번호 입력" autocomplete="off">
-      </div>
-      
-      <div id="loginError" class="token-error" style="display:none;"></div>
-      
-      <details class="login-help">
-        <summary>💡 시연용 계정 안내 (클릭하여 보기)</summary>
-        <div class="login-help-box">
-          <div class="login-account-item">
-            <div class="lai-badge edit">✏️ 편집</div>
-            <div class="lai-info">
-              <div class="lai-row"><strong>ID:</strong> HIMEC</div>
-              <div class="lai-row"><strong>PW:</strong> HIMEC</div>
-              <div class="lai-desc">프로젝트 추가/수정/삭제 가능</div>
-            </div>
-          </div>
-          <div class="login-account-item">
-            <div class="lai-badge readonly">👁️ 읽기</div>
-            <div class="lai-info">
-              <div class="lai-row"><strong>ID:</strong> guest</div>
-              <div class="lai-row"><strong>PW:</strong> guest</div>
-              <div class="lai-desc">데이터 조회만 가능</div>
-            </div>
-          </div>
+      <details class="token-help">
+        <summary class="token-help-summary">
+          <span>📖 토큰이 없으신가요?</span>
+          <span class="token-help-arrow">▼</span>
+        </summary>
+        <div class="token-help-content">
+          <ol class="token-help-steps">
+            <li><strong>github.com</strong> 로그인</li>
+            <li>우측 상단 프로필 → <strong>Settings</strong></li>
+            <li>좌측 맨 아래 → <strong>Developer settings</strong></li>
+            <li><strong>Personal access tokens</strong> → <strong>Tokens (classic)</strong></li>
+            <li><strong>Generate new token (classic)</strong> 클릭</li>
+            <li>Note: <code>diagnosis-app</code></li>
+            <li>Expiration: <code>No expiration</code></li>
+            <li>Scopes: <strong>☑ repo</strong> 체크</li>
+            <li><strong>Generate token</strong> 클릭</li>
+            <li>토큰 복사 (ghp_xxx...) → 위에 붙여넣기</li>
+          </ol>
+          <a href="https://github.com/settings/tokens" target="_blank" class="token-help-link">
+            🔗 GitHub Token 발급 페이지 바로가기
+          </a>
         </div>
       </details>
+      
     </div>
-    <div class="modal-footer">
-      <button class="btn-primary" onclick="submitLogin()" style="width:100%;">🔓 로그인</button>
+    
+    <div class="token-login-footer">
+      <button class="token-login-btn" onclick="submitToken()">
+        🔓 로그인
+      </button>
     </div>
+    
   </div>
 </div>
 
-<div class="modal-backdrop" id="confirmModal" onclick="closeConfirmModal(event)">
-  <div class="modal confirm-modal" onclick="event.stopPropagation()">
-    <div class="confirm-body">
-      <div class="confirm-icon">⚠️</div>
-      <div class="confirm-title" id="confirmTitle">삭제하시겠습니까?</div>
-      <div class="confirm-msg" id="confirmMsg">입력하신 데이터가 모두 사라집니다.</div>
-      <div class="confirm-info">💡 삭제 후 <strong>동일 종류의 뒷번호 호기가 자동으로 당겨집니다</strong>.</div>
-      <div class="confirm-btns">
-        <button class="btn-cancel" onclick="closeConfirmModal()">취소</button>
-        <button class="btn-danger" id="confirmDeleteBtn">삭제</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="photo-viewer" id="photoViewer" onclick="closePhotoViewer()">
-  <button class="photo-viewer-close" onclick="closePhotoViewer()">×</button>
-  <img id="photoViewerImg" src="" alt="">
-</div>
-
+<!-- ==================== 로딩 오버레이 ==================== -->
 <div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-box">
-    <div class="spinner"></div>
-    <div class="loading-text" id="loadingText">처리 중...</div>
+  <div class="loading-content">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">로딩 중...</div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- ==================== 토스트 알림 ==================== -->
+<div class="toast-container" id="toastContainer"></div>
 
-<!-- 🆕 Enter 키로 로그인 -->
+<!-- ==================== 스크립트 ==================== -->
+<script src="js/github-api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+
 <script>
+  // 페이지 로드 시 인증 시작
+  window.addEventListener('DOMContentLoaded', function(){
+    if(typeof initAuth === 'function'){
+      initAuth();
+    }
+  });
+  
+  // Enter 키로 로그인
   document.addEventListener('keydown', function(e){
     const modal = document.getElementById('loginModal');
     if(modal && modal.classList.contains('active') && e.key === 'Enter'){
       e.preventDefault();
-      if(typeof submitLogin === 'function') submitLogin();
+      if(typeof submitToken === 'function') submitToken();
     }
   });
+  
+  // 로딩 표시 함수
+  function showLoading(text){
+    const overlay = document.getElementById('loadingOverlay');
+    const textEl = document.getElementById('loadingText');
+    if(textEl) textEl.textContent = text || '로딩 중...';
+    if(overlay) overlay.classList.add('active');
+  }
+  function hideLoading(){
+    document.getElementById('loadingOverlay')?.classList.remove('active');
+  }
+  
+  // 토스트 알림 함수
+  function showToast(message, type){
+    const container = document.getElementById('toastContainer');
+    if(!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'success');
+    toast.textContent = message;
+    container.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
 </script>
-
-<!-- 자바스크립트 -->
-<script src="js/config.js"></script>
-<script src="js/grade.js"></script>
-<script src="js/calendar.js"></script>
-<script src="js/photo.js"></script>
-<script src="js/modal.js"></script>
-<script src="js/card.js"></script>
-<script src="js/summary.js"></script>
-<script src="js/sync.js"></script>
-<script src="js/github-api.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/projects.js"></script>
-<script src="js/excel-export.js"></script>
-<script src="js/pdf-export.js"></script>
-<script src="js/main.js"></script>
 
 </body>
 </html>
