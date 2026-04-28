@@ -1283,7 +1283,13 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     { width: 10 }
   ];
 
+  // 🔥 추가: L열(12) 이후 사용하지 않는 컬럼 숨기기
+  for(let i = 13; i <= 20; i++){
+    ws.getColumn(i).hidden = true;
+  }
+
   ws.mergeCells('A1:L1');
+
   const titleCell = ws.getCell('A1');
   titleCell.value = '📊 기계설비 노후화 진단 종합 요약';
   titleCell.font = { name:'맑은 고딕', size:18, bold:true, color:{argb:'FF1F2937'} };
@@ -1381,8 +1387,13 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   const colWidths = [3.5, 14, 7, 30, 12, 14, 12, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13];
   colWidths.forEach((w, i) => ws.getColumn(i+1).width = w);
 
+  // 🔥 추가: V열(22) 이후 사용하지 않는 컬럼 숨기기
+  for(let i = 23; i <= 30; i++){
+    ws.getColumn(i).hidden = true;
+  }
+
   const thinBorder = { style:'thin', color:{argb:'FFCBD5E1'} };
-  const border = { top:thinBorder, bottom:thinBorder, left:thinBorder, right:thinBorder };
+
 
   // ========== 제목 ==========
   ws.mergeCells('A1:V2');
@@ -1885,7 +1896,7 @@ window.onload = function(){
         addUnit(type);
         const id = unitCount[type];
         setTimeout(()=>applyUnitData(type, id, unitData), 50);
-      });
+      });=
     });
     setTimeout(()=>{
       Object.keys(fieldConfig).forEach(type=>{
