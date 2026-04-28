@@ -86,7 +86,7 @@
 
   .summary-wrap{margin-bottom:20px;}
   .summary-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #e5e7eb;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.04);}
-  .summary-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:960px;}
+  .summary-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:1000px;}
   .summary-table th,.summary-table td{border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;padding:10px 8px;text-align:center;vertical-align:middle;}
   .summary-table th:last-child,.summary-table td:last-child{border-right:none;}
   .summary-table tbody tr:last-child td{border-bottom:none;}
@@ -105,7 +105,8 @@
   .rating-badge.C{background:#fecaca;color:#dc2626;border-color:#fca5a5;}
   .rating-badge.empty{background:#f3f4f6;color:#9ca3af;border-color:#e5e7eb;}
 
-  .grade-cell{font-weight:800;font-size:16px;}
+  .grade-cell{font-weight:800;font-size:15px;line-height:1.2;}
+  .grade-cell .grade-score{display:block;font-size:10px;font-weight:600;color:#6b7280;margin-top:2px;}
   .grade-A{color:#059669;}
   .grade-B{color:#d97706;}
   .grade-C{color:#dc2626;}
@@ -130,6 +131,7 @@
   .chip-A{background:#d1fae5;color:#059669;}
   .chip-B{background:#fed7aa;color:#d97706;}
   .chip-C{background:#fecaca;color:#dc2626;}
+  .chip-grade{background:#1f2937;color:#fff;font-weight:800;}
 
   .card-header .arrow{flex-shrink:0;font-size:14px;transition:transform .25s;}
   .card.expanded .card-header .arrow{transform:rotate(180deg);}
@@ -198,6 +200,7 @@
   .factor-inner{display:flex;align-items:center;gap:10px;}
   .factor-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
   .factor-name{font-weight:700;color:#111827;font-size:13px;line-height:1.3;text-align:left;}
+  .factor-weight{font-size:10px;color:#2563eb;font-weight:700;background:#eff6ff;padding:1px 6px;border-radius:999px;margin-top:2px;display:inline-block;}
   .diag-table .rating-cell{width:85px;padding:10px 8px;}
   .rating-group{display:flex;flex-direction:column;gap:6px;align-items:stretch;}
   .rating-group label{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;margin:0;background:#fff;transition:all .15s;}
@@ -451,6 +454,39 @@ const PHOTO_QUALITY = 0.75;
 const EXCEL_PHOTO_W = 350;
 const EXCEL_PHOTO_H = 230;
 
+// 종합 등급 가중치 및 점수
+const diagWeights = {
+  usage_years: 0.30,
+  maint_history: 0.15,
+  inspection_state: 0.10,
+  install_env: 0.10,
+  appearance: 0.10,
+  temp_measure: 0.15,
+  piping_conn: 0.05,
+  mcc_panel: 0.05
+};
+const diagRateScores = { A: 1, B: 0.6, C: 0.2 };
+
+// 종합 등급 계산: { grade: 'A'|'B'|'C'|'-', score: 숫자 }
+function calculateOverallGrade(rates){
+  let score = 0;
+  let hasAny = false;
+  for(const key in diagWeights){
+    const rate = rates[key];
+    if(rate && diagRateScores[rate] !== undefined){
+      score += diagWeights[key] * diagRateScores[rate] * 100;
+      hasAny = true;
+    }
+  }
+  if(!hasAny) return { grade:'-', score:0 };
+  const finalScore = Math.round(score * 10) / 10;
+  let grade;
+  if(finalScore <= 40) grade = 'C';
+  else if(finalScore <= 60) grade = 'B';
+  else grade = 'A';
+  return { grade, score: finalScore };
+}
+
 const fieldConfig = {
   coldSource:['입구온도','출구온도','유량','전류'],
   heatSource:['급수온도','보일러압력','연료유량','배기온도'],
@@ -493,15 +529,16 @@ const imageMap = {
   pipe:"https://images.unsplash.com/photo-1581093588401-c0cabd2b1d0a"
 };
 
+// 가중치 정보 추가 (UI에 표시)
 const turboDiagItems = [
-  {key:'usage_years', factor:'사용연수', short:'사용연수', A:'9년 이하', B:'10년 이상 ~ 14년 이하', C:'15년 이상', target:'관리대장'},
-  {key:'maint_history', factor:'보수이력', short:'보수이력', A:'고장 없음', B:'경미한 고장 (1년간 1회 / 과거 2회)', C:'중대한 고장 (과거 4년간 1회 또는 과거 2회 이상)', target:'운전일지, 안전부'},
-  {key:'inspection_state', factor:'점검 상태', short:'점검상태', A:'양호, 정기점검 실시', B:'부분적 간헐 점검', C:'불량, 정기점검 미실시', target:'관리대장'},
-  {key:'install_env', factor:'설치 환경', short:'설치환경', A:'실내, 유지관리 편리, 점검공간 확보, 방진 양호', B:'실내, 유지보수 불편, 점검공간 부족, 방진 부족', C:'옥외, 방진 불량, 보수 불가', target:'육안'},
-  {key:'appearance', factor:'외관', short:'외관', A:'초기 상태 유지, 약간의 오염', B:'심한 오염, 부분 부식', C:'심한 부식 또는 누수 및 파손', target:'육안, 안전부'},
-  {key:'temp_measure', factor:'온도 계측', short:'온도계측', A:'정격 온도 유지', B:'정격 온도보다 2~4℃ 벗어나 운전', C:'정격 온도보다 5℃ 이상 상이', target:'운전일지'},
-  {key:'piping_conn', factor:'주위배관 및 연결부', short:'배관/연결부', A:'초기와 유사한 상태, 일부 부분적 변형 또는 부식 확인', B:'변형, 부식이 외부에서 쉽게 확인됨', C:'손상·변형·누수 상태가 심하여 파괴 위험성을 느끼거나 부식으로 인한 고착으로 작동 불가', target:'육안, 안전부'},
-  {key:'mcc_panel', factor:'MCC 및 현장 패널(마이어)', short:'MCC 패널', A:'계측값 양호', B:'기기 성능은 정상, 계측값만 이상', C:'고장', target:'육안, 안전부'}
+  {key:'usage_years', factor:'사용연수', short:'사용연수', weight:30, A:'9년 이하', B:'10년 이상 ~ 14년 이하', C:'15년 이상', target:'관리대장'},
+  {key:'maint_history', factor:'보수이력', short:'보수이력', weight:15, A:'고장 없음', B:'경미한 고장 (1년간 1회 / 과거 2회)', C:'중대한 고장 (과거 4년간 1회 또는 과거 2회 이상)', target:'운전일지, 안전부'},
+  {key:'inspection_state', factor:'점검 상태', short:'점검상태', weight:10, A:'양호, 정기점검 실시', B:'부분적 간헐 점검', C:'불량, 정기점검 미실시', target:'관리대장'},
+  {key:'install_env', factor:'설치 환경', short:'설치환경', weight:10, A:'실내, 유지관리 편리, 점검공간 확보, 방진 양호', B:'실내, 유지보수 불편, 점검공간 부족, 방진 부족', C:'옥외, 방진 불량, 보수 불가', target:'육안'},
+  {key:'appearance', factor:'외관', short:'외관', weight:10, A:'초기 상태 유지, 약간의 오염', B:'심한 오염, 부분 부식', C:'심한 부식 또는 누수 및 파손', target:'육안, 안전부'},
+  {key:'temp_measure', factor:'온도 계측', short:'온도계측', weight:15, A:'정격 온도 유지', B:'정격 온도보다 2~4℃ 벗어나 운전', C:'정격 온도보다 5℃ 이상 상이', target:'운전일지'},
+  {key:'piping_conn', factor:'주위배관 및 연결부', short:'배관/연결부', weight:5, A:'초기와 유사한 상태, 일부 부분적 변형 또는 부식 확인', B:'변형, 부식이 외부에서 쉽게 확인됨', C:'손상·변형·누수 상태가 심하여 파괴 위험성을 느끼거나 부식으로 인한 고착으로 작동 불가', target:'육안, 안전부'},
+  {key:'mcc_panel', factor:'MCC 및 현장 패널(마이어)', short:'MCC 패널', weight:5, A:'계측값 양호', B:'기기 성능은 정상, 계측값만 이상', C:'고장', target:'육안, 안전부'}
 ];
 
 const diagApplyTypes = ['coldSource'];
@@ -781,7 +818,7 @@ function renderCard(type, id){
       const base = `${type}_${id}_diag_${item.key}`;
       diagRows += `
         <tr>
-          <td class="factor"><div class="factor-inner"><div class="factor-num">${idx+1}</div><div class="factor-name">${item.factor}</div></div></td>
+          <td class="factor"><div class="factor-inner"><div class="factor-num">${idx+1}</div><div><div class="factor-name">${item.factor}</div><div class="factor-weight">가중치 ${item.weight}%</div></div></div></td>
           <td class="rating-cell">
             <div class="rating-group" data-base="${base}">
               <label><input type="radio" name="${base}_rate" value="A" onchange="updateRatingStyle(this);updateSummary('${type}',${id});renderGroupSummary('${type}');"><span class="rating-A">A</span></label>
@@ -919,6 +956,16 @@ function statusText(status){
   return '미지정';
 }
 
+// 카드의 평가 결과를 객체로 가져오기
+function getUnitRates(type, id){
+  const rates = {};
+  turboDiagItems.forEach(item=>{
+    const rateEl = document.querySelector(`input[name="${type}_${id}_diag_${item.key}_rate"]:checked`);
+    if(rateEl) rates[item.key] = rateEl.value;
+  });
+  return rates;
+}
+
 function renderGroupSummary(type){
   const wrap = document.getElementById(`${type}SummaryWrap`);
   if(!wrap) return;
@@ -932,7 +979,7 @@ function renderGroupSummary(type){
   let headers = '';
   if(withSub) headers += '<th style="width:160px;">종류</th>';
   headers += '<th style="width:70px;">호기</th><th style="width:90px;">상태</th>';
-  if(showDiag){ turboDiagItems.forEach(item=>{ headers += `<th>${item.short}</th>`; }); headers += '<th style="width:80px;">종합</th>'; }
+  if(showDiag){ turboDiagItems.forEach(item=>{ headers += `<th>${item.short}<br><span style="font-size:10px;font-weight:500;color:#6b7280;">(${item.weight}%)</span></th>`; }); headers += '<th style="width:90px;">종합</th>'; }
   let rows = '';
   let counter = {};
   let prevSubtype = null;
@@ -950,19 +997,23 @@ function renderGroupSummary(type){
     } else { unitNum = ordered.findIndex(x=>x.card === card) + 1; }
     let diagCells = '', gradeCell = '';
     if(showDiag){
-      let a=0,b=0,c=0;
+      const rates = getUnitRates(type, id);
       turboDiagItems.forEach(item=>{
-        const rateEl = document.querySelector(`input[name="${type}_${id}_diag_${item.key}_rate"]:checked`);
-        if(rateEl){ const v=rateEl.value; if(v==='A')a++; else if(v==='B')b++; else if(v==='C')c++; diagCells += `<td class="rating-cell"><span class="rating-badge ${v}">${v}</span></td>`;}
+        const v = rates[item.key];
+        if(v) diagCells += `<td class="rating-cell"><span class="rating-badge ${v}">${v}</span></td>`;
         else diagCells += `<td class="rating-cell"><span class="rating-badge empty">-</span></td>`;
       });
-      let grade='-', gradeCls='grade-empty';
-      if(a+b+c>0){ if(c>0){grade='C';gradeCls='grade-C';} else if(b>0){grade='B';gradeCls='grade-B';} else{grade='A';gradeCls='grade-A';} }
-      gradeCell = `<td class="grade-cell ${gradeCls}">${grade}</td>`;
+      const { grade, score } = calculateOverallGrade(rates);
+      let gradeCls = 'grade-empty';
+      if(grade==='A') gradeCls='grade-A';
+      else if(grade==='B') gradeCls='grade-B';
+      else if(grade==='C') gradeCls='grade-C';
+      const gradeText = grade === '-' ? '-' : `${grade}<span class="grade-score">${score}점</span>`;
+      gradeCell = `<td class="grade-cell ${gradeCls}">${gradeText}</td>`;
     }
     rows += `<tr class="${rowClass}">${typeCell}<td class="unit-col" onclick="scrollToCard('${type}_${id}_card')" title="클릭하면 해당 호기로 이동">${unitNum}호기</td><td>${st_chip}</td>${diagCells}${gradeCell}</tr>`;
   });
-  wrap.innerHTML = `<div class="section-title" style="margin-top:0;">📊 ${labelKor(type)} 진단 요약</div><div class="summary-table-wrap"><table class="summary-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div><div style="font-size:11px;color:#9ca3af;margin-top:6px;padding:0 4px;">💡 호기 번호를 클릭하면 해당 카드로 이동합니다.${showDiag?' / 종합 등급: C가 있으면 C, B가 있으면 B, 모두 A면 A':''}</div>`;
+  wrap.innerHTML = `<div class="section-title" style="margin-top:0;">📊 ${labelKor(type)} 진단 요약</div><div class="summary-table-wrap"><table class="summary-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div><div style="font-size:11px;color:#9ca3af;margin-top:6px;padding:0 4px;">💡 호기 번호를 클릭하면 해당 카드로 이동합니다.${showDiag?' / 종합 점수: A=1, B=0.6, C=0.2 × 가중치 합산 (60점 초과 A / 40점 초과 60점 이하 B / 40점 이하 C)':''}</div>`;
 }
 
 function scrollToCard(cardId){ const card = document.getElementById(cardId); if(!card) return; card.classList.add('expanded'); card.scrollIntoView({behavior:'smooth', block:'start'}); card.classList.add('highlight'); setTimeout(()=>{ card.classList.remove('highlight'); }, 1800); }
@@ -990,14 +1041,16 @@ function updateSummary(type, id){
   const invEl = document.getElementById(`${type}_${id}_inverter`);
   if(invEl && invEl.checked) chips.push(`<span class="status-chip chip-inv">인버터</span>`);
   if(diagApplyTypes.includes(type)){
+    const rates = getUnitRates(type, id);
     let a=0,b=0,c=0;
-    turboDiagItems.forEach(item=>{
-      const rateEl = document.querySelector(`input[name="${type}_${id}_diag_${item.key}_rate"]:checked`);
-      if(rateEl){ if(rateEl.value==='A') a++; else if(rateEl.value==='B') b++; else if(rateEl.value==='C') c++; }
-    });
+    Object.values(rates).forEach(v=>{ if(v==='A')a++; else if(v==='B')b++; else if(v==='C')c++; });
     if(a) chips.push(`<span class="status-chip chip-A">A ${a}</span>`);
     if(b) chips.push(`<span class="status-chip chip-B">B ${b}</span>`);
     if(c) chips.push(`<span class="status-chip chip-C">C ${c}</span>`);
+    const { grade, score } = calculateOverallGrade(rates);
+    if(grade !== '-'){
+      chips.push(`<span class="status-chip chip-${grade}">종합 ${grade} (${score}점)</span>`);
+    }
   }
   const photos = unitPhotos[`${type}_${id}`];
   if(photos){
@@ -1019,7 +1072,7 @@ function showCriteria(key){
   const item = turboDiagItems.find(d=>d.key===key);
   if(!item) return;
   document.getElementById('modalTitle').textContent = `${item.factor} - 진단 기준`;
-  document.getElementById('modalBody').innerHTML = `<div class="criteria-item"><div class="criteria-badge A">A</div><div class="criteria-text">${item.A}</div></div><div class="criteria-item"><div class="criteria-badge B">B</div><div class="criteria-text">${item.B}</div></div><div class="criteria-item"><div class="criteria-badge C">C</div><div class="criteria-text">${item.C}</div></div><div style="margin-top:14px;padding:10px;background:#f3f4f6;border-radius:8px;font-size:12px;color:#6b7280;">📂 <strong>조사대상:</strong> ${item.target}</div>`;
+  document.getElementById('modalBody').innerHTML = `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;font-size:12px;color:#1e40af;margin-bottom:14px;font-weight:600;">⚖️ 가중치: <strong>${item.weight}%</strong></div><div class="criteria-item"><div class="criteria-badge A">A</div><div class="criteria-text">${item.A}</div></div><div class="criteria-item"><div class="criteria-badge B">B</div><div class="criteria-text">${item.B}</div></div><div class="criteria-item"><div class="criteria-badge C">C</div><div class="criteria-text">${item.C}</div></div><div style="margin-top:14px;padding:10px;background:#f3f4f6;border-radius:8px;font-size:12px;color:#6b7280;">📂 <strong>조사대상:</strong> ${item.target}</div>`;
   document.getElementById('criteriaModal').classList.add('active');
 }
 function closeCriteriaModal(e){ if(e && e.target.id !== 'criteriaModal' && e.type==='click') return; document.getElementById('criteriaModal').classList.remove('active'); }
@@ -1241,17 +1294,17 @@ function collectColdSourceData(){
     const unitNum = counter[st.key];
 
     const diag = {};
+    const rates = {};
     turboDiagItems.forEach(item=>{
       const baseKey = `coldSource_${id}_diag_${item.key}`;
       const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
       const contentEl = document.getElementById(`${baseKey}_content`);
-      diag[item.key] = { rate: rateEl ? rateEl.value : '', content: contentEl ? contentEl.value : '' };
+      const r = rateEl ? rateEl.value : '';
+      diag[item.key] = { rate: r, content: contentEl ? contentEl.value : '' };
+      if(r) rates[item.key] = r;
     });
 
-    let a=0,b=0,c=0;
-    Object.values(diag).forEach(d=>{ if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++; });
-    let grade='-';
-    if(a+b+c>0){ if(c>0)grade='C'; else if(b>0)grade='B'; else grade='A'; }
+    const { grade, score } = calculateOverallGrade(rates);
 
     const photos = unitPhotos[`coldSource_${id}`] || new Array(PHOTO_COUNT).fill(null).map(()=>({img:null,desc:''}));
     const opinion = document.getElementById(`coldSource_${id}_opinion`)?.value || '';
@@ -1262,7 +1315,7 @@ function collectColdSourceData(){
       diag, opinion, photos,
       statusText: statusText(status),
       diagRates: turboDiagItems.map(item => diag[item.key]?.rate || '-'),
-      grade
+      grade, score
     });
   });
 
@@ -1276,7 +1329,7 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     { width: 18 }, { width: 10 }, { width: 11 },
     { width: 11 }, { width: 11 }, { width: 11 }, { width: 11 },
     { width: 11 }, { width: 13 }, { width: 13 }, { width: 11 },
-    { width: 10 }
+    { width: 14 }
   ];
 
   for(let i = 13; i <= 30; i++){
@@ -1319,6 +1372,16 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     r++;
   });
 
+  // 가중치 안내
+  r++;
+  ws.mergeCells(`A${r}:L${r}`);
+  const weightInfo = ws.getCell(`A${r}`);
+  weightInfo.value = `⚖️ 종합 점수 산정 방식: A=1, B=0.6, C=0.2 × 가중치 합산 (60점 초과 → A / 40점 초과 60점 이하 → B / 40점 이하 → C)`;
+  weightInfo.font = { name:'맑은 고딕', size:10, italic:true, color:{argb:'FF6B7280'} };
+  weightInfo.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+  weightInfo.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFEF3C7'} };
+  ws.getRow(r).height = 22;
+
   r += 2;
   ws.mergeCells(`A${r}:L${r}`);
   const subTitle = ws.getCell(`A${r}`);
@@ -1328,14 +1391,15 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   ws.getRow(r).height = 28;
   r++;
 
+  // 헤더 (가중치 표시)
   const headerRow = ['종류','호기','상태'];
-  turboDiagItems.forEach(item => headerRow.push(item.short));
-  headerRow.push('종합');
+  turboDiagItems.forEach(item => headerRow.push(`${item.short}\n(${item.weight}%)`));
+  headerRow.push('종합 (점수)');
 
   const hRow = ws.getRow(r);
   hRow.values = headerRow;
   hRow.eachCell((cell)=>{
-    cell.font = { bold:true, color:{argb:'FFFFFFFF'}, name:'맑은 고딕' };
+    cell.font = { bold:true, color:{argb:'FFFFFFFF'}, name:'맑은 고딕', size:10 };
     cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
     cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
     cell.border = {
@@ -1343,12 +1407,13 @@ function buildSummarySheet(wb, projectInfo, allUnits){
       left:{style:'thin',color:{argb:'FFE5E7EB'}}, right:{style:'thin',color:{argb:'FFE5E7EB'}}
     };
   });
-  hRow.height = 32;
+  hRow.height = 38;
   r++;
 
   allUnits.forEach(u => {
     const row = ws.getRow(r);
-    row.values = [u.subtypeLabel, `${u.unitNum}호기`, u.statusText, ...u.diagRates, u.grade];
+    const gradeText = u.grade === '-' ? '-' : `${u.grade} (${u.score}점)`;
+    row.values = [u.subtypeLabel, `${u.unitNum}호기`, u.statusText, ...u.diagRates, gradeText];
     row.eachCell((cell, col)=>{
       cell.alignment = { horizontal:'center', vertical:'middle' };
       cell.font = { name:'맑은 고딕' };
@@ -1363,11 +1428,17 @@ function buildSummarySheet(wb, projectInfo, allUnits){
         else if(v==='C') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFECACA'} };
       }
       if(col === 12){
-        cell.font = { name:'맑은 고딕', bold:true, size:13 };
-        const v = cell.value;
-        if(v==='A') cell.font = {...cell.font, color:{argb:'FF059669'}};
-        else if(v==='B') cell.font = {...cell.font, color:{argb:'FFD97706'}};
-        else if(v==='C') cell.font = {...cell.font, color:{argb:'FFDC2626'}};
+        cell.font = { name:'맑은 고딕', bold:true, size:12 };
+        if(u.grade==='A'){
+          cell.font = {...cell.font, color:{argb:'FF059669'}};
+          cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD1FAE5'} };
+        } else if(u.grade==='B'){
+          cell.font = {...cell.font, color:{argb:'FFD97706'}};
+          cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFED7AA'} };
+        } else if(u.grade==='C'){
+          cell.font = {...cell.font, color:{argb:'FFDC2626'}};
+          cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFECACA'} };
+        }
       }
     });
     row.height = 24;
@@ -1378,11 +1449,14 @@ function buildSummarySheet(wb, projectInfo, allUnits){
 function buildUnitSheet(wb, sheetName, u, projectInfo){
   const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: false }] });
 
-  // A~P 16개 컬럼만 사용 (사진 영역 4컬럼씩으로 축소)
-  const colWidths = [3.5, 14, 7, 30, 12, 14, 12, 14, 14, 14, 14, 14, 14, 14, 14, 14];
+  // 컬럼 너비 설정
+  // A~G: 진단표 영역, H: spacer, I~K: 좌측 사진(3컬럼), L: 숨김, M~O: 우측 사진(3컬럼), P: 숨김
+  const colWidths = [3.5, 14, 7, 30, 12, 14, 12, 14, 17, 17, 17, 5, 17, 17, 17, 5];
   colWidths.forEach((w, i) => ws.getColumn(i+1).width = w);
 
-  // P열(16) 이후 사용 안 하는 컬럼 숨기기
+  // L열(12), P열(16), Q열 이후 모두 숨김
+  ws.getColumn(12).hidden = true; // L열
+  ws.getColumn(16).hidden = true; // P열
   for(let i = 17; i <= 30; i++){
     ws.getColumn(i).hidden = true;
   }
@@ -1390,8 +1464,8 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   const thinBorder = { style:'thin', color:{argb:'FFCBD5E1'} };
   const border = { top:thinBorder, bottom:thinBorder, left:thinBorder, right:thinBorder };
 
-  // ========== 제목 (A1:P2) ==========
-  ws.mergeCells('A1:P2');
+  // ========== 제목 (A1:O2) ==========
+  ws.mergeCells('A1:O2');
   const title = ws.getCell('A1');
   title.value = `🔍 1차 진단 Check : ${u.subtypeLabel} - ${u.unitNum}호기`;
   title.font = { name:'맑은 고딕', size:18, bold:true, color:{argb:'FFFFFFFF'} };
@@ -1400,13 +1474,15 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   ws.getRow(1).height = 28;
   ws.getRow(2).height = 28;
 
-  // ========== 좌측 정보 박스 (A4~G7) ==========
+  // ========== 좌측 정보 박스 (A4~G8) ==========
   const infoStartRow = 4;
+  const gradeText = u.grade === '-' ? '미평가' : `${u.grade} (${u.score}점)`;
   const infoData = [
     ['프로젝트명', projectInfo.projectName || '-'],
     ['장비명', `${u.subtypeLabel} - ${u.unitNum}호기`],
     ['장비번호', `${u.unitNum}호기`],
-    ['상태', u.statusText]
+    ['상태', u.statusText],
+    ['종합 등급', gradeText]
   ];
   infoData.forEach((row, i) => {
     const r = infoStartRow + i;
@@ -1423,15 +1499,28 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     valCell.font = { name:'맑은 고딕', size:11 };
     valCell.alignment = { vertical:'middle', horizontal:'left', indent:1 };
     valCell.border = border;
+    // 종합 등급 색상 강조
+    if(row[0] === '종합 등급' && u.grade !== '-'){
+      if(u.grade === 'A'){
+        valCell.font = { name:'맑은 고딕', size:13, bold:true, color:{argb:'FF059669'} };
+        valCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD1FAE5'} };
+      } else if(u.grade === 'B'){
+        valCell.font = { name:'맑은 고딕', size:13, bold:true, color:{argb:'FFD97706'} };
+        valCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFED7AA'} };
+      } else if(u.grade === 'C'){
+        valCell.font = { name:'맑은 고딕', size:13, bold:true, color:{argb:'FFDC2626'} };
+        valCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFECACA'} };
+      }
+    }
     ws.getRow(r).height = 22;
   });
 
-  // ========== 우측 사진 영역 (사진 있는 것만, 4컬럼씩) ==========
+  // ========== 우측 사진 영역 (사진 있는 것만) ==========
   const validPhotos = (u.photos || []).map((p,i)=>({photo:p, idx:i})).filter(x=>x.photo && x.photo.img);
   
   if(validPhotos.length > 0){
-    // 사진 헤더 (I4:P4)
-    ws.mergeCells('I4:P4');
+    // 사진 헤더 (I4:O4) - L 숨김이므로 I~O 머지하면 보이는 건 I~K, M~O
+    ws.mergeCells('I4:O4');
     const photoTitle = ws.getCell('I4');
     photoTitle.value = '📸 현장 사진';
     photoTitle.font = { name:'맑은 고딕', bold:true, size:13, color:{argb:'FFFFFFFF'} };
@@ -1451,9 +1540,9 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
       const leftPhoto = validPhotos[row * 2];
       const rightPhoto = validPhotos[row * 2 + 1];
 
-      // 좌측 사진 (I~L, 4컬럼)
+      // 좌측 사진 (I~K, 3컬럼)
       if(leftPhoto){
-        ws.mergeCells(`I${layout.descRow}:L${layout.descRow}`);
+        ws.mergeCells(`I${layout.descRow}:K${layout.descRow}`);
         const leftDesc = ws.getCell(`I${layout.descRow}`);
         leftDesc.value = `📷 사진${leftPhoto.idx+1}: ${leftPhoto.photo.desc || ''}`;
         leftDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
@@ -1462,7 +1551,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
         leftDesc.border = border;
 
         for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
-          ['I','J','K','L'].forEach(col => {
+          ['I','J','K'].forEach(col => {
             ws.getCell(`${col}${r}`).border = border;
           });
         }
@@ -1480,9 +1569,9 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
         }catch(e){ console.error(`이미지 임베드 실패:`, e); }
       }
 
-      // 우측 사진 (M~P, 4컬럼)
+      // 우측 사진 (M~O, 3컬럼)
       if(rightPhoto){
-        ws.mergeCells(`M${layout.descRow}:P${layout.descRow}`);
+        ws.mergeCells(`M${layout.descRow}:O${layout.descRow}`);
         const rightDesc = ws.getCell(`M${layout.descRow}`);
         rightDesc.value = `📷 사진${rightPhoto.idx+1}: ${rightPhoto.photo.desc || ''}`;
         rightDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
@@ -1491,7 +1580,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
         rightDesc.border = border;
 
         for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
-          ['M','N','O','P'].forEach(col => {
+          ['M','N','O'].forEach(col => {
             ws.getCell(`${col}${r}`).border = border;
           });
         }
@@ -1517,7 +1606,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   }
 
   // ========== 진단 체크리스트 ==========
-  const checkStartRow = 9;
+  const checkStartRow = 10;
   ws.mergeCells(`A${checkStartRow}:G${checkStartRow}`);
   const checkTitle = ws.getCell(`A${checkStartRow}`);
   checkTitle.value = '🔍 1차 진단 Check-list (육안점검)';
@@ -1531,7 +1620,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   ws.mergeCells(`F${headerRow}:G${headerRow}`);
   
   const headers = [
-    {col:'A', text:'번호'}, {col:'B', text:'인자'}, {col:'C', text:'평가'},
+    {col:'A', text:'번호'}, {col:'B', text:'인자 (가중치)'}, {col:'C', text:'평가'},
     {col:'D', text:'주요 내용'}, {col:'F', text:'조사 대상'}
   ];
   headers.forEach(h => {
@@ -1551,7 +1640,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
 
   turboDiagItems.forEach((item, idx) => {
     const r = headerRow + 1 + idx;
-    ws.getRow(r).height = 30;
+    ws.getRow(r).height = 32;
 
     const numCell = ws.getCell(`A${r}`);
     numCell.value = idx + 1;
@@ -1561,7 +1650,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     numCell.border = border;
 
     const factorCell = ws.getCell(`B${r}`);
-    factorCell.value = item.factor;
+    factorCell.value = `${item.factor}\n(${item.weight}%)`;
     factorCell.font = { name:'맑은 고딕', bold:true, size:10 };
     factorCell.alignment = { vertical:'middle', horizontal:'left', indent:1, wrapText:true };
     factorCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF9FAFB'} };
@@ -1686,7 +1775,7 @@ async function exportToExcel(){
 }
 
 // =====================================
-// 📄 PDF 내보내기 (호기당 2페이지 분리)
+// 📄 PDF 내보내기
 // =====================================
 function exportToPDF(){
   const collected = collectColdSourceData();
@@ -1725,11 +1814,13 @@ function exportToPDF(){
       <tr><th>생성일시</th><td>${new Date().toLocaleString('ko-KR')}</td></tr>
     </table>`;
 
+    bodyHTML += `<div class="weight-info">⚖️ <strong>종합 점수 산정:</strong> A=1, B=0.6, C=0.2 × 가중치 합산 / 60점 초과 → A / 40점 초과 60점 이하 → B / 40점 이하 → C</div>`;
+
     bodyHTML += `<div class="section-h">📊 냉열원 진단 종합 요약</div>`;
     bodyHTML += `<table class="data-table"><thead><tr>`;
     bodyHTML += `<th>종류</th><th>호기</th><th>상태</th>`;
-    turboDiagItems.forEach(it => bodyHTML += `<th>${it.short}</th>`);
-    bodyHTML += `<th>종합</th></tr></thead><tbody>`;
+    turboDiagItems.forEach(it => bodyHTML += `<th>${it.short}<br><span class="weight-tag">${it.weight}%</span></th>`);
+    bodyHTML += `<th>종합<br>(점수)</th></tr></thead><tbody>`;
     allUnits.forEach(u => {
       bodyHTML += `<tr>`;
       bodyHTML += `<td class="left">${escapeHtml(u.subtypeLabel)}</td>`;
@@ -1740,7 +1831,8 @@ function exportToPDF(){
         bodyHTML += `<td class="${cls}">${r}</td>`;
       });
       const gcls = u.grade==='A'?'rate-A':u.grade==='B'?'rate-B':u.grade==='C'?'rate-C':'';
-      bodyHTML += `<td class="${gcls}"><strong>${u.grade}</strong></td>`;
+      const gradeText = u.grade === '-' ? '-' : `<strong>${u.grade}</strong><br><small>${u.score}점</small>`;
+      bodyHTML += `<td class="${gcls}">${gradeText}</td>`;
       bodyHTML += `</tr>`;
     });
     bodyHTML += `</tbody></table>`;
@@ -1751,18 +1843,19 @@ function exportToPDF(){
       // 페이지 A: 검토 결과
       bodyHTML += `<div class="page">`;
       bodyHTML += `<div class="unit-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기 <span class="page-tag">[검토 결과]</span></div>`;
-      bodyHTML += `<div class="unit-sub">상태: ${escapeHtml(u.statusText)} | 종합 등급: <strong class="grade-${u.grade}">${u.grade}</strong></div>`;
+      const gradeDisplay = u.grade === '-' ? '미평가' : `<strong class="grade-${u.grade}">${u.grade}</strong> (${u.score}점)`;
+      bodyHTML += `<div class="unit-sub">상태: ${escapeHtml(u.statusText)} | 종합 등급: ${gradeDisplay}</div>`;
 
       bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
       bodyHTML += `<table class="data-table"><thead><tr>`;
-      bodyHTML += `<th style="width:40px;">번호</th><th style="width:130px;">인자</th><th style="width:55px;">평가</th><th>주요 내용</th><th style="width:100px;">조사 대상</th></tr></thead><tbody>`;
+      bodyHTML += `<th style="width:40px;">번호</th><th style="width:160px;">인자 (가중치)</th><th style="width:55px;">평가</th><th>주요 내용</th><th style="width:100px;">조사 대상</th></tr></thead><tbody>`;
       turboDiagItems.forEach((it, idx)=>{
         const d = u.diag[it.key] || {};
         const r = d.rate || '-';
         const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
         bodyHTML += `<tr>`;
         bodyHTML += `<td>${idx+1}</td>`;
-        bodyHTML += `<td class="left"><strong>${escapeHtml(it.factor)}</strong></td>`;
+        bodyHTML += `<td class="left"><strong>${escapeHtml(it.factor)}</strong> <span class="weight-tag">${it.weight}%</span></td>`;
         bodyHTML += `<td class="${cls}"><strong>${r}</strong></td>`;
         bodyHTML += `<td class="left">${escapeHtml(d.content||'')}</td>`;
         bodyHTML += `<td>${escapeHtml(it.target)}</td>`;
@@ -1810,19 +1903,21 @@ function exportToPDF(){
   .cover-box { width: 100%; }
   .cover-title { font-size: 26px; font-weight: 800; color: #1f2937; margin-bottom: 6px; }
   .cover-sub { font-size: 14px; color: #6b7280; margin-bottom: 30px; }
-  .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+  .info-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
   .info-table th, .info-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
   .info-table tr:last-child th, .info-table tr:last-child td { border-bottom: none; }
   .info-table th { background: #f3f4f6; color: #374151; font-weight: 700; text-align: left; width: 130px; }
   .info-table td { color: #111827; }
+  .weight-info { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 14px; font-size: 11px; color: #92400e; margin-bottom: 18px; line-height: 1.6; }
   .unit-title { font-size: 22px; font-weight: 800; color: #1f2937; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
   .unit-sub { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
   .page-tag { font-size: 14px; font-weight: 600; color: #2563eb; background: #dbeafe; padding: 4px 10px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
   .section-h { background: #1f2937; color: #fff; padding: 8px 14px; font-size: 13px; font-weight: 700; border-radius: 6px 6px 0 0; margin-top: 18px; }
   .data-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb; border-top: none; }
   .data-table th, .data-table td { border: 1px solid #e5e7eb; padding: 7px 8px; text-align: center; vertical-align: middle; }
-  .data-table th { background: #f3f4f6; font-weight: 700; color: #111827; }
+  .data-table th { background: #f3f4f6; font-weight: 700; color: #111827; font-size: 10px; }
   .data-table td.left { text-align: left; }
+  .weight-tag { display: inline-block; background: #eff6ff; color: #2563eb; padding: 1px 6px; border-radius: 999px; font-size: 9px; font-weight: 700; }
   .rate-A { background: #d1fae5; color: #059669; font-weight: 700; }
   .rate-B { background: #fed7aa; color: #d97706; font-weight: 700; }
   .rate-C { background: #fecaca; color: #dc2626; font-weight: 700; }
