@@ -1,5 +1,5 @@
 // =====================================
-// 🐙 GitHub API 통신 라이브러리 (토큰 입력 방식)
+// 🐙 GitHub API 통신 (토큰 입력 방식)
 // =====================================
 
 const GITHUB_CONFIG = {
@@ -10,12 +10,11 @@ const GITHUB_CONFIG = {
 };
 
 const GH_API = 'https://api.github.com';
-
-// =====================================
-// 🔐 토큰 관리
-// =====================================
-
 const TOKEN_KEY = 'github_pat_token';
+
+// =====================================
+// 토큰 관리
+// =====================================
 
 function getStoredToken(){
   return localStorage.getItem(TOKEN_KEY) || '';
@@ -58,7 +57,7 @@ async function verifyToken(token){
 }
 
 // =====================================
-// 📥 파일 가져오기
+// 파일 가져오기
 // =====================================
 
 async function ghGetFile(path){
@@ -82,7 +81,7 @@ async function ghGetFile(path){
 }
 
 // =====================================
-// 📤 파일 저장/업데이트
+// 파일 저장
 // =====================================
 
 async function ghSaveFile(path, content, commitMessage){
@@ -118,7 +117,7 @@ async function ghSaveFile(path, content, commitMessage){
 }
 
 // =====================================
-// 🗑️ 파일 삭제
+// 파일 삭제
 // =====================================
 
 async function ghDeleteFile(path, commitMessage){
@@ -145,7 +144,7 @@ async function ghDeleteFile(path, commitMessage){
 }
 
 // =====================================
-// 📋 프로젝트 데이터
+// 프로젝트 데이터 (호환용 함수)
 // =====================================
 
 async function ghLoadProjectsList(){
@@ -172,7 +171,7 @@ async function ghSaveProjectData(projectId, data){
   return await ghSaveFile(
     `${GITHUB_CONFIG.dataPath}/${projectId}.json`,
     data,
-    `프로젝트 데이터 저장: ${data.projectName || projectId}`
+    `프로젝트 데이터: ${data.projectName || projectId}`
   );
 }
 
