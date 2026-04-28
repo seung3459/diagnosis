@@ -4,10 +4,10 @@
 
 // ⚠️ token-encoder.html에서 인코딩한 결과를 여기에 붙여넣기!
 const TOKEN_PARTS = {
-  a: '여기에_a값_붙여넣기',
-  b: '여기에_b값_붙여넣기',
-  c: '여기에_c값_붙여넣기',
-  d: '여기에_d값_붙여넣기'
+  a: 'Z2hwX3pGdmVWbw==',
+  b: 'NFg1U3ZLdkNsRg==',
+  c: 'QlJsOFlXSmhBNQ==',
+  d: 'aUNTZzIwSWF6bA=='
 };
 
 // 토큰 디코딩 (런타임에 합쳐짐)
