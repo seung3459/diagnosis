@@ -1,53 +1,60 @@
 // =====================================
-// 🐙 GitHub API 통신 라이브러리 (인코딩 버전)
+// 🐙 GitHub API 통신 라이브러리 (토큰 입력 방식)
 // =====================================
-
-// ⚠️ token-encoder.html에서 인코딩한 결과를 여기에 붙여넣기!
-const TOKEN_PARTS = {
-  a: 'Z2hwX3pGdmVWbw==',
-  b: 'NFg1U3ZLdkNsRg==',
-  c: 'QlJsOFlXSmhBNQ==',
-  d: 'aUNTZzIwSWF6bA=='
-};
-
-// 토큰 디코딩 (런타임에 합쳐짐)
-function _getToken(){
-  try{
-    return atob(TOKEN_PARTS.a) + atob(TOKEN_PARTS.b) + atob(TOKEN_PARTS.c) + atob(TOKEN_PARTS.d);
-  } catch(e){
-    console.error('토큰 디코딩 실패:', e);
-    return '';
-  }
-}
 
 const GITHUB_CONFIG = {
   owner: 'seung3459',
   repo: 'diagnosis',
   branch: 'main',
-  dataPath: 'data',
-  
-  // 토큰은 함수로 동적 생성 (인코딩된 조각에서 합침)
-  get token(){ return _getToken(); },
-  
-  // ID/PW 등록
-  accounts: [
-    { id: 'HIMEC', pw: 'HIMEC', canEdit: true,  displayName: 'HIMEC 관리자' },
-    { id: 'guest', pw: 'guest', canEdit: false, displayName: '게스트 (읽기 전용)' }
-  ]
+  dataPath: 'data'
 };
 
 const GH_API = 'https://api.github.com';
 
 // =====================================
-// 🔐 인증 헤더 생성
+// 🔐 토큰 관리
 // =====================================
 
+const TOKEN_KEY = 'github_pat_token';
+
+function getStoredToken(){
+  return localStorage.getItem(TOKEN_KEY) || '';
+}
+
+function setStoredToken(token){
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+function clearStoredToken(){
+  localStorage.removeItem(TOKEN_KEY);
+}
+
 function getAuthHeaders(){
+  const token = getStoredToken();
   return {
-    'Authorization': `token ${GITHUB_CONFIG.token}`,
+    'Authorization': `token ${token}`,
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json'
   };
+}
+
+// =====================================
+// 토큰 검증
+// =====================================
+
+async function verifyToken(token){
+  try{
+    const res = await fetch(`${GH_API}/user`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if(res.status === 200){
+      const user = await res.json();
+      return { valid: true, user };
+    }
+    return { valid: false, status: res.status };
+  } catch(e){
+    return { valid: false, error: e.message };
+  }
 }
 
 // =====================================
@@ -138,7 +145,7 @@ async function ghDeleteFile(path, commitMessage){
 }
 
 // =====================================
-// 📋 프로젝트 목록 (projects.json)
+// 📋 프로젝트 데이터
 // =====================================
 
 async function ghLoadProjectsList(){
@@ -151,13 +158,9 @@ async function ghSaveProjectsList(data){
   return await ghSaveFile(
     `${GITHUB_CONFIG.dataPath}/projects.json`,
     data,
-    `프로젝트 목록 업데이트 (by ${currentUser?.id || 'unknown'})`
+    `프로젝트 목록 업데이트`
   );
 }
-
-// =====================================
-// 📦 개별 프로젝트 데이터
-// =====================================
 
 async function ghLoadProjectData(projectId){
   const result = await ghGetFile(`${GITHUB_CONFIG.dataPath}/${projectId}.json`);
@@ -169,13 +172,13 @@ async function ghSaveProjectData(projectId, data){
   return await ghSaveFile(
     `${GITHUB_CONFIG.dataPath}/${projectId}.json`,
     data,
-    `프로젝트 데이터 저장: ${data.projectName || projectId} (by ${currentUser?.id || 'unknown'})`
+    `프로젝트 데이터 저장: ${data.projectName || projectId}`
   );
 }
 
 async function ghDeleteProjectData(projectId){
   return await ghDeleteFile(
     `${GITHUB_CONFIG.dataPath}/${projectId}.json`,
-    `프로젝트 삭제: ${projectId} (by ${currentUser?.id || 'unknown'})`
+    `프로젝트 삭제: ${projectId}`
   );
 }
