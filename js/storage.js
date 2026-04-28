@@ -1,5 +1,5 @@
 // =====================================
-// 💾 데이터 저장/복원
+// 💾 데이터 저장/복원 (GitHub 연동)
 // =====================================
 
 function collectUnitData(type, id){
@@ -111,39 +111,66 @@ function applyUnitData(type, id, data){
   updateSummary(type, id);
 }
 
-function manualSave(){ 
-  try{ saveData(); alert('저장 완료'); }
-  catch(e){
-    console.error(e);
-    if(e.name === 'QuotaExceededError') alert('❌ 저장 실패: 용량 초과\n\n사진이 너무 많거나 큽니다. 일부 사진을 삭제해주세요.');
-    else alert('저장 중 오류가 발생했습니다.');
+// =====================================
+// 💾 수동 저장 (GitHub에 push)
+// =====================================
+
+async function manualSave(){
+  if(!isAuthenticated){
+    showToast('🔐 먼저 로그인해주세요');
+    showTokenModal();
+    return;
+  }
+  
+  if(!canEdit){
+    alert(`❌ 편집 권한이 없습니다.\n\n현재 ID: ${currentUser?.login}\n허용 ID: ${GITHUB_CONFIG.allowedUsers.join(', ')}`);
+    return;
+  }
+  
+  if(!currentProjectId){
+    alert('⚠️ 활성 프로젝트가 없습니다.\n\n프로젝트 목록에서 프로젝트를 선택하거나 추가해주세요.');
+    return;
+  }
+  
+  showLoading('GitHub에 저장 중...\n(약 1~2초 소요)');
+  
+  try{
+    const data = collectCurrentProjectData();
+    await ghSaveProjectData(currentProjectId, data);
+    hideLoading();
+    
+    const projName = currentProject?.name || '';
+    showToast(`💾 GitHub 저장 완료: ${projName}`);
+  } catch(e){
+    hideLoading();
+    console.error('저장 실패:', e);
+    alert(`❌ 저장 실패\n\n${e.message}\n\n네트워크 또는 토큰을 확인해주세요.`);
   }
 }
 
-function saveData(){
-  const data = {
-    projectName: document.getElementById('projectName')?.value || '',
-    buildingName: document.getElementById('buildingName')?.value || '',
-    projectStartDate: document.getElementById('projectStartDate')?.value || '',
-    dateRange: document.getElementById('dateRange')?.value || '',
-    units: {}
-  };
-  Object.keys(fieldConfig).forEach(type=>{
-    data.units[type] = [];
-    const container = document.getElementById(type+'Units');
-    if(!container) return;
-    container.querySelectorAll('.card').forEach(card=>{
-      data.units[type].push(collectUnitData(type, card.dataset.id));
-    });
-  });
-  localStorage.setItem('facilityReport', JSON.stringify(data));
-}
+function saveData(){ manualSave(); }
 
-function loadSummary(){
-  const raw = localStorage.getItem('facilityReport');
-  if(!raw){ document.getElementById('summaryBox').textContent = '저장된 데이터 없음'; return; }
+// =====================================
+// 종합 결과 보기
+// =====================================
+
+async function loadSummary(){
+  if(!currentProjectId){
+    document.getElementById('summaryBox').textContent = '⚠️ 활성 프로젝트가 없습니다.';
+    return;
+  }
+  
+  showLoading('데이터 로드 중...');
+  
   try{
-    const data = JSON.parse(raw);
+    const data = await ghLoadProjectData(currentProjectId);
+    hideLoading();
+    
+    if(!data){
+      document.getElementById('summaryBox').textContent = `📋 "${currentProject?.name || ''}" 프로젝트의 GitHub 데이터가 없습니다.\n\n💾 저장 버튼을 눌러 현재 작업을 저장하세요.`;
+      return;
+    }
+    
     const preview = JSON.parse(JSON.stringify(data));
     if(preview.units){
       Object.keys(preview.units).forEach(type=>{
@@ -152,6 +179,16 @@ function loadSummary(){
         });
       });
     }
-    document.getElementById('summaryBox').textContent = JSON.stringify(preview, null, 2);
-  } catch(e){ document.getElementById('summaryBox').textContent = raw; }
+    
+    const projInfo = `📋 프로젝트: ${currentProject?.name || '?'}\n` +
+                     `🆔 ID: ${currentProjectId}\n` +
+                     `🕐 마지막 수정: ${data.lastModified || '?'}\n` +
+                     `👤 수정자: ${data.lastModifiedBy || '?'}\n` +
+                     `${'='.repeat(60)}\n\n`;
+    
+    document.getElementById('summaryBox').textContent = projInfo + JSON.stringify(preview, null, 2);
+  } catch(e){
+    hideLoading();
+    document.getElementById('summaryBox').textContent = `❌ 로드 실패: ${e.message}`;
+  }
 }
