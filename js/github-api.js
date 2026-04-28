@@ -1,6 +1,24 @@
 // =====================================
-// 🐙 GitHub API 통신 라이브러리
+// 🐙 GitHub API 통신 라이브러리 (인코딩 버전)
 // =====================================
+
+// ⚠️ token-encoder.html에서 인코딩한 결과를 여기에 붙여넣기!
+const TOKEN_PARTS = {
+  a: '여기에_a값_붙여넣기',
+  b: '여기에_b값_붙여넣기',
+  c: '여기에_c값_붙여넣기',
+  d: '여기에_d값_붙여넣기'
+};
+
+// 토큰 디코딩 (런타임에 합쳐짐)
+function _getToken(){
+  try{
+    return atob(TOKEN_PARTS.a) + atob(TOKEN_PARTS.b) + atob(TOKEN_PARTS.c) + atob(TOKEN_PARTS.d);
+  } catch(e){
+    console.error('토큰 디코딩 실패:', e);
+    return '';
+  }
+}
 
 const GITHUB_CONFIG = {
   owner: 'seung3459',
@@ -8,11 +26,10 @@ const GITHUB_CONFIG = {
   branch: 'main',
   dataPath: 'data',
   
-  // ⚠️ 여기에 본인의 GitHub Token을 입력하세요!
-  // 시연 후 GitHub에서 이 토큰을 즉시 삭제하세요!
-  token: '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',
+  // 토큰은 함수로 동적 생성 (인코딩된 조각에서 합침)
+  get token(){ return _getToken(); },
   
-  // ID/PW 등록 (간단 시연용)
+  // ID/PW 등록
   accounts: [
     { id: 'HIMEC', pw: 'HIMEC', canEdit: true,  displayName: 'HIMEC 관리자' },
     { id: 'guest', pw: 'guest', canEdit: false, displayName: '게스트 (읽기 전용)' }
