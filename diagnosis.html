@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>기계설비 노후화 진단 어플리케이션</title>
+<!-- ExcelJS: 양식 보존 + 이미지 임베드 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<!-- FileSaver: 다운로드 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+  body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#eef2f7;}
+  .topbar{background:#1f2937;padding:12px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:center;flex-wrap:wrap;gap:6px;}
+  .topbar button{background:#2563eb;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;}
+  .topbar button.export-btn{background:#059669;}
+  .topbar button.export-btn:hover{background:#047857;}
+  .container{padding:15px;max-width:1200px;margin:0 auto;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  .main-hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 50%,#3b82f6 100%);color:#fff;padding:36px 30px;border-radius:20px;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:0 20px 40px rgba(37,99,235,.25);}
+  .main-hero::before{content:'';position:absolute;top:-60%;right:-10%;width:500px;height:500px;background:radial-gradient(circle, rgba(255,255,255,.15) 0%, transparent 65%);pointer-events:none;}
+  .main-hero::after{content:'';position:absolute;bottom:-50%;left:-10%;width:400px;height:400px;background:radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 65%);pointer-events:none;}
+  .logo-row{display:flex;align-items:center;gap:14px;margin-bottom:20px;position:relative;z-index:1;flex-wrap:wrap;}
+  .himec-logo{background:#fff;border-radius:12px;padding:10px 18px;font-weight:900;font-size:22px;letter-spacing:2px;box-shadow:0 6px 20px rgba(0,0,0,.2);display:inline-flex;align-items:center;gap:2px;}
+  .himec-logo .h{color:#dc2626;}
+  .himec-logo .rest{background:linear-gradient(135deg,#1e3a8a,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .logo-divider{width:1px;height:36px;background:rgba(255,255,255,.3);}
+  .app-title{font-size:26px;font-weight:800;margin:0;letter-spacing:-.5px;line-height:1.3;}
+  .app-subtitle{font-size:13px;opacity:.85;margin-top:4px;}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;margin-top:12px;backdrop-filter:blur(10px);position:relative;z-index:1;}
+
+  .project-info-card{background:#fff;border-radius:16px;padding:24px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);border:1px solid #e5e7eb;}
+  .info-card-title{font-size:16px;font-weight:700;color:#1f2937;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .info-field-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media (max-width:600px){ .info-field-grid{grid-template-columns:1fr;} }
+  .info-field{display:flex;flex-direction:column;gap:6px;}
+  .info-field label{font-size:12px;font-weight:700;color:#6b7280;}
+  .info-field input{padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box;transition:all .15s;background:#f9fafb;}
+  .info-field input:focus{outline:none;border-color:#2563eb;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+
+  .calendar-card{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);border:1px solid #e5e7eb;}
+  .cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .cal-title{font-size:18px;font-weight:800;color:#1f2937;}
+  .cal-nav{display:flex;gap:6px;}
+  .cal-nav button{width:36px;height:36px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fff;cursor:pointer;font-size:14px;font-weight:700;color:#4b5563;transition:all .15s;}
+  .cal-nav button:hover{background:#f3f4f6;border-color:#9ca3af;}
+  .cal-today-btn{padding:0 14px !important;width:auto !important;color:#2563eb !important;border-color:#2563eb !important;}
+  .cal-today-btn:hover{background:#eff6ff !important;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-day-head{text-align:center;font-size:12px;font-weight:700;color:#6b7280;padding:8px 0;}
+  .cal-day-head.sun{color:#dc2626;}
+  .cal-day-head.sat{color:#2563eb;}
+  .cal-day{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#374151;border-radius:8px;cursor:default;transition:all .15s;position:relative;}
+  .cal-day.prev,.cal-day.next{color:#d1d5db;}
+  .cal-day.sun{color:#dc2626;}
+  .cal-day.sat{color:#2563eb;}
+  .cal-day.prev.sun,.cal-day.prev.sat,.cal-day.next.sun,.cal-day.next.sat{color:#d1d5db;}
+  .cal-day.today{background:#2563eb;color:#fff !important;font-weight:800;box-shadow:0 4px 12px rgba(37,99,235,.35);}
+  .cal-day.start-date{background:#fef3c7;color:#92400e !important;font-weight:800;border:2px solid #f59e0b;}
+  .cal-day.start-date.today{background:linear-gradient(135deg,#2563eb,#f59e0b);color:#fff !important;}
+  .cal-day.start-date::after{content:'⭐';position:absolute;top:-4px;right:-4px;font-size:10px;}
+  .cal-legend{display:flex;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid #e5e7eb;flex-wrap:wrap;}
+  .cal-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;}
+  .cal-dot{width:12px;height:12px;border-radius:4px;}
+  .cal-dot.today{background:#2563eb;}
+  .cal-dot.start{background:#fef3c7;border:1.5px solid #f59e0b;}
+
+  .main-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0 20px;}
+  @media (max-width:700px){ .main-tabs{grid-template-columns:repeat(2,1fr);} }
+  .main-tabs button{background:#fff;color:#6b7280;border:2px solid #e5e7eb;padding:16px 12px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .main-tabs button .tab-icon{font-size:22px;}
+  .main-tabs button:hover{border-color:#93c5fd;background:#f0f9ff;color:#2563eb;}
+  .main-tabs button.active{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:#2563eb;box-shadow:0 6px 18px rgba(37,99,235,.35);transform:translateY(-1px);}
+
+  .sub-tabs{display:flex;gap:8px;margin:12px 0 18px;flex-wrap:wrap;padding:8px;background:#f3f4f6;border-radius:12px;}
+  .sub-tabs button{background:#fff;color:#4b5563;border:1px solid #e5e7eb;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .sub-tabs button:hover{background:#eff6ff;border-color:#60a5fa;color:#2563eb;}
+  .sub-tabs button.active{background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 2px 8px rgba(37,99,235,.3);}
+
+  .diag-page{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,.06);}
+
+  .card-controls{display:flex;justify-content:space-between;align-items:center;margin:8px 0 14px;gap:10px;flex-wrap:wrap;}
+  .card-controls .count-badge{font-size:13px;color:#4b5563;font-weight:600;background:#f3f4f6;padding:6px 12px;border-radius:999px;}
+  .card-controls .toggle-all{background:#fff;color:#2563eb;border:1.5px solid #2563eb;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+  .card-controls .toggle-all:hover{background:#2563eb;color:#fff;}
+
+  .summary-wrap{margin-bottom:20px;}
+  .summary-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #e5e7eb;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.04);}
+  .summary-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:960px;}
+  .summary-table th,.summary-table td{border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;padding:10px 8px;text-align:center;vertical-align:middle;}
+  .summary-table th:last-child,.summary-table td:last-child{border-right:none;}
+  .summary-table tbody tr:last-child td{border-bottom:none;}
+  .summary-table thead th{background:#f3f4f6;color:#111827;font-weight:700;font-size:12px;padding:12px 8px;letter-spacing:.3px;}
+  .summary-table thead th:first-child{border-top-left-radius:12px;}
+  .summary-table thead th:last-child{border-top-right-radius:12px;}
+  .summary-table tbody tr:hover{background:#fafbfc;}
+  .summary-table .type-col{background:#f9fafb;font-weight:700;color:#374151;font-size:12px;text-align:left;padding-left:14px;white-space:nowrap;}
+  .summary-table .unit-col{font-weight:700;text-align:center;cursor:pointer;color:#2563eb;transition:all .15s;}
+  .summary-table .unit-col:hover{background:#dbeafe;text-decoration:underline;}
+  .summary-table tr.group-start td{border-top:2px solid #cbd5e1;}
+
+  .rating-badge{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-weight:700;font-size:12px;border:1.5px solid transparent;}
+  .rating-badge.A{background:#d1fae5;color:#059669;border-color:#6ee7b7;}
+  .rating-badge.B{background:#fed7aa;color:#d97706;border-color:#fdba74;}
+  .rating-badge.C{background:#fecaca;color:#dc2626;border-color:#fca5a5;}
+  .rating-badge.empty{background:#f3f4f6;color:#9ca3af;border-color:#e5e7eb;}
+
+  .grade-cell{font-weight:800;font-size:16px;}
+  .grade-A{color:#059669;}
+  .grade-B{color:#d97706;}
+  .grade-C{color:#dc2626;}
+  .grade-empty{color:#9ca3af;}
+
+  .no-data{padding:30px 20px;text-align:center;color:#9ca3af;font-size:14px;background:#f9fafb;border-radius:12px;border:1px dashed #d1d5db;}
+
+  .card{background:#fff;border-radius:16px;overflow:hidden;margin:12px 0;box-shadow:0 8px 20px rgba(0,0,0,.06);border:1px solid #e5e7eb;position:relative;transition:box-shadow .2s;}
+  .card:hover{box-shadow:0 12px 30px rgba(0,0,0,.1);}
+  .card.highlight{box-shadow:0 0 0 3px #2563eb,0 12px 30px rgba(37,99,235,.25);}
+
+  .card-header{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none;background:linear-gradient(135deg,#1f2937,#374151);color:#fff;transition:background .15s;}
+  .card-header:hover{background:linear-gradient(135deg,#111827,#1f2937);}
+  .card-header .header-icon{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .card-header .header-title{flex:1;font-size:16px;font-weight:700;display:flex;flex-direction:column;gap:3px;}
+  .card-header .header-sub{font-size:12px;font-weight:500;color:#d1d5db;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .status-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+  .chip-use{background:#10b981;color:#fff;}
+  .chip-fail{background:#ef4444;color:#fff;}
+  .chip-unused{background:#9ca3af;color:#fff;}
+  .chip-inv{background:#8b5cf6;color:#fff;}
+  .chip-A{background:#d1fae5;color:#059669;}
+  .chip-B{background:#fed7aa;color:#d97706;}
+  .chip-C{background:#fecaca;color:#dc2626;}
+
+  .card-header .arrow{flex-shrink:0;font-size:14px;transition:transform .25s;}
+  .card.expanded .card-header .arrow{transform:rotate(180deg);}
+  .card-header .delete-btn{position:static;background:rgba(239,68,68,.9);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;}
+  .card-header .delete-btn:hover{background:#dc2626;}
+
+  .card-content{max-height:0;overflow:hidden;transition:max-height .3s ease-out;}
+  .card.expanded .card-content{max-height:20000px;transition:max-height .5s ease-in;}
+
+  .equip-image{position:relative;height:180px;}
+  .equip-image img{width:100%;height:100%;object-fit:cover;}
+  .overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;flex-direction:column;justify-content:flex-end;padding:12px;color:#fff;}
+  .overlay .title{font-size:18px;font-weight:bold;margin-bottom:8px;}
+
+  .status-segment{display:inline-flex;gap:0;background:rgba(255,255,255,.12);border-radius:10px;padding:3px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);margin-bottom:4px;}
+  .status-segment label{padding:6px 14px;cursor:pointer;border-radius:8px;transition:all .2s;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:4px;color:#fff;}
+  .status-segment label:hover{background:rgba(255,255,255,.08);}
+  .status-segment input{display:none;}
+  .status-segment label.active{box-shadow:0 2px 8px rgba(0,0,0,.2);}
+  .status-segment label.active[data-val="use"]{background:#10b981;color:#fff;}
+  .status-segment label.active[data-val="fail"]{background:#ef4444;color:#fff;}
+  .status-segment label.active[data-val="unused"]{background:#6b7280;color:#fff;}
+
+  .extra-check-row{display:flex;gap:14px;margin-top:8px;font-weight:700;font-size:13px;flex-wrap:wrap;}
+  .extra-check-row label{display:flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer;}
+
+  .card-body{background:#fff;padding:18px;}
+  input[type="text"],input[type="number"]{width:100%;padding:10px;border-radius:10px;border:1px solid #d1d5db;font-size:14px;margin-top:4px;box-sizing:border-box;}
+  .btn{background:#2563eb;color:#fff;border:none;padding:10px 16px;margin:5px 0;border-radius:10px;font-weight:bold;cursor:pointer;}
+  pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:12px;overflow:auto;}
+
+  .section-title{font-size:14px;font-weight:700;color:#374151;margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid #e5e7eb;display:flex;align-items:center;gap:6px;}
+  .section-title:first-child{margin-top:0;}
+
+  .grid{display:grid;gap:12px;}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:900px){ .grid-3{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .grid-3,.grid-2{grid-template-columns:1fr;} }
+
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field > label{font-size:12px;font-weight:600;color:#6b7280;margin:0;}
+  .field .input-wrap{position:relative;}
+  .field input,.field select{width:100%;padding:10px 44px 10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;box-sizing:border-box;margin:0;transition:border-color .15s,box-shadow .15s;background:#fff;}
+  .field select{padding:10px 12px;cursor:pointer;font-weight:700;color:#1e40af;}
+  .field input:focus,.field select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15);}
+  .field .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#9ca3af;font-weight:600;pointer-events:none;}
+
+  .type-select-card{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #3b82f6;border-radius:12px;padding:16px;margin-bottom:12px;}
+  .type-select-card .field > label{font-size:13px;color:#1e40af;font-weight:700;}
+
+  .cs-sub-card{background:#f9fafb;border-radius:12px;padding:16px;border:1px solid #e5e7eb;margin-bottom:0;}
+  .inverter-field{display:none;margin-top:12px;}
+  .inverter-field.active{display:block;}
+
+  .diag-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #e5e7eb;}
+  .diag-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;background:#fff;min-width:820px;}
+  .diag-table th,.diag-table td{border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;padding:12px 10px;text-align:center;vertical-align:middle;}
+  .diag-table th:last-child,.diag-table td:last-child{border-right:none;}
+  .diag-table tbody tr:last-child td{border-bottom:none;}
+  .diag-table thead th{background:#1f2937;color:#fff;font-weight:700;font-size:13px;padding:12px 10px;letter-spacing:.5px;}
+  .diag-table thead th:first-child{border-top-left-radius:12px;}
+  .diag-table thead th:last-child{border-top-right-radius:12px;}
+  .diag-table tbody tr:hover{background:#fafbfc;}
+  .diag-table .factor{width:170px;background:#f9fafb;text-align:left;padding:12px 14px;}
+  .factor-inner{display:flex;align-items:center;gap:10px;}
+  .factor-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+  .factor-name{font-weight:700;color:#111827;font-size:13px;line-height:1.3;text-align:left;}
+  .diag-table .rating-cell{width:85px;padding:10px 8px;}
+  .rating-group{display:flex;flex-direction:column;gap:6px;align-items:stretch;}
+  .rating-group label{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;margin:0;background:#fff;transition:all .15s;}
+  .rating-group input[type="radio"]{margin:0;cursor:pointer;accent-color:#2563eb;}
+  .rating-group label:hover{background:#f3f4f6;border-color:#9ca3af;}
+  .rating-group label.sel-A{background:#d1fae5;border-color:#059669;}
+  .rating-group label.sel-B{background:#fed7aa;border-color:#d97706;}
+  .rating-group label.sel-C{background:#fecaca;border-color:#dc2626;}
+  .rating-A{color:#059669;}
+  .rating-B{color:#d97706;}
+  .rating-C{color:#dc2626;}
+  .diag-table td input[type="text"]{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;margin:0;box-sizing:border-box;}
+  .diag-table td input[type="text"]:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.15);}
+  .diag-table .content-cell{min-width:220px;text-align:left;}
+  .diag-table .target{width:110px;color:#4b5563;font-size:12px;font-weight:500;}
+  .diag-table .note-cell{width:160px;}
+  .diag-table .info-cell{width:70px;}
+  .info-btn{background:#3b82f6;color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-size:14px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:transform .15s,background .15s;box-shadow:0 2px 6px rgba(59,130,246,.3);}
+  .info-btn:hover{background:#1d4ed8;transform:scale(1.1);}
+
+  .photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;background:#f9fafb;border-radius:12px;padding:14px;border:1px solid #e5e7eb;}
+  @media (max-width:600px){ .photo-grid{grid-template-columns:1fr;} }
+  .photo-slot{background:#fff;border-radius:12px;overflow:hidden;border:1.5px solid #e5e7eb;transition:all .15s;display:flex;flex-direction:column;}
+  .photo-slot:hover{border-color:#93c5fd;box-shadow:0 4px 12px rgba(37,99,235,.1);}
+  .photo-slot.has-image{border-color:#2563eb;}
+  .photo-desc-input{padding:10px;border-bottom:1px solid #f3f4f6;}
+  .photo-desc-input input{width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;margin:0;font-weight:500;}
+  .photo-desc-input input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.12);}
+  .photo-display{position:relative;width:100%;aspect-ratio:4/3;background:#f3f4f6;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .photo-display img{width:100%;height:100%;object-fit:cover;}
+  .photo-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#9ca3af;text-align:center;padding:20px;}
+  .photo-empty .cam-icon{font-size:38px;opacity:.6;}
+  .photo-empty .cam-text{font-size:12px;font-weight:700;}
+  .photo-empty .cam-sub{font-size:11px;color:#d1d5db;}
+  .photo-slot-num{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;backdrop-filter:blur(6px);}
+  .photo-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;}
+  .photo-btn{background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;backdrop-filter:blur(6px);transition:all .15s;}
+  .photo-btn:hover{background:rgba(0,0,0,.9);transform:scale(1.05);}
+  .photo-btn.del{background:rgba(220,38,38,.85);}
+  .photo-btn.del:hover{background:rgba(185,28,28,1);}
+  .photo-hidden-input{display:none;}
+  .photo-hint{font-size:11px;color:#6b7280;margin-top:8px;display:flex;align-items:center;gap:6px;}
+
+  .photo-viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+  .photo-viewer.active{display:flex;}
+  .photo-viewer img{max-width:100%;max-height:90vh;object-fit:contain;border-radius:10px;}
+  .photo-viewer-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.2);color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:24px;cursor:pointer;backdrop-filter:blur(10px);}
+
+  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+  .modal-backdrop.active{display:flex;}
+  .modal{background:#fff;border-radius:16px;max-width:560px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden;animation:slideUp .25s ease-out;}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .modal-header{background:#1f2937;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
+  .modal-header h3{margin:0;font-size:16px;}
+  .modal-close{background:transparent;color:#fff;border:none;font-size:22px;cursor:pointer;padding:0 4px;}
+  .modal-body{padding:18px;}
+  .criteria-item{display:flex;gap:12px;padding:12px;border-radius:10px;margin-bottom:8px;border:1px solid #e5e7eb;background:#f9fafb;}
+  .criteria-item:last-child{margin-bottom:0;}
+  .criteria-badge{flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:16px;color:#fff;}
+  .criteria-badge.A{background:#059669;}
+  .criteria-badge.B{background:#d97706;}
+  .criteria-badge.C{background:#dc2626;}
+  .criteria-text{flex:1;font-size:13px;color:#374151;line-height:1.5;padding-top:7px;}
+  .opinion-box{width:100%;min-height:80px;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;font-family:inherit;box-sizing:border-box;resize:vertical;}
+  .opinion-box:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15);}
+
+  .confirm-modal{max-width:420px;}
+  .confirm-body{padding:20px;text-align:center;}
+  .confirm-icon{font-size:48px;margin-bottom:12px;}
+  .confirm-title{font-size:17px;font-weight:700;color:#111827;margin-bottom:8px;}
+  .confirm-msg{font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:18px;}
+  .confirm-info{background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:18px;text-align:left;}
+  .confirm-btns{display:flex;gap:10px;}
+  .confirm-btns button{flex:1;padding:10px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;border:none;}
+  .btn-cancel{background:#e5e7eb;color:#374151;}
+  .btn-cancel:hover{background:#d1d5db;}
+  .btn-danger{background:#dc2626;color:#fff;}
+  .btn-danger:hover{background:#b91c1c;}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#059669;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:700;box-shadow:0 10px 25px rgba(0,0,0,.2);z-index:2000;opacity:0;transition:all .3s;pointer-events:none;max-width:90vw;text-align:center;}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+  .loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .loading-overlay.active{display:flex;}
+  .loading-box{background:#fff;border-radius:16px;padding:30px 40px;box-shadow:0 20px 50px rgba(0,0,0,.3);text-align:center;}
+  .spinner{width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-text{font-size:14px;font-weight:700;color:#1f2937;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button onclick="showPage('main')">메인</button>
+  <button onclick="showPage('diag')">설비 진단</button>
+  <button onclick="showPage('result')">종합 결과</button>
+  <button onclick="manualSave()">💾 저장</button>
+  <button class="export-btn" onclick="exportToExcel()">📊 엑셀 내보내기</button>
+</div>
+
+<div class="container">
+
+<div id="main" class="page active">
+  <div class="main-hero">
+    <div class="logo-row">
+      <div class="himec-logo"><span class="h">H</span><span class="rest">IMEC</span></div>
+      <div class="logo-divider"></div>
+      <div>
+        <div class="app-title">🏢 기계설비 노후화 진단 어플리케이션</div>
+        <div class="app-subtitle">Mechanical Facility Aging Diagnosis System</div>
+      </div>
+    </div>
+    <div class="hero-badge">📌 <span id="heroProjectBadge">프로젝트를 입력해주세요</span></div>
+  </div>
+
+  <div class="project-info-card">
+    <div class="info-card-title">📋 프로젝트 정보</div>
+    <div class="info-field-grid">
+      <div class="info-field"><label>프로젝트명</label><input type="text" id="projectName" placeholder="예: OO빌딩 설비 노후화 진단" oninput="updateHeroBadge()"></div>
+      <div class="info-field"><label>건물명</label><input type="text" id="buildingName" placeholder="예: OO타워"></div>
+      <div class="info-field"><label>과업 수행시작일</label><input type="date" id="projectStartDate" onchange="renderCalendar()"></div>
+      <div class="info-field"><label>점검 기간</label><input type="text" id="dateRange" placeholder="예: 2026.04.01 ~ 2026.04.30"></div>
+    </div>
+  </div>
+
+  <div class="calendar-card">
+    <div class="cal-header">
+      <div class="cal-title" id="calTitle">2026년 4월</div>
+      <div class="cal-nav">
+        <button onclick="calPrev()" title="이전 달">◀</button>
+        <button class="cal-today-btn" onclick="calToday()">오늘</button>
+        <button onclick="calNext()" title="다음 달">▶</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-dot today"></div> 오늘</div>
+      <div class="cal-legend-item"><div class="cal-dot start"></div> 과업 수행시작일 ⭐</div>
+    </div>
+  </div>
+</div>
+
+<div id="diag" class="page">
+  <div class="diag-page">
+  <h2 style="margin-top:0;">🔧 설비 진단</h2>
+  <div class="main-tabs">
+    <button data-section="heatSection" onclick="showSection('heatSection', this)"><span class="tab-icon">🔥</span><span>열원설비</span></button>
+    <button data-section="airSection" onclick="showSection('airSection', this)"><span class="tab-icon">💨</span><span>공조설비</span></button>
+    <button data-section="pumpSection" onclick="showSection('pumpSection', this)"><span class="tab-icon">⚙️</span><span>펌프설비</span></button>
+    <button data-section="pipeSection" onclick="showSection('pipeSection', this)"><span class="tab-icon">🔗</span><span>배관설비</span></button>
+  </div>
+
+  <div id="heatSection">
+    <div class="sub-tabs">
+      <button data-sub="coldSourceSection" onclick="showHeatType('coldSourceSection', this)">❄️ 냉열원</button>
+      <button data-sub="heatSourceSection" onclick="showHeatType('heatSourceSection', this)">🔥 온열원</button>
+      <button data-sub="coolingTowerSection" onclick="showHeatType('coolingTowerSection', this)">🗼 냉각탑</button>
+    </div>
+    <div id="coldSourceSection">
+      <div class="card-controls"><button class="btn" onclick="addUnit('coldSource')">+ 냉열원 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="coldSource_count">0 대</span><button class="toggle-all" onclick="toggleAll('coldSource', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('coldSource', false)">모두 접기</button></div></div>
+      <div id="coldSourceSummaryWrap" class="summary-wrap"></div>
+      <div id="coldSourceUnits"></div>
+    </div>
+    <div id="heatSourceSection" style="display:none;">
+      <div class="card-controls"><button class="btn" onclick="addUnit('heatSource')">+ 온열원 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="heatSource_count">0 대</span><button class="toggle-all" onclick="toggleAll('heatSource', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('heatSource', false)">모두 접기</button></div></div>
+      <div id="heatSourceSummaryWrap" class="summary-wrap"></div>
+      <div id="heatSourceUnits"></div>
+    </div>
+    <div id="coolingTowerSection" style="display:none;">
+      <div class="card-controls"><button class="btn" onclick="addUnit('coolingTower')">+ 냉각탑 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="coolingTower_count">0 대</span><button class="toggle-all" onclick="toggleAll('coolingTower', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('coolingTower', false)">모두 접기</button></div></div>
+      <div id="coolingTowerSummaryWrap" class="summary-wrap"></div>
+      <div id="coolingTowerUnits"></div>
+    </div>
+  </div>
+
+  <div id="airSection" style="display:none;">
+    <div class="sub-tabs"><button data-sub="ahuSection" onclick="showAirType('ahuSection', this)">공조기(AHU)</button><button data-sub="fanSection" onclick="showAirType('fanSection', this)">급·배기팬</button></div>
+    <div id="ahuSection"><div class="card-controls"><button class="btn" onclick="addUnit('ahu')">+ 공조기 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="ahu_count">0 대</span><button class="toggle-all" onclick="toggleAll('ahu', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('ahu', false)">모두 접기</button></div></div><div id="ahuUnits"></div></div>
+    <div id="fanSection" style="display:none;"><div class="card-controls"><button class="btn" onclick="addUnit('fan')">+ 급·배기팬 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="fan_count">0 대</span><button class="toggle-all" onclick="toggleAll('fan', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('fan', false)">모두 접기</button></div></div><div id="fanUnits"></div></div>
+  </div>
+
+  <div id="pumpSection" style="display:none;">
+    <div class="sub-tabs"><button data-sub="chilledPumpSection" onclick="showPumpType('chilledPumpSection', this)">냉수펌프</button><button data-sub="hotPumpSection" onclick="showPumpType('hotPumpSection', this)">온수펌프</button><button data-sub="coolingPumpSection" onclick="showPumpType('coolingPumpSection', this)">냉각수펌프</button></div>
+    <div id="chilledPumpSection"><div class="card-controls"><button class="btn" onclick="addUnit('chilled_pump')">+ 냉수펌프 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="chilled_pump_count">0 대</span><button class="toggle-all" onclick="toggleAll('chilled_pump', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('chilled_pump', false)">모두 접기</button></div></div><div id="chilled_pumpUnits"></div></div>
+    <div id="hotPumpSection" style="display:none;"><div class="card-controls"><button class="btn" onclick="addUnit('hot_pump')">+ 온수펌프 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="hot_pump_count">0 대</span><button class="toggle-all" onclick="toggleAll('hot_pump', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('hot_pump', false)">모두 접기</button></div></div><div id="hot_pumpUnits"></div></div>
+    <div id="coolingPumpSection" style="display:none;"><div class="card-controls"><button class="btn" onclick="addUnit('cooling_pump')">+ 냉각수펌프 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="cooling_pump_count">0 대</span><button class="toggle-all" onclick="toggleAll('cooling_pump', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('cooling_pump', false)">모두 접기</button></div></div><div id="cooling_pumpUnits"></div></div>
+  </div>
+
+  <div id="pipeSection" style="display:none;">
+    <div class="card-controls"><button class="btn" onclick="addUnit('pipe')">+ 배관 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="pipe_count">0 대</span><button class="toggle-all" onclick="toggleAll('pipe', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('pipe', false)">모두 접기</button></div></div>
+    <div id="pipeUnits"></div>
+  </div>
+  </div>
+</div>
+
+<div id="result" class="page">
+  <div class="diag-page">
+  <button class="btn" onclick="loadSummary()">저장 데이터 보기</button>
+  <button class="btn" style="background:#059669;" onclick="exportToExcel()">📊 엑셀 내보내기</button>
+  <pre id="summaryBox"></pre>
+  </div>
+</div>
+
+</div>
+
+<div class="modal-backdrop" id="criteriaModal" onclick="closeCriteriaModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3 id="modalTitle">진단 기준</h3><button class="modal-close" onclick="closeCriteriaModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="confirmModal" onclick="closeConfirmModal(event)">
+  <div class="modal confirm-modal" onclick="event.stopPropagation()">
+    <div class="confirm-body">
+      <div class="confirm-icon">⚠️</div>
+      <div class="confirm-title" id="confirmTitle">삭제하시겠습니까?</div>
+      <div class="confirm-msg" id="confirmMsg">입력하신 데이터가 모두 사라집니다.</div>
+      <div class="confirm-info">💡 삭제 후 <strong>동일 종류의 뒷번호 호기가 자동으로 당겨집니다</strong>.</div>
+      <div class="confirm-btns">
+        <button class="btn-cancel" onclick="closeConfirmModal()">취소</button>
+        <button class="btn-danger" id="confirmDeleteBtn">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="photo-viewer" id="photoViewer" onclick="closePhotoViewer()">
+  <button class="photo-viewer-close" onclick="closePhotoViewer()">×</button>
+  <img id="photoViewerImg" src="" alt="">
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">엑셀 파일 생성 중...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PHOTO_COUNT = 8;
+const PHOTO_MAX_SIZE = 1200;
+const PHOTO_QUALITY = 0.75;
+
+// 엑셀 양식 경로 (HTML과 같은 폴더 기준)
+const TEMPLATE_PATH = {
+  turbo: 'templates/터보_냉동기_진단.xlsx'
+};
+
+// 엑셀 사진 통일 크기 (픽셀)
+const EXCEL_PHOTO_W = 250;
+const EXCEL_PHOTO_H = 160;
+
+// 양식의 사진 위치 (0-indexed: A=0, B=1, ..., U=20, AE=30)
+const PHOTO_POSITIONS = [
+  { col: 20, row: 4  },  // 사진1: U5
+  { col: 30, row: 4  },  // 사진2: AE5
+  { col: 20, row: 11 },  // 사진3: U12
+  { col: 30, row: 11 },  // 사진4: AE12
+  { col: 20, row: 21 },  // 사진5: U22
+  { col: 30, row: 21 },  // 사진6: AE22
+  { col: 20, row: 31 },  // 사진7: U32
+  { col: 30, row: 31 }   // 사진8: AE32
+];
+
+const fieldConfig = {
+  coldSource:['입구온도','출구온도','유량','전류'],
+  heatSource:['급수온도','보일러압력','연료유량','배기온도'],
+  coolingTower:['환수온도','급수온도','냉각수압력'],
+  ahu:['급기온도','환기온도','풍량'],
+  fan:['전류','회전수'],
+  chilled_pump:['흡입압력','토출압력','유량','전류'],
+  hot_pump:['흡입압력','토출압력','유량','전류'],
+  cooling_pump:['흡입압력','토출압력','유량','전류'],
+  pipe:['부식여부','누수여부','보온상태']
+};
+
+const subtypeMap = {
+  coldSource: [
+    {key:'turbo',       label:'터보냉동기',       icon:'❄️'},
+    {key:'absorption',  label:'흡수식 냉동기',    icon:'🌡️'},
+    {key:'abs_hw',      label:'흡수식 냉온수기',  icon:'🔄'},
+    {key:'ice_storage', label:'빙축열 시스템',    icon:'🧊'}
+  ],
+  heatSource: [
+    {key:'steam',    label:'증기보일러', icon:'♨️'},
+    {key:'hotwater', label:'온수보일러', icon:'🔥'}
+  ],
+  coolingTower: [
+    {key:'closed', label:'밀폐형', icon:'🗼'},
+    {key:'open',   label:'개방형', icon:'🗼'}
+  ]
+};
+
+const iconMap = {ahu:'💨', fan:'🌀', chilled_pump:'⚙️', hot_pump:'⚙️', cooling_pump:'⚙️', pipe:'🔗'};
+const imageMap = {
+  coldSource:"https://images.unsplash.com/photo-1581092160613-1a01b0d6f58c",
+  heatSource:"https://images.unsplash.com/photo-1581093588401-12c5cda9e565",
+  coolingTower:"https://images.unsplash.com/photo-1581091870622-1c9c62f2f8f2",
+  ahu:"https://images.unsplash.com/photo-1581092334394-12c3a0508c1a",
+  fan:"https://images.unsplash.com/photo-1581091870622-6a1d73f9cfb0",
+  chilled_pump:"https://images.unsplash.com/photo-1581091870622-9e8b97c88f18",
+  hot_pump:"https://images.unsplash.com/photo-1581091870622-9e8b97c88f18",
+  cooling_pump:"https://images.unsplash.com/photo-1581091870622-9e8b97c88f18",
+  pipe:"https://images.unsplash.com/photo-1581093588401-c0cabd2b1d0a"
+};
+
+const turboDiagItems = [
+  {key:'usage_years', factor:'사용연수', short:'사용연수', A:'9년 이하', B:'10년 이상 ~ 14년 이하', C:'15년 이상', target:'관리대장'},
+  {key:'maint_history', factor:'보수이력', short:'보수이력', A:'고장 없음', B:'경미한 고장 (1년간 1회 / 과거 2회)', C:'중대한 고장 (과거 4년간 1회 또는 과거 2회 이상)', target:'운전일지, 안전부'},
+  {key:'inspection_state', factor:'점검 상태', short:'점검상태', A:'양호, 정기점검 실시', B:'부분적 간헐 점검', C:'불량, 정기점검 미실시', target:'관리대장'},
+  {key:'install_env', factor:'설치 환경', short:'설치환경', A:'실내, 유지관리 편리, 점검공간 확보, 방진 양호', B:'실내, 유지보수 불편, 점검공간 부족, 방진 부족', C:'옥외, 방진 불량, 보수 불가', target:'육안'},
+  {key:'appearance', factor:'외관', short:'외관', A:'초기 상태 유지, 약간의 오염', B:'심한 오염, 부분 부식', C:'심한 부식 또는 누수 및 파손', target:'육안, 안전부'},
+  {key:'temp_measure', factor:'온도 계측', short:'온도계측', A:'정격 온도 유지', B:'정격 온도보다 2~4℃ 벗어나 운전', C:'정격 온도보다 5℃ 이상 상이', target:'운전일지'},
+  {key:'piping_conn', factor:'주위배관 및 연결부', short:'배관/연결부', A:'초기와 유사한 상태, 일부 부분적 변형 또는 부식 확인', B:'변형, 부식이 외부에서 쉽게 확인됨', C:'손상·변형·누수 상태가 심하여 파괴 위험성을 느끼거나 부식으로 인한 고착으로 작동 불가', target:'육안, 안전부'},
+  {key:'mcc_panel', factor:'MCC 및 현장 패널(마이어)', short:'MCC 패널', A:'계측값 양호', B:'기기 성능은 정상, 계측값만 이상', C:'고장', target:'육안, 안전부'}
+];
+
+const diagApplyTypes = ['coldSource'];
+
+let unitCount = {};
+let unitSubtype = {};
+let unitPhotos = {};
+
+let calYear, calMonth;
+(function initCal(){ const t = new Date(); calYear = t.getFullYear(); calMonth = t.getMonth(); })();
+
+function renderCalendar(){
+  const title = document.getElementById('calTitle');
+  const grid = document.getElementById('calGrid');
+  if(!title || !grid) return;
+  title.textContent = `${calYear}년 ${calMonth+1}월`;
+  const today = new Date();
+  const startDateStr = document.getElementById('projectStartDate')?.value;
+  const startDate = startDateStr ? new Date(startDateStr) : null;
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+  const dayNames = ['일','월','화','수','목','금','토'];
+  let html = '';
+  dayNames.forEach((d,i)=>{ const cls = i===0?'sun':(i===6?'sat':''); html += `<div class="cal-day-head ${cls}">${d}</div>`; });
+  for(let i=firstDay-1; i>=0; i--){ const dayNum = prevMonthDays - i; const dow = (firstDay-1-i); const cls = dow===0?'sun':(dow===6?'sat':''); html += `<div class="cal-day prev ${cls}">${dayNum}</div>`; }
+  for(let d=1; d<=daysInMonth; d++){
+    const dow = new Date(calYear, calMonth, d).getDay();
+    const classes = ['cal-day'];
+    if(dow===0) classes.push('sun'); else if(dow===6) classes.push('sat');
+    if(today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d) classes.push('today');
+    if(startDate && startDate.getFullYear()===calYear && startDate.getMonth()===calMonth && startDate.getDate()===d) classes.push('start-date');
+    html += `<div class="${classes.join(' ')}">${d}</div>`;
+  }
+  const used = firstDay + daysInMonth;
+  for(let d=1; d<=totalCells-used; d++){ const dow = (used+d-1)%7; const cls = dow===0?'sun':(dow===6?'sat':''); html += `<div class="cal-day next ${cls}">${d}</div>`; }
+  grid.innerHTML = html;
+}
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+function calToday(){ const t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth(); renderCalendar(); }
+
+function updateHeroBadge(){
+  const el = document.getElementById('projectName');
+  const badge = document.getElementById('heroProjectBadge');
+  if(!el || !badge) return;
+  badge.textContent = el.value.trim() || '프로젝트를 입력해주세요';
+}
+
+function hasSubtype(type){ return !!subtypeMap[type]; }
+function getSubtypeInfo(type, key){ const list = subtypeMap[type]; if(!list) return null; return list.find(s=>s.key===key) || list[0]; }
+function getUnitSubtype(type, id){ if(!hasSubtype(type)) return null; return unitSubtype[`${type}_${id}`] || subtypeMap[type][0].key; }
+function labelKor(type){ const map = {coldSource:'냉열원', heatSource:'온열원', coolingTower:'냉각탑', ahu:'공조기', fan:'급·배기팬', chilled_pump:'냉수펌프', hot_pump:'온수펌프', cooling_pump:'냉각수펌프', pipe:'배관설비'}; return map[type]; }
+
+function getSubtypeNumber(type, id){
+  if(!hasSubtype(type)){
+    const container = document.getElementById(type+'Units');
+    if(!container) return 0;
+    const cards = Array.from(container.querySelectorAll('.card'));
+    return cards.findIndex(c => c.dataset.id == id) + 1;
+  }
+  const mySubtype = getUnitSubtype(type, id);
+  const container = document.getElementById(type+'Units');
+  if(!container) return 0;
+  let count = 0;
+  for(const card of container.querySelectorAll('.card')){
+    if(getUnitSubtype(type, card.dataset.id) === mySubtype){
+      count++;
+      if(card.dataset.id == id) return count;
+    }
+  }
+  return 0;
+}
+
+function getDisplayName(type, id){
+  if(hasSubtype(type)){
+    const info = getSubtypeInfo(type, getUnitSubtype(type, id));
+    return `${info.label} - ${getSubtypeNumber(type, id)}호기`;
+  }
+  return `${labelKor(type)} - ${getSubtypeNumber(type, id)}호기`;
+}
+function getDisplayIcon(type, id){
+  if(hasSubtype(type)) return getSubtypeInfo(type, getUnitSubtype(type, id)).icon;
+  return iconMap[type] || '🔧';
+}
+
+function refreshCardLabels(type){
+  const container = document.getElementById(type+'Units');
+  if(!container) return;
+  container.querySelectorAll('.card').forEach(card=>{
+    const id = card.dataset.id;
+    const displayName = getDisplayName(type, id);
+    const headerName = card.querySelector('.header-title > div:first-child');
+    if(headerName) headerName.textContent = displayName;
+    const iconBox = card.querySelector('.header-icon');
+    if(iconBox) iconBox.textContent = getDisplayIcon(type, id);
+    const overlayTitle = card.querySelector('.overlay .title');
+    if(overlayTitle) overlayTitle.textContent = displayName;
+    const photoTitle = card.querySelector('.photo-section-title');
+    if(photoTitle) photoTitle.textContent = `📸 현장 사진 (${displayName})`;
+  });
+}
+
+function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function showSection(id, btn){
+  ['heatSection','airSection','pumpSection','pipeSection'].forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(id).style.display='block';
+  document.querySelectorAll('.main-tabs button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+function showHeatType(id, btn){ ['coldSourceSection','heatSourceSection','coolingTowerSection'].forEach(s=>document.getElementById(s).style.display='none'); document.getElementById(id).style.display='block'; setActiveSubTab(btn); }
+function showAirType(id, btn){ ['ahuSection','fanSection'].forEach(s=>document.getElementById(s).style.display='none'); document.getElementById(id).style.display='block'; setActiveSubTab(btn); }
+function showPumpType(id, btn){ ['chilledPumpSection','hotPumpSection','coolingPumpSection'].forEach(s=>document.getElementById(s).style.display='none'); document.getElementById(id).style.display='block'; setActiveSubTab(btn); }
+function setActiveSubTab(btn){ if(!btn) return; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+
+function addUnit(type){
+  if(!unitCount[type]) unitCount[type]=0;
+  unitCount[type]++;
+  const id = unitCount[type];
+  const container = document.getElementById(type+'Units');
+  if(hasSubtype(type)) unitSubtype[`${type}_${id}`] = subtypeMap[type][0].key;
+  unitPhotos[`${type}_${id}`] = new Array(PHOTO_COUNT).fill(null).map(()=>({img:null, desc:''}));
+  container.insertAdjacentHTML('beforeend', renderCard(type, id));
+  refreshCardLabels(type);
+  updateCount(type);
+  updateSummary(type, id);
+  renderGroupSummary(type);
+}
+
+function renderPhotoSection(type, id){
+  const displayName = getDisplayName(type, id);
+  let slots = '';
+  for(let i=0; i<PHOTO_COUNT; i++){ slots += renderPhotoSlot(type, id, i); }
+  return `
+    <div class="section-title photo-section-title">📸 현장 사진 (${displayName})</div>
+    <div class="photo-grid" id="${type}_${id}_photoGrid">${slots}</div>
+    <div class="photo-hint">💡 사진 영역을 클릭하면 카메라가 실행되거나 파일을 선택할 수 있습니다. (자동 리사이즈)</div>
+  `;
+}
+
+function renderPhotoSlot(type, id, idx){
+  const photos = unitPhotos[`${type}_${id}`];
+  const photo = photos && photos[idx] ? photos[idx] : {img:null, desc:''};
+  const hasImage = !!photo.img;
+  return `
+    <div class="photo-slot ${hasImage?'has-image':''}" id="${type}_${id}_slot_${idx}">
+      <div class="photo-desc-input">
+        <input type="text" placeholder="사진 ${idx+1} 설명 (예: 외관 부식 상태)"
+               value="${escapeHtml(photo.desc)}"
+               oninput="updatePhotoMeta('${type}',${id},${idx},'desc',this.value)">
+      </div>
+      <div class="photo-display" onclick="triggerPhotoInput('${type}',${id},${idx})">
+        <div class="photo-slot-num">${idx+1}</div>
+        ${hasImage ? `
+          <img src="${photo.img}" alt="사진${idx+1}">
+          <div class="photo-actions">
+            <button class="photo-btn" onclick="event.stopPropagation();openPhotoViewer('${type}',${id},${idx})" title="크게 보기">🔍</button>
+            <button class="photo-btn" onclick="event.stopPropagation();triggerPhotoInput('${type}',${id},${idx})" title="다시 찍기">🔄</button>
+            <button class="photo-btn del" onclick="event.stopPropagation();removePhoto('${type}',${id},${idx})" title="삭제">✕</button>
+          </div>
+        ` : `
+          <div class="photo-empty">
+            <div class="cam-icon">📷</div>
+            <div class="cam-text">사진 ${idx+1}</div>
+            <div class="cam-sub">클릭하여 촬영/선택</div>
+          </div>
+        `}
+      </div>
+      <input type="file" accept="image/*" capture="environment" class="photo-hidden-input"
+             id="${type}_${id}_input_${idx}"
+             onchange="handlePhotoInput(this,'${type}',${id},${idx})">
+    </div>
+  `;
+}
+
+function escapeHtml(s){
+  if(s==null) return '';
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function triggerPhotoInput(type, id, idx){
+  const input = document.getElementById(`${type}_${id}_input_${idx}`);
+  if(input) input.click();
+}
+
+function handlePhotoInput(input, type, id, idx){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ showToast('❌ 이미지 파일만 선택 가능합니다'); return; }
+  resizeImage(file, PHOTO_MAX_SIZE, PHOTO_QUALITY).then(dataURL=>{
+    if(!unitPhotos[`${type}_${id}`]){
+      unitPhotos[`${type}_${id}`] = new Array(PHOTO_COUNT).fill(null).map(()=>({img:null, desc:''}));
+    }
+    unitPhotos[`${type}_${id}`][idx].img = dataURL;
+    const slot = document.getElementById(`${type}_${id}_slot_${idx}`);
+    if(slot){
+      const wrap = document.createElement('div');
+      wrap.innerHTML = renderPhotoSlot(type, id, idx);
+      slot.parentElement.replaceChild(wrap.firstElementChild, slot);
+    }
+    input.value = '';
+    showToast(`✅ 사진 ${idx+1} 업로드 완료`);
+    updateSummary(type, id);
+  }).catch(err=>{ console.error(err); showToast('❌ 이미지 처리 실패'); });
+}
+
+function removePhoto(type, id, idx){
+  if(!unitPhotos[`${type}_${id}`]) return;
+  unitPhotos[`${type}_${id}`][idx].img = null;
+  const slot = document.getElementById(`${type}_${id}_slot_${idx}`);
+  if(slot){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = renderPhotoSlot(type, id, idx);
+    slot.parentElement.replaceChild(wrap.firstElementChild, slot);
+  }
+  updateSummary(type, id);
+}
+
+function updatePhotoMeta(type, id, idx, field, value){
+  if(!unitPhotos[`${type}_${id}`]) return;
+  unitPhotos[`${type}_${id}`][idx][field] = value;
+}
+
+function resizeImage(file, maxSize, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let {width, height} = img;
+        if(width > maxSize || height > maxSize){
+          if(width > height){ height = Math.round(height * (maxSize/width)); width = maxSize; }
+          else { width = Math.round(width * (maxSize/height)); height = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function openPhotoViewer(type, id, idx){
+  const photo = unitPhotos[`${type}_${id}`][idx];
+  if(!photo || !photo.img) return;
+  document.getElementById('photoViewerImg').src = photo.img;
+  document.getElementById('photoViewer').classList.add('active');
+}
+function closePhotoViewer(){ document.getElementById('photoViewer').classList.remove('active'); }
+
+function renderCard(type, id){
+  const displayName = getDisplayName(type, id);
+  const icon = getDisplayIcon(type, id);
+
+  let typeSelectHTML = '';
+  if(hasSubtype(type)){
+    const options = subtypeMap[type].map(s=>`<option value="${s.key}">${s.icon} ${s.label}</option>`).join('');
+    typeSelectHTML = `<div class="type-select-card"><div class="field"><label>🏷️ 설비 종류 선택</label><div class="input-wrap"><select id="${type}_${id}_subtype" onchange="changeSubtype('${type}',${id})">${options}</select></div></div></div>`;
+  }
+
+  let measureFields = '';
+  fieldConfig[type].forEach((lbl,i)=>{
+    measureFields += `<div class="field"><label>${lbl}</label><div class="input-wrap"><input type="text" id="${type}_${id}_f${i+1}"></div></div>`;
+  });
+
+  let diagSection = '';
+  if(diagApplyTypes.includes(type)){
+    let diagRows = '';
+    turboDiagItems.forEach((item, idx)=>{
+      const base = `${type}_${id}_diag_${item.key}`;
+      diagRows += `
+        <tr>
+          <td class="factor"><div class="factor-inner"><div class="factor-num">${idx+1}</div><div class="factor-name">${item.factor}</div></div></td>
+          <td class="rating-cell">
+            <div class="rating-group" data-base="${base}">
+              <label><input type="radio" name="${base}_rate" value="A" onchange="updateRatingStyle(this);updateSummary('${type}',${id});renderGroupSummary('${type}');"><span class="rating-A">A</span></label>
+              <label><input type="radio" name="${base}_rate" value="B" onchange="updateRatingStyle(this);updateSummary('${type}',${id});renderGroupSummary('${type}');"><span class="rating-B">B</span></label>
+              <label><input type="radio" name="${base}_rate" value="C" onchange="updateRatingStyle(this);updateSummary('${type}',${id});renderGroupSummary('${type}');"><span class="rating-C">C</span></label>
+            </div>
+          </td>
+          <td class="content-cell"><input type="text" id="${base}_content" placeholder="주요 내용 입력"></td>
+          <td class="info-cell"><button class="info-btn" onclick="showCriteria('${item.key}')" title="진단 기준 보기">?</button></td>
+          <td class="target">${item.target}</td>
+          <td class="note-cell"><input type="text" id="${base}_note" placeholder="비고"></td>
+        </tr>
+      `;
+    });
+    diagSection = `
+      <div class="section-title">🔍 1차 진단 Check-list (육안점검)</div>
+      <div class="diag-table-wrap"><table class="diag-table">
+        <thead><tr><th style="width:170px;">인자</th><th style="width:85px;">평가</th><th>주요 내용</th><th style="width:70px;">진단 기준</th><th style="width:110px;">조사대상</th><th style="width:160px;">비고</th></tr></thead>
+        <tbody>${diagRows}</tbody>
+      </table></div>
+      <div class="section-title">📝 주요 검토 의견</div>
+      <textarea class="opinion-box" id="${type}_${id}_opinion" placeholder="종합 검토 의견을 입력하세요..."></textarea>
+      ${renderPhotoSection(type, id)}
+    `;
+  } else {
+    diagSection = renderPhotoSection(type, id);
+  }
+
+  let nameplateSection = '';
+  if(type === 'coldSource'){
+    nameplateSection = `
+      <div class="section-title">📋 명판사항</div>
+      <div class="cs-sub-card">
+        <div class="grid grid-3">
+          <div class="field"><label>제조사</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_maker" placeholder="예: 캐리어"></div></div>
+          <div class="field"><label>모델명</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_model" placeholder="예: 19XR"></div></div>
+          <div class="field"><label>설치일자</label><div class="input-wrap"><input type="date" id="${type}_${id}_np_date"></div></div>
+          <div class="field"><label>냉방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cooling" placeholder="0"><span class="unit">RT</span></div></div>
+          <div class="field"><label>정격 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_flow" placeholder="0"><span class="unit">m³/h</span></div></div>
+          <div class="field"><label>정격 동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_power" placeholder="0"><span class="unit">kW</span></div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  let inverterCheckbox = '', inverterField = '';
+  if(type === 'coldSource'){
+    inverterCheckbox = `<label><input type="checkbox" id="${type}_${id}_inverter" onchange="toggleInverter('${type}',${id});updateSummary('${type}',${id});"> 인버터 여부</label>`;
+    inverterField = `<div class="inverter-field" id="${type}_${id}_inverterWrap"><div class="field" style="margin-top:12px;"><label>⚙️ 인버터 주파수</label><div class="input-wrap"><input type="number" step="0.1" id="${type}_${id}_inverterValue" placeholder="0.0"><span class="unit">Hz</span></div></div></div>`;
+  }
+
+  let ahuExtraCheck = '';
+  if(type === 'ahu'){
+    ahuExtraCheck = `<label><input type="checkbox" id="${type}_${id}_supplyFan"> 급기팬</label><label><input type="checkbox" id="${type}_${id}_exhaustFan"> 배기팬</label>`;
+  }
+
+  const statusSegment = `
+    <div class="status-segment" data-unit="${type}_${id}">
+      <label data-val="use"><input type="radio" name="${type}_${id}_status" value="use" onchange="onStatusChange('${type}',${id})">🟢 사용</label>
+      <label data-val="fail"><input type="radio" name="${type}_${id}_status" value="fail" onchange="onStatusChange('${type}',${id})">🔴 고장</label>
+      <label data-val="unused"><input type="radio" name="${type}_${id}_status" value="unused" onchange="onStatusChange('${type}',${id})">⚪ 미사용</label>
+    </div>
+  `;
+
+  return `
+    <div class="card expanded" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
+      <div class="card-header" onclick="toggleCard('${type}_${id}_card', event)">
+        <div class="header-icon">${icon}</div>
+        <div class="header-title">
+          <div>${displayName}</div>
+          <div class="header-sub" id="${type}_${id}_summary"></div>
+        </div>
+        <span class="arrow">▼</span>
+        <button class="delete-btn" onclick="event.stopPropagation();removeUnit('${type}',${id})">삭제</button>
+      </div>
+      <div class="card-content">
+        <div class="equip-image">
+          <img src="${imageMap[type]}">
+          <div class="overlay">
+            <div class="title">${displayName}</div>
+            ${statusSegment}
+            ${(inverterCheckbox || ahuExtraCheck) ? `<div class="extra-check-row">${inverterCheckbox}${ahuExtraCheck}</div>` : ''}
+          </div>
+        </div>
+        <div class="card-body">
+          ${typeSelectHTML}
+          ${nameplateSection}
+          <div class="section-title">📊 운전 측정값</div>
+          <div class="cs-sub-card">
+            <div class="grid grid-2">${measureFields}</div>
+            ${inverterField}
+          </div>
+          ${diagSection}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function onStatusChange(type, id){
+  const segment = document.querySelector(`.status-segment[data-unit="${type}_${id}"]`);
+  if(segment){
+    const labels = segment.querySelectorAll('label');
+    labels.forEach(l=>l.classList.remove('active'));
+    const checked = segment.querySelector('input:checked');
+    if(checked){ const lab = checked.closest('label'); if(lab) lab.classList.add('active'); }
+  }
+  updateSummary(type, id);
+  renderGroupSummary(type);
+}
+
+function getUnitStatus(type, id){ const checked = document.querySelector(`input[name="${type}_${id}_status"]:checked`); return checked ? checked.value : ''; }
+function setUnitStatus(type, id, status){ const radios = document.getElementsByName(`${type}_${id}_status`); radios.forEach(r=>{ r.checked = (r.value === status); }); onStatusChange(type, id); }
+
+function changeSubtype(type, id){
+  const sel = document.getElementById(`${type}_${id}_subtype`);
+  if(!sel) return;
+  unitSubtype[`${type}_${id}`] = sel.value;
+  refreshCardLabels(type);
+  updateSummary(type, id);
+  renderGroupSummary(type);
+}
+
+function statusChip(status){
+  if(status==='use') return '<span class="status-chip chip-use">🟢 사용</span>';
+  if(status==='fail') return '<span class="status-chip chip-fail">🔴 고장</span>';
+  if(status==='unused') return '<span class="status-chip chip-unused">⚪ 미사용</span>';
+  return '<span style="color:#9ca3af;font-size:11px;">미지정</span>';
+}
+
+function statusText(status){
+  if(status==='use') return '🟢 사용';
+  if(status==='fail') return '🔴 고장';
+  if(status==='unused') return '⚪ 미사용';
+  return '미지정';
+}
+
+function renderGroupSummary(type){
+  const wrap = document.getElementById(`${type}SummaryWrap`);
+  if(!wrap) return;
+  const cards = Array.from(document.querySelectorAll(`#${type}Units .card`));
+  if(cards.length===0){ wrap.innerHTML = `<div class="no-data">📋 ${labelKor(type)}을(를) 추가하면 이곳에 진단 요약표가 자동으로 표시됩니다.</div>`; return; }
+  const showDiag = diagApplyTypes.includes(type);
+  const withSub = hasSubtype(type);
+  const ordered = [];
+  if(withSub){ subtypeMap[type].forEach(st=>{ cards.forEach(card=>{ if(getUnitSubtype(type, card.dataset.id) === st.key) ordered.push({card, st}); }); }); }
+  else { cards.forEach(card=>ordered.push({card, st:null})); }
+  let headers = '';
+  if(withSub) headers += '<th style="width:160px;">종류</th>';
+  headers += '<th style="width:70px;">호기</th><th style="width:90px;">상태</th>';
+  if(showDiag){ turboDiagItems.forEach(item=>{ headers += `<th>${item.short}</th>`; }); headers += '<th style="width:80px;">종합</th>'; }
+  let rows = '';
+  let counter = {};
+  let prevSubtype = null;
+  ordered.forEach(({card, st})=>{
+    const id = card.dataset.id;
+    const st_chip = statusChip(getUnitStatus(type, id));
+    let typeCell = ''; let unitNum = 0; let rowClass = '';
+    if(withSub){
+      const key = st.key;
+      counter[key] = (counter[key]||0) + 1;
+      unitNum = counter[key];
+      typeCell = `<td class="type-col">${st.icon} ${st.label}</td>`;
+      if(prevSubtype !== null && prevSubtype !== key) rowClass = 'group-start';
+      prevSubtype = key;
+    } else { unitNum = ordered.findIndex(x=>x.card === card) + 1; }
+    let diagCells = '', gradeCell = '';
+    if(showDiag){
+      let a=0,b=0,c=0;
+      turboDiagItems.forEach(item=>{
+        const rateEl = document.querySelector(`input[name="${type}_${id}_diag_${item.key}_rate"]:checked`);
+        if(rateEl){ const v=rateEl.value; if(v==='A')a++; else if(v==='B')b++; else if(v==='C')c++; diagCells += `<td class="rating-cell"><span class="rating-badge ${v}">${v}</span></td>`;}
+        else diagCells += `<td class="rating-cell"><span class="rating-badge empty">-</span></td>`;
+      });
+      let grade='-', gradeCls='grade-empty';
+      if(a+b+c>0){ if(c>0){grade='C';gradeCls='grade-C';} else if(b>0){grade='B';gradeCls='grade-B';} else{grade='A';gradeCls='grade-A';} }
+      gradeCell = `<td class="grade-cell ${gradeCls}">${grade}</td>`;
+    }
+    rows += `<tr class="${rowClass}">${typeCell}<td class="unit-col" onclick="scrollToCard('${type}_${id}_card')" title="클릭하면 해당 호기로 이동">${unitNum}호기</td><td>${st_chip}</td>${diagCells}${gradeCell}</tr>`;
+  });
+  wrap.innerHTML = `<div class="section-title" style="margin-top:0;">📊 ${labelKor(type)} 진단 요약</div><div class="summary-table-wrap"><table class="summary-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div><div style="font-size:11px;color:#9ca3af;margin-top:6px;padding:0 4px;">💡 호기 번호를 클릭하면 해당 카드로 이동합니다.${showDiag?' / 종합 등급: C가 있으면 C, B가 있으면 B, 모두 A면 A':''}</div>`;
+}
+
+function scrollToCard(cardId){ const card = document.getElementById(cardId); if(!card) return; card.classList.add('expanded'); card.scrollIntoView({behavior:'smooth', block:'start'}); card.classList.add('highlight'); setTimeout(()=>{ card.classList.remove('highlight'); }, 1800); }
+
+function toggleCard(cardId, e){
+  if(e && e.target && (e.target.tagName==='INPUT' || e.target.tagName==='BUTTON' || e.target.tagName==='SELECT' || e.target.tagName==='LABEL' || e.target.closest('.delete-btn') || e.target.closest('.photo-slot'))) return;
+  const card = document.getElementById(cardId);
+  if(card) card.classList.toggle('expanded');
+}
+
+function toggleAll(type, expand){
+  const container = document.getElementById(type+'Units');
+  if(!container) return;
+  container.querySelectorAll('.card').forEach(c=>{ if(expand) c.classList.add('expanded'); else c.classList.remove('expanded'); });
+}
+
+function updateSummary(type, id){
+  const el = document.getElementById(`${type}_${id}_summary`);
+  if(!el) return;
+  const chips = [];
+  const status = getUnitStatus(type, id);
+  if(status === 'use') chips.push(`<span class="status-chip chip-use">🟢 사용중</span>`);
+  else if(status === 'fail') chips.push(`<span class="status-chip chip-fail">🔴 고장</span>`);
+  else if(status === 'unused') chips.push(`<span class="status-chip chip-unused">⚪ 미사용</span>`);
+  const invEl = document.getElementById(`${type}_${id}_inverter`);
+  if(invEl && invEl.checked) chips.push(`<span class="status-chip chip-inv">인버터</span>`);
+  if(diagApplyTypes.includes(type)){
+    let a=0,b=0,c=0;
+    turboDiagItems.forEach(item=>{
+      const rateEl = document.querySelector(`input[name="${type}_${id}_diag_${item.key}_rate"]:checked`);
+      if(rateEl){ if(rateEl.value==='A') a++; else if(rateEl.value==='B') b++; else if(rateEl.value==='C') c++; }
+    });
+    if(a) chips.push(`<span class="status-chip chip-A">A ${a}</span>`);
+    if(b) chips.push(`<span class="status-chip chip-B">B ${b}</span>`);
+    if(c) chips.push(`<span class="status-chip chip-C">C ${c}</span>`);
+  }
+  const photos = unitPhotos[`${type}_${id}`];
+  if(photos){
+    const filled = photos.filter(p=>p && p.img).length;
+    if(filled>0) chips.push(`<span class="status-chip" style="background:#06b6d4;color:#fff;">📸 ${filled}/${PHOTO_COUNT}</span>`);
+  }
+  el.innerHTML = chips.length ? chips.join('') : '<span style="color:#9ca3af;">상태 미입력</span>';
+}
+
+function updateCount(type){
+  const el = document.getElementById(`${type}_count`);
+  if(!el) return;
+  const container = document.getElementById(type+'Units');
+  const cnt = container ? container.querySelectorAll('.card').length : 0;
+  el.textContent = `${cnt} 대`;
+}
+
+function showCriteria(key){
+  const item = turboDiagItems.find(d=>d.key===key);
+  if(!item) return;
+  document.getElementById('modalTitle').textContent = `${item.factor} - 진단 기준`;
+  document.getElementById('modalBody').innerHTML = `<div class="criteria-item"><div class="criteria-badge A">A</div><div class="criteria-text">${item.A}</div></div><div class="criteria-item"><div class="criteria-badge B">B</div><div class="criteria-text">${item.B}</div></div><div class="criteria-item"><div class="criteria-badge C">C</div><div class="criteria-text">${item.C}</div></div><div style="margin-top:14px;padding:10px;background:#f3f4f6;border-radius:8px;font-size:12px;color:#6b7280;">📂 <strong>조사대상:</strong> ${item.target}</div>`;
+  document.getElementById('criteriaModal').classList.add('active');
+}
+function closeCriteriaModal(e){ if(e && e.target.id !== 'criteriaModal' && e.type==='click') return; document.getElementById('criteriaModal').classList.remove('active'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeCriteriaModal(); closeConfirmModal(); closePhotoViewer(); } });
+
+function updateRatingStyle(radio){
+  const group = radio.closest('.rating-group');
+  if(!group) return;
+  group.querySelectorAll('label').forEach(l=>{ l.classList.remove('sel-A','sel-B','sel-C'); });
+  const selectedLabel = radio.closest('label');
+  if(selectedLabel) selectedLabel.classList.add('sel-'+radio.value);
+}
+
+function toggleInverter(type, id){
+  const chk = document.getElementById(`${type}_${id}_inverter`);
+  const wrap = document.getElementById(`${type}_${id}_inverterWrap`);
+  if(chk && wrap) wrap.classList.toggle('active', chk.checked);
+}
+
+function collectUnitData(type, id){
+  const data = {};
+  if(hasSubtype(type)) data.subtype = getUnitSubtype(type, id);
+  data.status = getUnitStatus(type, id);
+  ['inverter','supplyFan','exhaustFan'].forEach(k=>{ const el = document.getElementById(`${type}_${id}_${k}`); if(el) data[k] = el.checked; });
+  fieldConfig[type].forEach((_,idx)=>{ const el = document.getElementById(`${type}_${id}_f${idx+1}`); if(el) data[`f${idx+1}`] = el.value; });
+  if(type === 'coldSource'){
+    data.nameplate = {};
+    ['maker','model','date','cooling','flow','power'].forEach(f=>{ const el = document.getElementById(`${type}_${id}_np_${f}`); if(el) data.nameplate[f] = el.value; });
+    const invEl = document.getElementById(`${type}_${id}_inverterValue`);
+    if(invEl) data.inverterValue = invEl.value;
+  }
+  if(diagApplyTypes.includes(type)){
+    data.diag = {};
+    turboDiagItems.forEach(item=>{
+      const baseKey = `${type}_${id}_diag_${item.key}`;
+      const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
+      const contentEl = document.getElementById(`${baseKey}_content`);
+      const noteEl = document.getElementById(`${baseKey}_note`);
+      data.diag[item.key] = { rate: rateEl ? rateEl.value : null, content: contentEl ? contentEl.value : '', note: noteEl ? noteEl.value : '' };
+    });
+    const opEl = document.getElementById(`${type}_${id}_opinion`);
+    if(opEl) data.opinion = opEl.value;
+  }
+  data.photos = unitPhotos[`${type}_${id}`] || [];
+  return data;
+}
+
+function applyUnitData(type, id, data){
+  if(hasSubtype(type) && data.subtype){
+    unitSubtype[`${type}_${id}`] = data.subtype;
+    const sel = document.getElementById(`${type}_${id}_subtype`);
+    if(sel) sel.value = data.subtype;
+    refreshCardLabels(type);
+  }
+  let status = data.status;
+  if(!status && (data.use !== undefined || data.fail !== undefined)){
+    if(data.fail) status = 'fail'; else if(data.use) status = 'use'; else status = '';
+  }
+  if(status) setUnitStatus(type, id, status);
+  ['inverter','supplyFan','exhaustFan'].forEach(k=>{ const el = document.getElementById(`${type}_${id}_${k}`); if(el && data[k] !== undefined) el.checked = data[k]; });
+  fieldConfig[type].forEach((_,idx)=>{ const el = document.getElementById(`${type}_${id}_f${idx+1}`); if(el && data[`f${idx+1}`] !== undefined) el.value = data[`f${idx+1}`]; });
+  if(type === 'coldSource'){
+    if(data.nameplate){ ['maker','model','date','cooling','flow','power'].forEach(f=>{ const el = document.getElementById(`${type}_${id}_np_${f}`); if(el && data.nameplate[f] !== undefined) el.value = data.nameplate[f]; }); }
+    if(data.inverterValue !== undefined){ const invEl = document.getElementById(`${type}_${id}_inverterValue`); if(invEl) invEl.value = data.inverterValue; }
+    toggleInverter(type, id);
+  }
+  if(diagApplyTypes.includes(type) && data.diag){
+    turboDiagItems.forEach(item=>{
+      const d = data.diag[item.key];
+      if(!d) return;
+      const baseKey = `${type}_${id}_diag_${item.key}`;
+      if(d.rate){ const radios = document.getElementsByName(`${baseKey}_rate`); radios.forEach(r=>{ if(r.value === d.rate){ r.checked = true; updateRatingStyle(r); } }); }
+      const contentEl = document.getElementById(`${baseKey}_content`);
+      if(contentEl && d.content !== undefined) contentEl.value = d.content;
+      const noteEl = document.getElementById(`${baseKey}_note`);
+      if(noteEl && d.note !== undefined) noteEl.value = d.note;
+    });
+    if(data.opinion !== undefined){ const opEl = document.getElementById(`${type}_${id}_opinion`); if(opEl) opEl.value = data.opinion; }
+  }
+  if(Array.isArray(data.photos) && data.photos.length > 0){
+    const photos = new Array(PHOTO_COUNT).fill(null).map((_,i)=>{
+      const p = data.photos[i];
+      return p ? {img:p.img||null, desc:p.desc||''} : {img:null,desc:''};
+    });
+    unitPhotos[`${type}_${id}`] = photos;
+    const grid = document.getElementById(`${type}_${id}_photoGrid`);
+    if(grid){
+      let html = '';
+      for(let i=0; i<PHOTO_COUNT; i++) html += renderPhotoSlot(type, id, i);
+      grid.innerHTML = html;
+    }
+  }
+  updateSummary(type, id);
+}
+
+let pendingDelete = null;
+function removeUnit(type, id){
+  pendingDelete = {type, id};
+  const name = getDisplayName(type, id);
+  document.getElementById('confirmTitle').textContent = `${name}를 삭제하시겠습니까?`;
+  document.getElementById('confirmMsg').textContent = `입력하신 데이터가 모두 사라집니다.`;
+  document.getElementById('confirmModal').classList.add('active');
+  document.getElementById('confirmDeleteBtn').onclick = function(){
+    if(!pendingDelete) return;
+    const {type, id} = pendingDelete;
+    const deletedName = name;
+    const card = document.getElementById(`${type}_${id}_card`);
+    if(card) card.remove();
+    delete unitSubtype[`${type}_${id}`];
+    delete unitPhotos[`${type}_${id}`];
+    refreshCardLabels(type);
+    updateCount(type);
+    renderGroupSummary(type);
+    saveData();
+    closeConfirmModal();
+    showToast(`✅ ${deletedName} 삭제 완료`);
+    pendingDelete = null;
+  };
+}
+function closeConfirmModal(e){ if(e && e.target.id !== 'confirmModal' && e.type==='click') return; document.getElementById('confirmModal').classList.remove('active'); pendingDelete = null; }
+
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>{ toast.classList.remove('show'); }, 2500);
+}
+
+function showLoading(text){
+  document.getElementById('loadingText').textContent = text || '처리 중...';
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+function hideLoading(){
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function manualSave(){ 
+  try{ saveData(); alert('저장 완료'); }
+  catch(e){
+    console.error(e);
+    if(e.name === 'QuotaExceededError') alert('❌ 저장 실패: 용량 초과\n\n사진이 너무 많거나 큽니다. 일부 사진을 삭제해주세요.');
+    else alert('저장 중 오류가 발생했습니다.');
+  }
+}
+
+function saveData(){
+  const data = {
+    projectName: document.getElementById('projectName')?.value || '',
+    buildingName: document.getElementById('buildingName')?.value || '',
+    projectStartDate: document.getElementById('projectStartDate')?.value || '',
+    dateRange: document.getElementById('dateRange')?.value || '',
+    units: {}
+  };
+  Object.keys(fieldConfig).forEach(type=>{
+    data.units[type] = [];
+    const container = document.getElementById(type+'Units');
+    if(!container) return;
+    container.querySelectorAll('.card').forEach(card=>{
+      data.units[type].push(collectUnitData(type, card.dataset.id));
+    });
+  });
+  localStorage.setItem('facilityReport', JSON.stringify(data));
+}
+
+// =====================================
+// 📊 엑셀 내보내기 (양식 기반 + 이미지 임베드)
+// =====================================
+
+// dataURL → ArrayBuffer
+function dataURLToArrayBuffer(dataURL){
+  const base64 = dataURL.split(',')[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// 양식 시트를 새 워크북에 복제
+async function cloneTemplateSheet(templateBuffer, targetWb, newSheetName){
+  const tempWb = new ExcelJS.Workbook();
+  await tempWb.xlsx.load(templateBuffer);
+  const srcWs = tempWb.worksheets[0];
+
+  const newWs = targetWb.addWorksheet(newSheetName, {
+    properties: {...srcWs.properties},
+    pageSetup: srcWs.pageSetup ? {...srcWs.pageSetup} : undefined,
+    views: srcWs.views ? srcWs.views.map(v=>({...v})) : undefined
+  });
+
+  // 컬럼 너비
+  if(srcWs.columns){
+    srcWs.columns.forEach((col, i) => {
+      if(col && col.width) newWs.getColumn(i+1).width = col.width;
+    });
+  }
+
+  // 셀 + 스타일 복사
+  srcWs.eachRow({includeEmpty:true}, (row, rowNum) => {
+    const newRow = newWs.getRow(rowNum);
+    if(row.height) newRow.height = row.height;
+    row.eachCell({includeEmpty:true}, (cell, colNum) => {
+      const newCell = newRow.getCell(colNum);
+      newCell.value = cell.value;
+      if(cell.style){
+        try { newCell.style = JSON.parse(JSON.stringify(cell.style)); } catch(e){}
+      }
+    });
+    newRow.commit();
+  });
+
+  // 병합 셀 복사
+  if(srcWs._merges){
+    Object.keys(srcWs._merges).forEach(key => {
+      const m = srcWs._merges[key];
+      if(m && m.model){
+        try{
+          newWs.mergeCells(m.model.top, m.model.left, m.model.bottom, m.model.right);
+        }catch(e){}
+      }
+    });
+  }
+
+  return newWs;
+}
+
+// 양식 시트 데이터 채우기
+function fillUnitSheet(ws, wb, info){
+  const { subtypeLabel, unitNum, projectName, photos, diag, opinion } = info;
+
+  // 플레이스홀더 매핑
+  const replacements = {
+    '{{종류}}': subtypeLabel,
+    '{{호기}}': `${unitNum}호기`,
+    '{{프로젝트명}}': projectName || '',
+    '{{주요 검토 의견}}': opinion || '',
+    // 진단 평가/주요내용 (양식의 다양한 표기 대응)
+    '{{사용연수 평가}}': diag.usage_years?.rate || '',
+    '{{사용연수 주요내용}}': diag.usage_years?.content || '',
+    '{{보수이력 평가}}': diag.maint_history?.rate || '',
+    '{{보수이력 주요내용}}': diag.maint_history?.content || '',
+    '{{점검 상태 평가}}': diag.inspection_state?.rate || '',
+    '{{점검 상태 주요내용}}': diag.inspection_state?.content || '',
+    '{{설치 환경 주요 평가}}': diag.install_env?.rate || '',
+    '{{설치 환경 평가}}': diag.install_env?.rate || '',
+    '{{설치환경 주요내용}}': diag.install_env?.content || '',
+    '{{설치 환경 주요내용}}': diag.install_env?.content || '',
+    '{{외관 평가}': diag.appearance?.rate || '',
+    '{{외관 평가}}': diag.appearance?.rate || '',
+    '{{외관 주요내용}}': diag.appearance?.content || '',
+    '{{온도 계측 평가}}': diag.temp_measure?.rate || '',
+    '{{온도 계측 주요 내용}}': diag.temp_measure?.content || '',
+    '{{온도 계측 주요내용}}': diag.temp_measure?.content || '',
+    '{{주위배관 및 연결부 평가}}': diag.piping_conn?.rate || '',
+    '{{주위배관 및 연결부 주요내용}}': diag.piping_conn?.content || '',
+    '{{MCC 및 현장 패널 (마이어) 평가}}': diag.mcc_panel?.rate || '',
+    '{{MCC 및 현장 패널 (마이어) 주요내용}}': diag.mcc_panel?.content || '',
+    '{{MCC 및 현장 패널(마이어) 평가}}': diag.mcc_panel?.rate || '',
+    '{{MCC 및 현장 패널(마이어) 주요내용}}': diag.mcc_panel?.content || ''
+  };
+
+  // 사진 설명
+  photos.forEach((p, idx) => {
+    replacements[`{{사진 ${idx+1} 설명}}`] = p?.desc || `사진 ${idx+1}`;
+  });
+
+  // 모든 셀 순회하며 치환
+  ws.eachRow({includeEmpty:false}, (row) => {
+    row.eachCell({includeEmpty:false}, (cell) => {
+      let val = cell.value;
+      // rich text 처리
+      if(val && typeof val === 'object' && val.richText){
+        let combined = val.richText.map(r=>r.text).join('');
+        let replaced = combined;
+        Object.keys(replacements).forEach(ph => {
+          if(replaced.includes(ph)){
+            replaced = replaced.split(ph).join(replacements[ph]);
+          }
+        });
+        if(replaced !== combined){
+          cell.value = replaced;
+        }
+        return;
+      }
+      if(typeof val !== 'string') return;
+      let v = val;
+      Object.keys(replacements).forEach(ph => {
+        if(v.includes(ph)){
+          v = v.split(ph).join(replacements[ph]);
+        }
+      });
+      if(v !== val){
+        cell.value = v;
+      }
+    });
+  });
+
+  // 이미지 임베드 (모두 동일 크기)
+  for(let i=0; i<PHOTO_POSITIONS.length; i++){
+    const pos = PHOTO_POSITIONS[i];
+    const photo = photos[i];
+    if(!photo || !photo.img) continue;
+    try{
+      const imgId = wb.addImage({
+        buffer: dataURLToArrayBuffer(photo.img),
+        extension: 'jpeg'
+      });
+      ws.addImage(imgId, {
+        tl: { col: pos.col, row: pos.row },
+        ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
+        editAs: 'oneCell'
+      });
+    }catch(e){
+      console.error(`이미지 ${i+1} 임베드 실패:`, e);
+    }
+  }
+}
+
+// 종합 요약 시트
+function buildSummarySheet(wb, projectInfo, allUnits){
+  const ws = wb.addWorksheet('종합 요약', {
+    views: [{ showGridLines: false }]
+  });
+
+  ws.columns = [
+    { width: 18 }, { width: 10 }, { width: 11 },
+    { width: 11 }, { width: 11 }, { width: 11 }, { width: 11 },
+    { width: 11 }, { width: 13 }, { width: 13 }, { width: 11 },
+    { width: 10 }
+  ];
+
+  // 제목
+  ws.mergeCells('A1:L1');
+  const titleCell = ws.getCell('A1');
+  titleCell.value = '📊 기계설비 노후화 진단 종합 요약';
+  titleCell.font = { name:'맑은 고딕', size:18, bold:true, color:{argb:'FF1F2937'} };
+  titleCell.alignment = { vertical:'middle', horizontal:'center' };
+  titleCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
+  ws.getRow(1).height = 36;
+
+  // 프로젝트 정보
+  let r = 3;
+  const infoRows = [
+    ['프로젝트명', projectInfo.projectName],
+    ['건물명', projectInfo.buildingName],
+    ['과업 수행시작일', projectInfo.projectStartDate],
+    ['점검 기간', projectInfo.dateRange],
+    ['보고서 생성일', new Date().toLocaleString('ko-KR')]
+  ];
+  infoRows.forEach(([k,v])=>{
+    const keyCell = ws.getCell(`A${r}`);
+    keyCell.value = k;
+    keyCell.font = { bold:true, color:{argb:'FF6B7280'}, name:'맑은 고딕' };
+    keyCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF9FAFB'} };
+    keyCell.alignment = { vertical:'middle' };
+    ws.mergeCells(`B${r}:L${r}`);
+    const valCell = ws.getCell(`B${r}`);
+    valCell.value = v || '';
+    valCell.alignment = { vertical:'middle' };
+    valCell.font = { name:'맑은 고딕' };
+    [`A${r}`,`B${r}`].forEach(addr=>{
+      ws.getCell(addr).border = {
+        top:{style:'thin',color:{argb:'FFE5E7EB'}},
+        bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
+        left:{style:'thin',color:{argb:'FFE5E7EB'}},
+        right:{style:'thin',color:{argb:'FFE5E7EB'}}
+      };
+    });
+    r++;
+  });
+
+  // 진단 요약 제목
+  r += 2;
+  ws.mergeCells(`A${r}:L${r}`);
+  const subTitle = ws.getCell(`A${r}`);
+  subTitle.value = '❄️ 냉열원 진단 요약';
+  subTitle.font = { name:'맑은 고딕', size:14, bold:true };
+  subTitle.alignment = { vertical:'middle' };
+  ws.getRow(r).height = 28;
+  r++;
+
+  // 헤더
+  const headerRow = ['종류','호기','상태'];
+  turboDiagItems.forEach(item => headerRow.push(item.short));
+  headerRow.push('종합');
+
+  const hRow = ws.getRow(r);
+  hRow.values = headerRow;
+  hRow.eachCell((cell)=>{
+    cell.font = { bold:true, color:{argb:'FFFFFFFF'}, name:'맑은 고딕' };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
+    cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+    cell.border = {
+      top:{style:'thin',color:{argb:'FFE5E7EB'}},
+      bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
+      left:{style:'thin',color:{argb:'FFE5E7EB'}},
+      right:{style:'thin',color:{argb:'FFE5E7EB'}}
+    };
+  });
+  hRow.height = 32;
+  r++;
+
+  // 데이터 행
+  allUnits.forEach(u => {
+    const row = ws.getRow(r);
+    row.values = [
+      u.subtypeLabel,
+      `${u.unitNum}호기`,
+      u.statusText,
+      ...u.diagRates,
+      u.grade
+    ];
+    row.eachCell((cell, col)=>{
+      cell.alignment = { horizontal:'center', vertical:'middle' };
+      cell.font = { name:'맑은 고딕' };
+      cell.border = {
+        top:{style:'thin',color:{argb:'FFE5E7EB'}},
+        bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
+        left:{style:'thin',color:{argb:'FFE5E7EB'}},
+        right:{style:'thin',color:{argb:'FFE5E7EB'}}
+      };
+      // 등급 색상
+      if(col >= 4 && col <= 11){
+        const v = cell.value;
+        if(v==='A') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD1FAE5'} };
+        else if(v==='B') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFED7AA'} };
+        else if(v==='C') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFECACA'} };
+      }
+      if(col === 12){
+        cell.font = { name:'맑은 고딕', bold:true, size:13 };
+        const v = cell.value;
+        if(v==='A') cell.font = {...cell.font, color:{argb:'FF059669'}};
+        else if(v==='B') cell.font = {...cell.font, color:{argb:'FFD97706'}};
+        else if(v==='C') cell.font = {...cell.font, color:{argb:'FFDC2626'}};
+      }
+    });
+    row.height = 24;
+    r++;
+  });
+
+  // 안내 문구
+  r += 2;
+  ws.mergeCells(`A${r}:L${r}`);
+  const noteCell = ws.getCell(`A${r}`);
+  noteCell.value = '💡 종합 등급 기준: C가 하나라도 있으면 C / B가 있으면 B / 모두 A면 A';
+  noteCell.font = { italic:true, color:{argb:'FF6B7280'}, size:11 };
+  noteCell.alignment = { horizontal:'left' };
+}
+
+async function exportToExcel(){
+  if(typeof ExcelJS === 'undefined'){
+    alert('ExcelJS 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+    return;
+  }
+
+  const container = document.getElementById('coldSourceUnits');
+  if(!container || container.querySelectorAll('.card').length === 0){
+    alert('⚠️ 내보낼 냉열원 데이터가 없습니다.\n\n냉열원을 추가하고 진단 데이터를 입력해주세요.');
+    return;
+  }
+
+  showLoading('양식 파일 로딩 중...');
+
+  try{
+    // 양식 로드
+    let templateBuffer;
+    try{
+      const res = await fetch(TEMPLATE_PATH.turbo);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      templateBuffer = await res.arrayBuffer();
+    }catch(e){
+      hideLoading();
+      alert(`❌ 양식 파일을 찾을 수 없습니다.\n\n경로: ${TEMPLATE_PATH.turbo}\n\nHTML 파일과 같은 위치에 'templates' 폴더를 만들고 양식 파일을 넣어주세요.\n\n※ 파일을 더블클릭으로 열면 작동하지 않습니다.\n   로컬 서버(Live Server, python -m http.server 등)로 실행해주세요.\n\n에러: ${e.message}`);
+      return;
+    }
+
+    showLoading('데이터 수집 중...');
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'HIMEC 진단 시스템';
+    wb.created = new Date();
+
+    // 정렬된 호기 리스트 (subtype 순)
+    const cards = Array.from(container.querySelectorAll('.card'));
+    const ordered = [];
+    subtypeMap.coldSource.forEach(st=>{
+      cards.forEach(card=>{
+        if(getUnitSubtype('coldSource', card.dataset.id) === st.key){
+          ordered.push({card, st});
+        }
+      });
+    });
+
+    const projectInfo = {
+      projectName: document.getElementById('projectName')?.value || '',
+      buildingName: document.getElementById('buildingName')?.value || '',
+      projectStartDate: document.getElementById('projectStartDate')?.value || '',
+      dateRange: document.getElementById('dateRange')?.value || ''
+    };
+
+    // 호기 데이터 수집
+    const allUnits = [];
+    let counter = {};
+    ordered.forEach(({card, st})=>{
+      const id = card.dataset.id;
+      counter[st.key] = (counter[st.key]||0) + 1;
+      const unitNum = counter[st.key];
+
+      const diag = {};
+      turboDiagItems.forEach(item=>{
+        const baseKey = `coldSource_${id}_diag_${item.key}`;
+        const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
+        const contentEl = document.getElementById(`${baseKey}_content`);
+        diag[item.key] = {
+          rate: rateEl ? rateEl.value : '',
+          content: contentEl ? contentEl.value : ''
+        };
+      });
+
+      let a=0,b=0,c=0;
+      Object.values(diag).forEach(d=>{
+        if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++;
+      });
+      let grade='-';
+      if(a+b+c>0){ if(c>0)grade='C'; else if(b>0)grade='B'; else grade='A'; }
+
+      const photos = unitPhotos[`coldSource_${id}`] || new Array(PHOTO_COUNT).fill(null).map(()=>({img:null,desc:''}));
+      const opinion = document.getElementById(`coldSource_${id}_opinion`)?.value || '';
+      const status = getUnitStatus('coldSource', id);
+
+      allUnits.push({
+        id, st, subtypeLabel: st.label, unitNum,
+        projectName: projectInfo.projectName,
+        diag, opinion, photos,
+        statusText: statusText(status),
+        diagRates: turboDiagItems.map(item => diag[item.key]?.rate || '-'),
+        grade
+      });
+    });
+
+    showLoading('종합 요약 시트 생성 중...');
+    buildSummarySheet(wb, projectInfo, allUnits);
+
+    // 호기별 시트
+    for(let i=0; i<allUnits.length; i++){
+      const u = allUnits[i];
+      showLoading(`호기별 시트 생성 중... (${i+1}/${allUnits.length})\n${u.subtypeLabel} ${u.unitNum}호기`);
+      // 시트명 31자 제한
+      let sheetName = `${u.subtypeLabel.replace(/\s+/g,'')}_${u.unitNum}호기`;
+      if(sheetName.length > 31) sheetName = sheetName.substring(0, 31);
+      // 중복 방지
+      let suffix = 1;
+      let finalName = sheetName;
+      while(wb.getWorksheet(finalName)){
+        finalName = sheetName.substring(0, 28) + `_${suffix}`;
+        suffix++;
+      }
+      const ws = await cloneTemplateSheet(templateBuffer, wb, finalName);
+      fillUnitSheet(ws, wb, u);
+    }
+
+    showLoading('파일 저장 중...');
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const safeName = (projectInfo.projectName || '냉동기진단').replace(/[\\/:*?"<>|]/g,'_');
+    const today = new Date().toISOString().slice(0,10);
+    saveAs(blob, `${safeName}_${today}.xlsx`);
+
+    hideLoading();
+    showToast(`✅ 엑셀 파일 다운로드 완료 (${allUnits.length}개 호기)`);
+
+  }catch(e){
+    hideLoading();
+    console.error(e);
+    alert('❌ 엑셀 내보내기 중 오류가 발생했습니다:\n\n' + (e.message || e));
+  }
+}
+
+window.onload = function(){
+  const raw = localStorage.getItem('facilityReport');
+  let data = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch(e){ data = {}; }
+  if(data.projectName) document.getElementById('projectName').value = data.projectName;
+  if(data.buildingName) document.getElementById('buildingName').value = data.buildingName;
+  if(data.projectStartDate) document.getElementById('projectStartDate').value = data.projectStartDate;
+  if(data.dateRange) document.getElementById('dateRange').value = data.dateRange;
+  updateHeroBadge();
+
+  if(data.units){
+    Object.keys(data.units).forEach(type=>{
+      if(!fieldConfig[type]) return;
+      data.units[type].forEach((unitData)=>{
+        addUnit(type);
+        const id = unitCount[type];
+        setTimeout(()=>applyUnitData(type, id, unitData), 50);
+      });
+    });
+    setTimeout(()=>{
+      Object.keys(fieldConfig).forEach(type=>{
+        refreshCardLabels(type);
+        const container = document.getElementById(type+'Units');
+        if(container){ container.querySelectorAll('.card').forEach(card=>{ updateSummary(type, card.dataset.id); }); }
+        renderGroupSummary(type);
+      });
+    }, 250);
+  }
+
+  const firstMainBtn = document.querySelector('.main-tabs button[data-section="heatSection"]');
+  if(firstMainBtn) firstMainBtn.classList.add('active');
+  const firstSubBtn = document.querySelector('.sub-tabs button[data-sub="coldSourceSection"]');
+  if(firstSubBtn) firstSubBtn.classList.add('active');
+  ['coldSource','heatSource','coolingTower'].forEach(t=>renderGroupSummary(t));
+  renderCalendar();
+};
+
+function loadSummary(){
+  const raw = localStorage.getItem('facilityReport');
+  if(!raw){ summaryBox.textContent = '저장된 데이터 없음'; return; }
+  try{
+    const data = JSON.parse(raw);
+    const preview = JSON.parse(JSON.stringify(data));
+    if(preview.units){
+      Object.keys(preview.units).forEach(type=>{
+        preview.units[type].forEach(u=>{
+          if(u.photos){
+            u.photos = u.photos.map(p=> p && p.img ? {img:'[사진 데이터 생략]', desc:p.desc} : p);
+          }
+        });
+      });
+    }
+    summaryBox.textContent = JSON.stringify(preview, null, 2);
+  } catch(e){ summaryBox.textContent = raw; }
+}
+</script>
+
+</body>
+</html>
