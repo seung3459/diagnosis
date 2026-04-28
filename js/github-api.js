@@ -7,8 +7,16 @@ const GITHUB_CONFIG = {
   repo: 'diagnosis',
   branch: 'main',
   dataPath: 'data',
-  // 편집 권한이 있는 GitHub ID 목록
-  allowedUsers: ['seung3459', 'eedhals']
+  
+  // ⚠️ 여기에 본인의 GitHub Token을 입력하세요!
+  // 시연 후 GitHub에서 이 토큰을 즉시 삭제하세요!
+  token: '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',
+  
+  // ID/PW 등록 (간단 시연용)
+  accounts: [
+    { id: 'HIMEC', pw: 'HIMEC', canEdit: true,  displayName: 'HIMEC 관리자' },
+    { id: 'guest', pw: 'guest', canEdit: false, displayName: '게스트 (읽기 전용)' }
+  ]
 };
 
 const GH_API = 'https://api.github.com';
@@ -18,29 +26,11 @@ const GH_API = 'https://api.github.com';
 // =====================================
 
 function getAuthHeaders(){
-  const token = getStoredToken();
-  if(!token) return null;
   return {
-    'Authorization': `token ${token}`,
+    'Authorization': `token ${GITHUB_CONFIG.token}`,
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json'
   };
-}
-
-// =====================================
-// 👤 현재 사용자 정보 가져오기
-// =====================================
-
-async function ghGetCurrentUser(){
-  const headers = getAuthHeaders();
-  if(!headers) throw new Error('토큰이 없습니다');
-  
-  const res = await fetch(`${GH_API}/user`, { headers });
-  if(!res.ok){
-    if(res.status === 401) throw new Error('토큰이 유효하지 않습니다');
-    throw new Error(`GitHub API 오류: ${res.status}`);
-  }
-  return await res.json();
 }
 
 // =====================================
@@ -48,18 +38,14 @@ async function ghGetCurrentUser(){
 // =====================================
 
 async function ghGetFile(path){
-  const headers = getAuthHeaders();
-  if(!headers) throw new Error('인증 필요');
-  
   const url = `${GH_API}/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}?ref=${GITHUB_CONFIG.branch}`;
   
   try{
-    const res = await fetch(url, { headers });
-    if(res.status === 404) return null; // 파일 없음
+    const res = await fetch(url, { headers: getAuthHeaders() });
+    if(res.status === 404) return null;
     if(!res.ok) throw new Error(`파일 로드 실패: ${res.status}`);
     
     const data = await res.json();
-    // base64 디코딩 (한글 처리 위해 UTF-8로)
     const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
     return {
       content: JSON.parse(content),
@@ -76,23 +62,15 @@ async function ghGetFile(path){
 // =====================================
 
 async function ghSaveFile(path, content, commitMessage){
-  const headers = getAuthHeaders();
-  if(!headers) throw new Error('인증 필요');
-  
-  // 1. 기존 파일 확인 (sha 가져오기)
   let sha = null;
   try{
     const existing = await ghGetFile(path);
     if(existing) sha = existing.sha;
-  } catch(e){
-    // 파일이 없으면 새로 생성
-  }
+  } catch(e){}
   
-  // 2. content를 base64로 인코딩 (UTF-8 한글 처리)
   const jsonStr = JSON.stringify(content, null, 2);
   const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
   
-  // 3. 파일 저장
   const url = `${GH_API}/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`;
   const body = {
     message: commitMessage || `Update ${path}`,
@@ -103,7 +81,7 @@ async function ghSaveFile(path, content, commitMessage){
   
   const res = await fetch(url, {
     method: 'PUT',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify(body)
   });
   
@@ -120,18 +98,13 @@ async function ghSaveFile(path, content, commitMessage){
 // =====================================
 
 async function ghDeleteFile(path, commitMessage){
-  const headers = getAuthHeaders();
-  if(!headers) throw new Error('인증 필요');
-  
-  // 1. sha 가져오기
   const existing = await ghGetFile(path);
-  if(!existing) return; // 이미 없음
+  if(!existing) return;
   
-  // 2. 삭제 요청
   const url = `${GH_API}/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`;
   const res = await fetch(url, {
     method: 'DELETE',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       message: commitMessage || `Delete ${path}`,
       sha: existing.sha,
@@ -161,7 +134,7 @@ async function ghSaveProjectsList(data){
   return await ghSaveFile(
     `${GITHUB_CONFIG.dataPath}/projects.json`,
     data,
-    `프로젝트 목록 업데이트 (by ${currentUser?.login || 'unknown'})`
+    `프로젝트 목록 업데이트 (by ${currentUser?.id || 'unknown'})`
   );
 }
 
@@ -179,13 +152,13 @@ async function ghSaveProjectData(projectId, data){
   return await ghSaveFile(
     `${GITHUB_CONFIG.dataPath}/${projectId}.json`,
     data,
-    `프로젝트 데이터 저장: ${data.projectName || projectId} (by ${currentUser?.login || 'unknown'})`
+    `프로젝트 데이터 저장: ${data.projectName || projectId} (by ${currentUser?.id || 'unknown'})`
   );
 }
 
 async function ghDeleteProjectData(projectId){
   return await ghDeleteFile(
     `${GITHUB_CONFIG.dataPath}/${projectId}.json`,
-    `프로젝트 삭제: ${projectId} (by ${currentUser?.login || 'unknown'})`
+    `프로젝트 삭제: ${projectId} (by ${currentUser?.id || 'unknown'})`
   );
 }
