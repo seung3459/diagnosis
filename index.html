@@ -7,12 +7,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <!-- FileSaver: 다운로드 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<!-- html2pdf: PDF 내보내기 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#eef2f7;}
   .topbar{background:#1f2937;padding:12px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:center;flex-wrap:wrap;gap:6px;}
   .topbar button{background:#2563eb;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;}
   .topbar button.export-btn{background:#059669;}
   .topbar button.export-btn:hover{background:#047857;}
+  .topbar button.pdf-btn{background:#dc2626;}
+  .topbar button.pdf-btn:hover{background:#b91c1c;}
   .container{padding:15px;max-width:1200px;margin:0 auto;}
   .page{display:none;}
   .page.active{display:block;}
@@ -285,7 +289,32 @@
   .loading-box{background:#fff;border-radius:16px;padding:30px 40px;box-shadow:0 20px 50px rgba(0,0,0,.3);text-align:center;}
   .spinner{width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .loading-text{font-size:14px;font-weight:700;color:#1f2937;}
+  .loading-text{font-size:14px;font-weight:700;color:#1f2937;white-space:pre-line;}
+
+  /* PDF 캡처용 영역 (오프스크린) */
+  .pdf-render-zone{position:fixed;left:-99999px;top:0;width:794px;background:#fff;padding:30px;font-family:'Pretendard','Malgun Gothic',sans-serif;}
+  .pdf-render-zone .pdf-page{page-break-after:always;background:#fff;}
+  .pdf-render-zone .pdf-page:last-child{page-break-after:auto;}
+  .pdf-title{font-size:22px;font-weight:800;color:#1f2937;margin-bottom:6px;}
+  .pdf-sub{font-size:13px;color:#6b7280;margin-bottom:20px;}
+  .pdf-meta{display:grid;grid-template-columns:120px 1fr;gap:0;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:18px;}
+  .pdf-meta .lbl{background:#f3f4f6;padding:8px 12px;font-weight:700;font-size:12px;color:#374151;border-bottom:1px solid #e5e7eb;}
+  .pdf-meta .val{padding:8px 12px;font-size:12px;color:#111827;border-bottom:1px solid #e5e7eb;}
+  .pdf-meta div:nth-last-child(-n+2){border-bottom:none;}
+  .pdf-section-h{background:#1f2937;color:#fff;padding:8px 12px;font-size:13px;font-weight:700;border-radius:6px 6px 0 0;}
+  .pdf-table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 6px 6px;overflow:hidden;margin-bottom:18px;}
+  .pdf-table th,.pdf-table td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:middle;}
+  .pdf-table th{background:#f3f4f6;font-weight:700;color:#111827;}
+  .pdf-table td.left{text-align:left;}
+  .pdf-rate-A{background:#d1fae5;color:#059669;font-weight:700;}
+  .pdf-rate-B{background:#fed7aa;color:#d97706;font-weight:700;}
+  .pdf-rate-C{background:#fecaca;color:#dc2626;font-weight:700;}
+  .pdf-opinion{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;font-size:12px;color:#111827;line-height:1.6;min-height:60px;margin-bottom:18px;white-space:pre-wrap;}
+  .pdf-photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .pdf-photo{border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;background:#fff;}
+  .pdf-photo .pdf-photo-desc{background:#eff6ff;color:#1e40AF;padding:6px 8px;font-size:11px;font-weight:700;border-bottom:1px solid #e5e7eb;}
+  .pdf-photo .pdf-photo-img{width:100%;height:230px;object-fit:cover;display:block;background:#f3f4f6;}
+  .pdf-photo .pdf-photo-empty{width:100%;height:230px;display:flex;align-items:center;justify-content:center;background:#f9fafb;color:#9ca3af;font-size:12px;}
 </style>
 </head>
 <body>
@@ -295,7 +324,8 @@
   <button onclick="showPage('diag')">설비 진단</button>
   <button onclick="showPage('result')">종합 결과</button>
   <button onclick="manualSave()">💾 저장</button>
-  <button class="export-btn" onclick="exportToExcel()">📊 엑셀 내보내기</button>
+  <button class="export-btn" onclick="exportToExcel()">📊 엑셀</button>
+  <button class="pdf-btn" onclick="exportToPDF()">📄 PDF</button>
 </div>
 
 <div class="container">
@@ -397,6 +427,7 @@
   <div class="diag-page">
   <button class="btn" onclick="loadSummary()">저장 데이터 보기</button>
   <button class="btn" style="background:#059669;" onclick="exportToExcel()">📊 엑셀 내보내기</button>
+  <button class="btn" style="background:#dc2626;" onclick="exportToPDF()">📄 PDF 내보내기</button>
   <pre id="summaryBox"></pre>
   </div>
 </div>
@@ -433,36 +464,36 @@
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-box">
     <div class="spinner"></div>
-    <div class="loading-text" id="loadingText">엑셀 파일 생성 중...</div>
+    <div class="loading-text" id="loadingText">처리 중...</div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- PDF 렌더링 영역 (오프스크린) -->
+<div class="pdf-render-zone" id="pdfRenderZone"></div>
 
 <script>
 const PHOTO_COUNT = 8;
 const PHOTO_MAX_SIZE = 1200;
 const PHOTO_QUALITY = 0.75;
 
-// 엑셀 양식 경로 (HTML과 같은 폴더 기준)
+// 엑셀 양식 경로
 const TEMPLATE_PATH = {
   turbo: 'templates/turbo_template.xlsx'
 };
 
-// 엑셀 사진 통일 크기 (픽셀)
-const EXCEL_PHOTO_W = 250;
-const EXCEL_PHOTO_H = 160;
-
-// 양식의 사진 위치 (0-indexed: A=0, B=1, ..., U=20, AE=30)
+// 새 양식의 사진 위치 (br 좌표 사용 → 셀 영역에 정확히 맞춤)
+// ExcelJS 0-indexed: A=0, 1행=0
 const PHOTO_POSITIONS = [
-  { col: 20, row: 4  },  // 사진1: U5
-  { col: 30, row: 4  },  // 사진2: AE5
-  { col: 20, row: 11 },  // 사진3: U12
-  { col: 30, row: 11 },  // 사진4: AE12
-  { col: 20, row: 21 },  // 사진5: U22
-  { col: 30, row: 21 },  // 사진6: AE22
-  { col: 20, row: 31 },  // 사진7: U32
-  { col: 30, row: 31 }   // 사진8: AE32
+  { tl: {col:8,  row:4 }, br: {col:15, row:11} }, // 사진1: I5~O11
+  { tl: {col:15, row:4 }, br: {col:22, row:11} }, // 사진2: P5~V11
+  { tl: {col:8,  row:12}, br: {col:15, row:19} }, // 사진3: I13~O19
+  { tl: {col:15, row:12}, br: {col:22, row:19} }, // 사진4: P13~V19
+  { tl: {col:8,  row:20}, br: {col:15, row:27} }, // 사진5: I21~O27
+  { tl: {col:15, row:20}, br: {col:22, row:27} }, // 사진6: P21~V27
+  { tl: {col:8,  row:28}, br: {col:15, row:35} }, // 사진7: I29~O35
+  { tl: {col:15, row:28}, br: {col:22, row:35} }  // 사진8: P29~V35
 ];
 
 const fieldConfig = {
@@ -1201,8 +1232,6 @@ function saveData(){
 // =====================================
 // 📊 엑셀 내보내기 (양식 기반 + 이미지 임베드)
 // =====================================
-
-// dataURL → ArrayBuffer
 function dataURLToArrayBuffer(dataURL){
   const base64 = dataURL.split(',')[1];
   const binary = atob(base64);
@@ -1211,7 +1240,6 @@ function dataURLToArrayBuffer(dataURL){
   return bytes.buffer;
 }
 
-// 양식 시트를 새 워크북에 복제
 async function cloneTemplateSheet(templateBuffer, targetWb, newSheetName){
   const tempWb = new ExcelJS.Workbook();
   await tempWb.xlsx.load(templateBuffer);
@@ -1223,14 +1251,12 @@ async function cloneTemplateSheet(templateBuffer, targetWb, newSheetName){
     views: srcWs.views ? srcWs.views.map(v=>({...v})) : undefined
   });
 
-  // 컬럼 너비
   if(srcWs.columns){
     srcWs.columns.forEach((col, i) => {
       if(col && col.width) newWs.getColumn(i+1).width = col.width;
     });
   }
 
-  // 셀 + 스타일 복사
   srcWs.eachRow({includeEmpty:true}, (row, rowNum) => {
     const newRow = newWs.getRow(rowNum);
     if(row.height) newRow.height = row.height;
@@ -1244,7 +1270,6 @@ async function cloneTemplateSheet(templateBuffer, targetWb, newSheetName){
     newRow.commit();
   });
 
-  // 병합 셀 복사
   if(srcWs._merges){
     Object.keys(srcWs._merges).forEach(key => {
       const m = srcWs._merges[key];
@@ -1259,78 +1284,58 @@ async function cloneTemplateSheet(templateBuffer, targetWb, newSheetName){
   return newWs;
 }
 
-// 양식 시트 데이터 채우기
 function fillUnitSheet(ws, wb, info){
   const { subtypeLabel, unitNum, projectName, photos, diag, opinion } = info;
 
-  // 플레이스홀더 매핑
   const replacements = {
     '{{종류}}': subtypeLabel,
     '{{호기}}': `${unitNum}호기`,
     '{{프로젝트명}}': projectName || '',
     '{{주요 검토 의견}}': opinion || '',
-    // 진단 평가/주요내용 (양식의 다양한 표기 대응)
     '{{사용연수 평가}}': diag.usage_years?.rate || '',
     '{{사용연수 주요내용}}': diag.usage_years?.content || '',
     '{{보수이력 평가}}': diag.maint_history?.rate || '',
     '{{보수이력 주요내용}}': diag.maint_history?.content || '',
     '{{점검 상태 평가}}': diag.inspection_state?.rate || '',
     '{{점검 상태 주요내용}}': diag.inspection_state?.content || '',
-    '{{설치 환경 주요 평가}}': diag.install_env?.rate || '',
     '{{설치 환경 평가}}': diag.install_env?.rate || '',
-    '{{설치환경 주요내용}}': diag.install_env?.content || '',
     '{{설치 환경 주요내용}}': diag.install_env?.content || '',
-    '{{외관 평가}': diag.appearance?.rate || '',
     '{{외관 평가}}': diag.appearance?.rate || '',
     '{{외관 주요내용}}': diag.appearance?.content || '',
     '{{온도 계측 평가}}': diag.temp_measure?.rate || '',
-    '{{온도 계측 주요 내용}}': diag.temp_measure?.content || '',
     '{{온도 계측 주요내용}}': diag.temp_measure?.content || '',
     '{{주위배관 및 연결부 평가}}': diag.piping_conn?.rate || '',
     '{{주위배관 및 연결부 주요내용}}': diag.piping_conn?.content || '',
-    '{{MCC 및 현장 패널 (마이어) 평가}}': diag.mcc_panel?.rate || '',
-    '{{MCC 및 현장 패널 (마이어) 주요내용}}': diag.mcc_panel?.content || '',
-    '{{MCC 및 현장 패널(마이어) 평가}}': diag.mcc_panel?.rate || '',
-    '{{MCC 및 현장 패널(마이어) 주요내용}}': diag.mcc_panel?.content || ''
+    '{{MCC 및 현장 패널 평가}}': diag.mcc_panel?.rate || '',
+    '{{MCC 및 현장 패널 주요내용}}': diag.mcc_panel?.content || ''
   };
 
-  // 사진 설명
   photos.forEach((p, idx) => {
     replacements[`{{사진 ${idx+1} 설명}}`] = p?.desc || `사진 ${idx+1}`;
   });
 
-  // 모든 셀 순회하며 치환
   ws.eachRow({includeEmpty:false}, (row) => {
     row.eachCell({includeEmpty:false}, (cell) => {
       let val = cell.value;
-      // rich text 처리
       if(val && typeof val === 'object' && val.richText){
         let combined = val.richText.map(r=>r.text).join('');
         let replaced = combined;
         Object.keys(replacements).forEach(ph => {
-          if(replaced.includes(ph)){
-            replaced = replaced.split(ph).join(replacements[ph]);
-          }
+          if(replaced.includes(ph)){ replaced = replaced.split(ph).join(replacements[ph]); }
         });
-        if(replaced !== combined){
-          cell.value = replaced;
-        }
+        if(replaced !== combined) cell.value = replaced;
         return;
       }
       if(typeof val !== 'string') return;
       let v = val;
       Object.keys(replacements).forEach(ph => {
-        if(v.includes(ph)){
-          v = v.split(ph).join(replacements[ph]);
-        }
+        if(v.includes(ph)){ v = v.split(ph).join(replacements[ph]); }
       });
-      if(v !== val){
-        cell.value = v;
-      }
+      if(v !== val) cell.value = v;
     });
   });
 
-  // 이미지 임베드 (모두 동일 크기)
+  // 이미지 임베드 - br 좌표 사용으로 셀 영역에 정확히 맞춤
   for(let i=0; i<PHOTO_POSITIONS.length; i++){
     const pos = PHOTO_POSITIONS[i];
     const photo = photos[i];
@@ -1341,8 +1346,8 @@ function fillUnitSheet(ws, wb, info){
         extension: 'jpeg'
       });
       ws.addImage(imgId, {
-        tl: { col: pos.col, row: pos.row },
-        ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
+        tl: pos.tl,
+        br: pos.br,        // ← br 좌표로 셀 영역에 정확히 맞춤!
         editAs: 'oneCell'
       });
     }catch(e){
@@ -1351,11 +1356,8 @@ function fillUnitSheet(ws, wb, info){
   }
 }
 
-// 종합 요약 시트
 function buildSummarySheet(wb, projectInfo, allUnits){
-  const ws = wb.addWorksheet('종합 요약', {
-    views: [{ showGridLines: false }]
-  });
+  const ws = wb.addWorksheet('종합 요약', { views: [{ showGridLines: false }] });
 
   ws.columns = [
     { width: 18 }, { width: 10 }, { width: 11 },
@@ -1364,7 +1366,6 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     { width: 10 }
   ];
 
-  // 제목
   ws.mergeCells('A1:L1');
   const titleCell = ws.getCell('A1');
   titleCell.value = '📊 기계설비 노후화 진단 종합 요약';
@@ -1373,7 +1374,6 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   titleCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
   ws.getRow(1).height = 36;
 
-  // 프로젝트 정보
   let r = 3;
   const infoRows = [
     ['프로젝트명', projectInfo.projectName],
@@ -1395,16 +1395,13 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     valCell.font = { name:'맑은 고딕' };
     [`A${r}`,`B${r}`].forEach(addr=>{
       ws.getCell(addr).border = {
-        top:{style:'thin',color:{argb:'FFE5E7EB'}},
-        bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
-        left:{style:'thin',color:{argb:'FFE5E7EB'}},
-        right:{style:'thin',color:{argb:'FFE5E7EB'}}
+        top:{style:'thin',color:{argb:'FFE5E7EB'}}, bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
+        left:{style:'thin',color:{argb:'FFE5E7EB'}}, right:{style:'thin',color:{argb:'FFE5E7EB'}}
       };
     });
     r++;
   });
 
-  // 진단 요약 제목
   r += 2;
   ws.mergeCells(`A${r}:L${r}`);
   const subTitle = ws.getCell(`A${r}`);
@@ -1414,7 +1411,6 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   ws.getRow(r).height = 28;
   r++;
 
-  // 헤더
   const headerRow = ['종류','호기','상태'];
   turboDiagItems.forEach(item => headerRow.push(item.short));
   headerRow.push('종합');
@@ -1426,35 +1422,23 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
     cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
     cell.border = {
-      top:{style:'thin',color:{argb:'FFE5E7EB'}},
-      bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
-      left:{style:'thin',color:{argb:'FFE5E7EB'}},
-      right:{style:'thin',color:{argb:'FFE5E7EB'}}
+      top:{style:'thin',color:{argb:'FFE5E7EB'}}, bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
+      left:{style:'thin',color:{argb:'FFE5E7EB'}}, right:{style:'thin',color:{argb:'FFE5E7EB'}}
     };
   });
   hRow.height = 32;
   r++;
 
-  // 데이터 행
   allUnits.forEach(u => {
     const row = ws.getRow(r);
-    row.values = [
-      u.subtypeLabel,
-      `${u.unitNum}호기`,
-      u.statusText,
-      ...u.diagRates,
-      u.grade
-    ];
+    row.values = [u.subtypeLabel, `${u.unitNum}호기`, u.statusText, ...u.diagRates, u.grade];
     row.eachCell((cell, col)=>{
       cell.alignment = { horizontal:'center', vertical:'middle' };
       cell.font = { name:'맑은 고딕' };
       cell.border = {
-        top:{style:'thin',color:{argb:'FFE5E7EB'}},
-        bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
-        left:{style:'thin',color:{argb:'FFE5E7EB'}},
-        right:{style:'thin',color:{argb:'FFE5E7EB'}}
+        top:{style:'thin',color:{argb:'FFE5E7EB'}}, bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
+        left:{style:'thin',color:{argb:'FFE5E7EB'}}, right:{style:'thin',color:{argb:'FFE5E7EB'}}
       };
-      // 등급 색상
       if(col >= 4 && col <= 11){
         const v = cell.value;
         if(v==='A') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD1FAE5'} };
@@ -1472,32 +1456,23 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     row.height = 24;
     r++;
   });
-
-  // 안내 문구
-  r += 2;
-  ws.mergeCells(`A${r}:L${r}`);
-  const noteCell = ws.getCell(`A${r}`);
-  noteCell.value = '💡 종합 등급 기준: C가 하나라도 있으면 C / B가 있으면 B / 모두 A면 A';
-  noteCell.font = { italic:true, color:{argb:'FF6B7280'}, size:11 };
-  noteCell.alignment = { horizontal:'left' };
 }
 
 async function exportToExcel(){
   if(typeof ExcelJS === 'undefined'){
-    alert('ExcelJS 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+    alert('ExcelJS 라이브러리가 아직 로드되지 않았습니다.');
     return;
   }
 
   const container = document.getElementById('coldSourceUnits');
   if(!container || container.querySelectorAll('.card').length === 0){
-    alert('⚠️ 내보낼 냉열원 데이터가 없습니다.\n\n냉열원을 추가하고 진단 데이터를 입력해주세요.');
+    alert('⚠️ 내보낼 냉열원 데이터가 없습니다.');
     return;
   }
 
   showLoading('양식 파일 로딩 중...');
 
   try{
-    // 양식 로드
     let templateBuffer;
     try{
       const res = await fetch(TEMPLATE_PATH.turbo);
@@ -1505,7 +1480,7 @@ async function exportToExcel(){
       templateBuffer = await res.arrayBuffer();
     }catch(e){
       hideLoading();
-      alert(`❌ 양식 파일을 찾을 수 없습니다.\n\n경로: ${TEMPLATE_PATH.turbo}\n\nHTML 파일과 같은 위치에 'templates' 폴더를 만들고 양식 파일을 넣어주세요.\n\n※ 파일을 더블클릭으로 열면 작동하지 않습니다.\n   로컬 서버(Live Server, python -m http.server 등)로 실행해주세요.\n\n에러: ${e.message}`);
+      alert(`❌ 양식 파일을 찾을 수 없습니다.\n\n경로: ${TEMPLATE_PATH.turbo}\n\n에러: ${e.message}`);
       return;
     }
 
@@ -1515,7 +1490,6 @@ async function exportToExcel(){
     wb.creator = 'HIMEC 진단 시스템';
     wb.created = new Date();
 
-    // 정렬된 호기 리스트 (subtype 순)
     const cards = Array.from(container.querySelectorAll('.card'));
     const ordered = [];
     subtypeMap.coldSource.forEach(st=>{
@@ -1533,7 +1507,6 @@ async function exportToExcel(){
       dateRange: document.getElementById('dateRange')?.value || ''
     };
 
-    // 호기 데이터 수집
     const allUnits = [];
     let counter = {};
     ordered.forEach(({card, st})=>{
@@ -1546,16 +1519,11 @@ async function exportToExcel(){
         const baseKey = `coldSource_${id}_diag_${item.key}`;
         const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
         const contentEl = document.getElementById(`${baseKey}_content`);
-        diag[item.key] = {
-          rate: rateEl ? rateEl.value : '',
-          content: contentEl ? contentEl.value : ''
-        };
+        diag[item.key] = { rate: rateEl ? rateEl.value : '', content: contentEl ? contentEl.value : '' };
       });
 
       let a=0,b=0,c=0;
-      Object.values(diag).forEach(d=>{
-        if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++;
-      });
+      Object.values(diag).forEach(d=>{ if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++; });
       let grade='-';
       if(a+b+c>0){ if(c>0)grade='C'; else if(b>0)grade='B'; else grade='A'; }
 
@@ -1576,14 +1544,11 @@ async function exportToExcel(){
     showLoading('종합 요약 시트 생성 중...');
     buildSummarySheet(wb, projectInfo, allUnits);
 
-    // 호기별 시트
     for(let i=0; i<allUnits.length; i++){
       const u = allUnits[i];
       showLoading(`호기별 시트 생성 중... (${i+1}/${allUnits.length})\n${u.subtypeLabel} ${u.unitNum}호기`);
-      // 시트명 31자 제한
       let sheetName = `${u.subtypeLabel.replace(/\s+/g,'')}_${u.unitNum}호기`;
       if(sheetName.length > 31) sheetName = sheetName.substring(0, 31);
-      // 중복 방지
       let suffix = 1;
       let finalName = sheetName;
       while(wb.getWorksheet(finalName)){
@@ -1603,11 +1568,200 @@ async function exportToExcel(){
 
     hideLoading();
     showToast(`✅ 엑셀 파일 다운로드 완료 (${allUnits.length}개 호기)`);
-
   }catch(e){
     hideLoading();
     console.error(e);
-    alert('❌ 엑셀 내보내기 중 오류가 발생했습니다:\n\n' + (e.message || e));
+    alert('❌ 엑셀 내보내기 중 오류:\n\n' + (e.message || e));
+  }
+}
+
+// =====================================
+// 📄 PDF 내보내기 (화면 그대로)
+// =====================================
+function buildPDFContent(allUnits, projectInfo){
+  const zone = document.getElementById('pdfRenderZone');
+  let html = '';
+
+  // 표지 페이지
+  html += `<div class="pdf-page">`;
+  html += `<div class="pdf-title">📊 기계설비 노후화 진단 보고서</div>`;
+  html += `<div class="pdf-sub">Mechanical Facility Aging Diagnosis Report</div>`;
+  html += `<div class="pdf-meta">
+    <div class="lbl">프로젝트명</div><div class="val">${escapeHtml(projectInfo.projectName)||'-'}</div>
+    <div class="lbl">건물명</div><div class="val">${escapeHtml(projectInfo.buildingName)||'-'}</div>
+    <div class="lbl">과업 시작일</div><div class="val">${escapeHtml(projectInfo.projectStartDate)||'-'}</div>
+    <div class="lbl">점검 기간</div><div class="val">${escapeHtml(projectInfo.dateRange)||'-'}</div>
+    <div class="lbl">생성일시</div><div class="val">${new Date().toLocaleString('ko-KR')}</div>
+  </div>`;
+
+  // 종합 요약 표
+  html += `<div class="pdf-section-h">📊 냉열원 진단 종합 요약</div>`;
+  html += `<table class="pdf-table"><thead><tr>`;
+  html += `<th>종류</th><th>호기</th><th>상태</th>`;
+  turboDiagItems.forEach(it => html += `<th>${it.short}</th>`);
+  html += `<th>종합</th></tr></thead><tbody>`;
+  allUnits.forEach(u => {
+    html += `<tr>`;
+    html += `<td class="left">${escapeHtml(u.subtypeLabel)}</td>`;
+    html += `<td>${u.unitNum}호기</td>`;
+    html += `<td>${escapeHtml(u.statusText)}</td>`;
+    u.diagRates.forEach(r => {
+      const cls = r==='A'?'pdf-rate-A':r==='B'?'pdf-rate-B':r==='C'?'pdf-rate-C':'';
+      html += `<td class="${cls}">${r}</td>`;
+    });
+    const gcls = u.grade==='A'?'pdf-rate-A':u.grade==='B'?'pdf-rate-B':u.grade==='C'?'pdf-rate-C':'';
+    html += `<td class="${gcls}"><strong>${u.grade}</strong></td>`;
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+  html += `</div>`;
+
+  // 호기별 상세 페이지
+  allUnits.forEach(u => {
+    html += `<div class="pdf-page">`;
+    html += `<div class="pdf-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기</div>`;
+    html += `<div class="pdf-sub">상태: ${escapeHtml(u.statusText)}</div>`;
+
+    // 진단 체크리스트
+    html += `<div class="pdf-section-h">🔍 1차 진단 Check-list</div>`;
+    html += `<table class="pdf-table"><thead><tr>`;
+    html += `<th style="width:40px;">번호</th><th style="width:120px;">인자</th><th style="width:55px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
+    turboDiagItems.forEach((it, idx)=>{
+      const d = u.diag[it.key] || {};
+      const r = d.rate || '-';
+      const cls = r==='A'?'pdf-rate-A':r==='B'?'pdf-rate-B':r==='C'?'pdf-rate-C':'';
+      html += `<tr>`;
+      html += `<td>${idx+1}</td>`;
+      html += `<td class="left"><strong>${escapeHtml(it.factor)}</strong></td>`;
+      html += `<td class="${cls}"><strong>${r}</strong></td>`;
+      html += `<td class="left">${escapeHtml(d.content||'')}</td>`;
+      html += `<td>${escapeHtml(it.target)}</td>`;
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+
+    // 검토 의견
+    html += `<div class="pdf-section-h">📝 주요 검토 의견</div>`;
+    html += `<div class="pdf-opinion">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
+
+    // 사진 (사진 있는 것만)
+    const validPhotos = (u.photos||[]).map((p,i)=>({...p, idx:i})).filter(p=>p.img);
+    if(validPhotos.length > 0){
+      html += `<div class="pdf-section-h">📸 현장 사진</div>`;
+      html += `<div class="pdf-photo-grid">`;
+      validPhotos.forEach(p=>{
+        html += `<div class="pdf-photo">`;
+        html += `<div class="pdf-photo-desc">📷 사진${p.idx+1}: ${escapeHtml(p.desc)||'-'}</div>`;
+        html += `<img class="pdf-photo-img" src="${p.img}" alt="사진${p.idx+1}">`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  });
+
+  zone.innerHTML = html;
+}
+
+async function exportToPDF(){
+  if(typeof html2pdf === 'undefined'){
+    alert('PDF 라이브러리가 아직 로드되지 않았습니다.');
+    return;
+  }
+
+  const container = document.getElementById('coldSourceUnits');
+  if(!container || container.querySelectorAll('.card').length === 0){
+    alert('⚠️ 내보낼 냉열원 데이터가 없습니다.');
+    return;
+  }
+
+  showLoading('PDF 생성 준비 중...');
+
+  try{
+    const projectInfo = {
+      projectName: document.getElementById('projectName')?.value || '',
+      buildingName: document.getElementById('buildingName')?.value || '',
+      projectStartDate: document.getElementById('projectStartDate')?.value || '',
+      dateRange: document.getElementById('dateRange')?.value || ''
+    };
+
+    // 데이터 수집
+    const cards = Array.from(container.querySelectorAll('.card'));
+    const ordered = [];
+    subtypeMap.coldSource.forEach(st=>{
+      cards.forEach(card=>{
+        if(getUnitSubtype('coldSource', card.dataset.id) === st.key){
+          ordered.push({card, st});
+        }
+      });
+    });
+
+    const allUnits = [];
+    let counter = {};
+    ordered.forEach(({card, st})=>{
+      const id = card.dataset.id;
+      counter[st.key] = (counter[st.key]||0) + 1;
+      const unitNum = counter[st.key];
+      const diag = {};
+      turboDiagItems.forEach(item=>{
+        const baseKey = `coldSource_${id}_diag_${item.key}`;
+        const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
+        const contentEl = document.getElementById(`${baseKey}_content`);
+        diag[item.key] = { rate: rateEl ? rateEl.value : '', content: contentEl ? contentEl.value : '' };
+      });
+      let a=0,b=0,c=0;
+      Object.values(diag).forEach(d=>{ if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++; });
+      let grade='-';
+      if(a+b+c>0){ if(c>0)grade='C'; else if(b>0)grade='B'; else grade='A'; }
+      const photos = unitPhotos[`coldSource_${id}`] || [];
+      const opinion = document.getElementById(`coldSource_${id}_opinion`)?.value || '';
+      const status = getUnitStatus('coldSource', id);
+      allUnits.push({
+        id, subtypeLabel: st.label, unitNum,
+        diag, opinion, photos,
+        statusText: statusText(status),
+        diagRates: turboDiagItems.map(item => diag[item.key]?.rate || '-'),
+        grade
+      });
+    });
+
+    showLoading('PDF 콘텐츠 렌더링 중...');
+    buildPDFContent(allUnits, projectInfo);
+
+    // 잠시 대기 (이미지 로딩 시간)
+    await new Promise(r=>setTimeout(r, 500));
+
+    showLoading(`PDF 파일 변환 중...\n(${allUnits.length}개 호기, 시간이 걸릴 수 있습니다)`);
+
+    const safeName = (projectInfo.projectName || '냉동기진단').replace(/[\\/:*?"<>|]/g,'_');
+    const today = new Date().toISOString().slice(0,10);
+    
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `${safeName}_${today}.pdf`,
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: 794
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    };
+
+    await html2pdf().set(opt).from(document.getElementById('pdfRenderZone')).save();
+
+    // 클린업
+    document.getElementById('pdfRenderZone').innerHTML = '';
+
+    hideLoading();
+    showToast(`✅ PDF 다운로드 완료 (${allUnits.length}개 호기)`);
+  }catch(e){
+    hideLoading();
+    console.error(e);
+    alert('❌ PDF 내보내기 중 오류:\n\n' + (e.message || e));
   }
 }
 
@@ -1657,9 +1811,7 @@ function loadSummary(){
     if(preview.units){
       Object.keys(preview.units).forEach(type=>{
         preview.units[type].forEach(u=>{
-          if(u.photos){
-            u.photos = u.photos.map(p=> p && p.img ? {img:'[사진 데이터 생략]', desc:p.desc} : p);
-          }
+          if(u.photos){ u.photos = u.photos.map(p=> p && p.img ? {img:'[사진 데이터 생략]', desc:p.desc} : p); }
         });
       });
     }
