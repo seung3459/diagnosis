@@ -77,18 +77,18 @@ function exportToPDF(){
       bodyHTML += `<div class="unit-sub">상태: ${escapeHtml(u.statusText)} | 종합 등급: <strong class="grade-${u.grade}">${u.grade}${scoreInfo}</strong></div>`;
 
       bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
-      bodyHTML += `<table class="data-table"><thead><tr>`;
-      bodyHTML += `<th style="width:40px;">번호</th><th style="width:160px;">인자 (가중치)</th><th style="width:55px;">평가</th><th>주요 내용</th><th style="width:100px;">조사 대상</th></tr></thead><tbody>`;
+      bodyHTML += `<table class="data-table check-table"><thead><tr>`;
+      bodyHTML += `<th style="width:36px;">번호</th><th style="width:175px;">인자 (가중치)</th><th style="width:50px;">평가</th><th>주요 내용</th><th style="width:95px;">조사 대상</th></tr></thead><tbody>`;
       turboDiagItems.forEach((it, idx)=>{
         const d = u.diag[it.key] || {};
         const r = d.rate || '-';
         const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
         bodyHTML += `<tr>`;
         bodyHTML += `<td>${idx+1}</td>`;
-        bodyHTML += `<td class="left"><strong>${escapeHtml(it.factor)}</strong> <span style="color:#6b7280;font-size:10px;">(${Math.round(it.weight*100)}%)</span></td>`;
+        bodyHTML += `<td class="left factor-cell"><strong>${escapeHtml(it.factor)}</strong> <span class="weight-tag">(${Math.round(it.weight*100)}%)</span></td>`;
         bodyHTML += `<td class="${cls}"><strong>${r}</strong></td>`;
         bodyHTML += `<td class="left">${escapeHtml(d.content||'')}</td>`;
-        bodyHTML += `<td>${escapeHtml(it.target)}</td>`;
+        bodyHTML += `<td class="target-cell">${escapeHtml(it.target)}</td>`;
         bodyHTML += `</tr>`;
       });
       bodyHTML += `</tbody></table>`;
@@ -147,6 +147,16 @@ function exportToPDF(){
   .data-table th { background: #f3f4f6; font-weight: 700; color: #111827; }
   .data-table th small { font-weight: 500; color: #6b7280; font-size: 9px; }
   .data-table td.left { text-align: left; }
+
+  /* 진단 체크리스트 표 (한 줄에 들어가도록 조정) */
+  .check-table { font-size: 10.5px; letter-spacing: -0.2px; }
+  .check-table th, .check-table td { padding: 5px 7px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .check-table td.left { white-space: normal; word-break: keep-all; }
+  .check-table .factor-cell { white-space: nowrap; font-size: 10.5px; letter-spacing: -0.3px; }
+  .check-table .factor-cell strong { font-size: 10.5px; }
+  .check-table .weight-tag { color: #6b7280; font-size: 9.5px; font-weight: 500; letter-spacing: 0; }
+  .check-table .target-cell { font-size: 10px; letter-spacing: -0.3px; color: #4b5563; line-height: 1.35; }
+
   .rate-A { background: #d1fae5; color: #059669; font-weight: 700; }
   .rate-B { background: #fed7aa; color: #d97706; font-weight: 700; }
   .rate-C { background: #fecaca; color: #dc2626; font-weight: 700; }
