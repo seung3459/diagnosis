@@ -3,6 +3,7 @@
 // =====================================
 
 window.onload = function(){
+  // 저장된 데이터 불러오기
   const raw = localStorage.getItem('facilityReport');
   let data = {};
   try { data = raw ? JSON.parse(raw) : {}; } catch(e){ data = {}; }
@@ -47,4 +48,7 @@ window.onload = function(){
   
   // 캘린더 렌더링
   renderCalendar();
+  
+  // 시작 화면 표시
+  showStartView();
 };
