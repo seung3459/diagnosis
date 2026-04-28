@@ -56,7 +56,8 @@ function renderProjectsTable(){
         <td class="project-name-cell">${escapeHtml(p.name)}</td>
         <td class="note-cell">${escapeHtml(p.note) || '-'}</td>
         <td class="project-action">
-          <button onclick="event.stopPropagation();deleteProject(${idx})" title="삭제">🗑️</button>
+          <button class="action-edit" onclick="event.stopPropagation();editProject(${idx})" title="수정">✏️</button>
+          <button class="action-delete" onclick="event.stopPropagation();deleteProject(${idx})" title="삭제">🗑️</button>
         </td>
       </tr>
     `;
@@ -71,7 +72,7 @@ function selectProject(idx){
   
   currentProject = project;
   
-  // 프로젝트명 자동 입력
+  // 프로젝트명 자동 입력 (비어있을 때만)
   const projectNameEl = document.getElementById('projectName');
   if(projectNameEl && !projectNameEl.value){
     projectNameEl.value = project.name;
@@ -85,12 +86,21 @@ function selectProject(idx){
 // 새 프로젝트 추가 (간단한 prompt)
 function addProjectPrompt(){
   const year = prompt('연도를 입력하세요 (예: 2026)', new Date().getFullYear());
-  if(!year) return;
+  if(year === null) return;
+  if(!year.trim()){
+    showToast('❌ 연도를 입력해주세요');
+    return;
+  }
   
   const name = prompt('프로젝트명을 입력하세요');
-  if(!name || !name.trim()) return;
+  if(name === null) return;
+  if(!name.trim()){
+    showToast('❌ 프로젝트명을 입력해주세요');
+    return;
+  }
   
   const note = prompt('비고 (선택사항, 없으면 그냥 확인)') || '';
+  if(note === null) return;
   
   projectsList.push({
     year: year.trim(),
@@ -101,6 +111,39 @@ function addProjectPrompt(){
   saveProjectsList();
   renderProjectsTable();
   showToast(`✅ "${name}" 프로젝트 추가됨`);
+}
+
+// 🆕 프로젝트 수정
+function editProject(idx){
+  const project = projectsList[idx];
+  if(!project) return;
+  
+  // 1단계: 프로젝트명 수정
+  const newName = prompt('📝 프로젝트명을 수정하세요', project.name);
+  if(newName === null) return; // 취소
+  if(!newName.trim()){
+    showToast('❌ 프로젝트명은 비울 수 없습니다');
+    return;
+  }
+  
+  // 2단계: 연도 수정
+  const newYear = prompt('📅 연도를 수정하세요', project.year);
+  if(newYear === null) return;
+  
+  // 3단계: 비고 수정
+  const newNote = prompt('📌 비고를 수정하세요 (선택사항)', project.note || '');
+  if(newNote === null) return;
+  
+  // 변경사항 적용
+  projectsList[idx] = {
+    year: newYear.trim() || project.year,
+    name: newName.trim(),
+    note: newNote.trim()
+  };
+  
+  saveProjectsList();
+  renderProjectsTable();
+  showToast(`✅ "${newName}" 수정 완료`);
 }
 
 // 프로젝트 삭제
