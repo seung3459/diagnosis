@@ -17,6 +17,7 @@
   <button onclick="manualSave()">💾 저장</button>
   <button class="export-btn" onclick="exportToExcel()">📊 엑셀</button>
   <button class="pdf-btn" onclick="exportToPDF()">📄 PDF</button>
+  <div id="authStatus" class="auth-status"></div>
 </div>
 
 <!-- 인트로 페이지 -->
@@ -234,6 +235,46 @@
   </div>
 </div>
 
+<!-- 🆕 GitHub Token 로그인 모달 -->
+<div class="modal-backdrop" id="tokenModal">
+  <div class="modal token-modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🔐 GitHub 로그인</h3>
+    </div>
+    <div class="modal-body">
+      <div class="token-info">
+        <p><strong>📁 저장소:</strong> github.com/seung3459/diagnosis</p>
+        <p><strong>👥 편집 권한:</strong> seung3459, eedhals</p>
+        <p style="color:#6b7280;font-size:12px;margin-top:8px;">※ 다른 ID로 로그인 시 읽기 전용으로 표시됩니다.</p>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">🔑 Personal Access Token <span class="required">*</span></label>
+        <input type="password" id="tokenInput" class="form-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+        <div class="form-hint">GitHub 계정의 Personal Access Token을 입력하세요</div>
+      </div>
+      
+      <div id="tokenError" class="token-error" style="display:none;"></div>
+      
+      <details class="token-help">
+        <summary>📖 토큰이 없으신가요? (클릭하여 발급 방법 보기)</summary>
+        <ol class="token-help-list">
+          <li>GitHub.com 로그인</li>
+          <li>우측 상단 프로필 → <strong>Settings</strong></li>
+          <li>좌측 맨 아래 → <strong>Developer settings</strong></li>
+          <li><strong>Personal access tokens → Tokens (classic)</strong></li>
+          <li><strong>Generate new token (classic)</strong></li>
+          <li>권한: <strong>☑ repo</strong> 만 체크</li>
+          <li>Generate → 토큰 복사 (ghp_xxx...)</li>
+        </ol>
+      </details>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="tokenSubmitBtn" onclick="submitToken()" style="width:100%;">🔓 로그인</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="confirmModal" onclick="closeConfirmModal(event)">
   <div class="modal confirm-modal" onclick="event.stopPropagation()">
     <div class="confirm-body">
@@ -271,6 +312,9 @@
 <script src="js/modal.js"></script>
 <script src="js/card.js"></script>
 <script src="js/summary.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/github-api.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/projects.js"></script>
 <script src="js/excel-export.js"></script>
