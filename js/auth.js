@@ -1,64 +1,95 @@
 // =====================================
-// 🔐 인증 및 권한 관리 (ID/PW 방식)
+// 🔐 토큰 입력 방식 인증
 // =====================================
-
-const USER_STORAGE_KEY = 'app_user_info';
 
 let currentUser = null;
 let isAuthenticated = false;
-let canEdit = false;
 
 // =====================================
-// 사용자 정보 저장/조회
+// 토큰 모달 표시
 // =====================================
 
-function getStoredUser(){
-  try{
-    const stored = localStorage.getItem(USER_STORAGE_KEY);
-    if(!stored) return null;
-    return JSON.parse(stored);
-  } catch(e){
-    return null;
-  }
-}
-
-function setStoredUser(user){
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-}
-
-function clearStoredUser(){
-  localStorage.removeItem(USER_STORAGE_KEY);
-  currentUser = null;
-  isAuthenticated = false;
-  canEdit = false;
-}
-
-// =====================================
-// ID/PW 검증
-// =====================================
-
-function authenticateWithCredentials(id, pw){
-  const account = GITHUB_CONFIG.accounts.find(a => a.id === id && a.pw === pw);
+function showTokenModal(errorMsg){
+  const modal = document.getElementById('loginModal');
+  if(!modal) return;
   
-  if(!account){
-    return { success: false, reason: 'invalid_credentials' };
+  const errEl = document.getElementById('loginError');
+  if(errorMsg && errEl){
+    errEl.textContent = errorMsg;
+    errEl.style.display = 'block';
+  } else if(errEl){
+    errEl.style.display = 'none';
   }
   
-  currentUser = {
-    id: account.id,
-    displayName: account.displayName,
-    canEdit: account.canEdit,
-    loginAt: new Date().toISOString()
-  };
+  const input = document.getElementById('tokenInput');
+  if(input) input.value = '';
   
+  modal.classList.add('active');
+  setTimeout(() => input?.focus(), 100);
+}
+
+function showLoginModal(errorMsg){ showTokenModal(errorMsg); }
+
+function closeTokenModal(){
+  document.getElementById('loginModal')?.classList.remove('active');
+}
+
+// =====================================
+// 토큰 제출
+// =====================================
+
+async function submitToken(){
+  const input = document.getElementById('tokenInput');
+  const errEl = document.getElementById('loginError');
+  const token = input.value.trim();
+  
+  if(!token){
+    errEl.textContent = '❌ 토큰을 입력해주세요';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  if(!token.startsWith('ghp_') && !token.startsWith('github_pat_')){
+    errEl.textContent = '❌ 유효한 GitHub Token 형식이 아닙니다';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  if(typeof showLoading === 'function') showLoading('토큰 검증 중...');
+  
+  const result = await verifyToken(token);
+  
+  if(typeof hideLoading === 'function') hideLoading();
+  
+  if(!result.valid){
+    errEl.textContent = `❌ 토큰이 유효하지 않습니다 (${result.status || result.error})`;
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  // 토큰 저장
+  setStoredToken(token);
+  currentUser = result.user;
   isAuthenticated = true;
-  canEdit = account.canEdit;
   
-  setStoredUser(currentUser);
+  closeTokenModal();
   
-  console.log(`✅ 로그인 성공: ${currentUser.id} (편집권한: ${canEdit ? '있음' : '없음'})`);
-  return { success: true, user: currentUser };
+  if(typeof showToast === 'function'){
+    showToast(`✅ 환영합니다, ${result.user.login}님!`);
+  }
+  
+  updateAuthUI();
+  
+  // 프로젝트 로드
+  if(typeof loadProjectsList === 'function'){
+    await loadProjectsList();
+    if(typeof renderProjectsTable === 'function'){
+      renderProjectsTable();
+    }
+  }
 }
+
+function submitLogin(){ submitToken(); }
 
 // =====================================
 // 로그아웃
@@ -66,87 +97,15 @@ function authenticateWithCredentials(id, pw){
 
 function logout(){
   if(!confirm('로그아웃하시겠습니까?')) return;
-  
-  clearStoredUser();
-  showToast('✅ 로그아웃 완료');
-  setTimeout(() => location.reload(), 500);
+  clearStoredToken();
+  currentUser = null;
+  isAuthenticated = false;
+  if(typeof showToast === 'function') showToast('✅ 로그아웃 완료');
+  setTimeout(() => location.reload(), 800);
 }
 
 // =====================================
-// 로그인 모달
-// =====================================
-
-function showLoginModal(errorMsg){
-  const modal = document.getElementById('loginModal');
-  if(!modal) return;
-  
-  const errEl = document.getElementById('loginError');
-  if(errorMsg){
-    errEl.textContent = `❌ ${errorMsg}`;
-    errEl.style.display = 'block';
-  } else {
-    errEl.style.display = 'none';
-  }
-  
-  document.getElementById('loginId').value = '';
-  document.getElementById('loginPw').value = '';
-  modal.classList.add('active');
-  setTimeout(() => document.getElementById('loginId').focus(), 100);
-}
-
-// 토큰 모달과의 호환을 위해 별칭
-function showTokenModal(errorMsg){
-  showLoginModal(errorMsg);
-}
-
-function closeLoginModal(){
-  document.getElementById('loginModal').classList.remove('active');
-}
-
-function submitLogin(){
-  const idInput = document.getElementById('loginId');
-  const pwInput = document.getElementById('loginPw');
-  const errEl = document.getElementById('loginError');
-  
-  const id = idInput.value.trim();
-  const pw = pwInput.value.trim();
-  
-  if(!id || !pw){
-    errEl.textContent = '❌ ID와 비밀번호를 모두 입력해주세요';
-    errEl.style.display = 'block';
-    return;
-  }
-  
-  const result = authenticateWithCredentials(id, pw);
-  
-  if(result.success){
-    closeLoginModal();
-    
-    if(result.user.canEdit){
-      showToast(`✅ 환영합니다, ${result.user.displayName}님! (편집 가능)`);
-    } else {
-      showToast(`👀 ${result.user.displayName}로 로그인되었습니다`);
-    }
-    
-    updateAuthUI();
-    
-    if(typeof loadProjectsList === 'function'){
-      loadProjectsList().then(() => {
-        if(typeof renderProjectsTable === 'function'){
-          renderProjectsTable();
-        }
-      });
-    }
-  } else {
-    errEl.textContent = '❌ ID 또는 비밀번호가 올바르지 않습니다';
-    errEl.style.display = 'block';
-    pwInput.value = '';
-    pwInput.focus();
-  }
-}
-
-// =====================================
-// 인증 UI 업데이트
+// UI 업데이트
 // =====================================
 
 function updateAuthUI(){
@@ -154,69 +113,44 @@ function updateAuthUI(){
   if(!authStatus) return;
   
   if(isAuthenticated && currentUser){
-    const editBadge = canEdit 
-      ? '<span class="auth-edit">✏️ 편집</span>' 
-      : '<span class="auth-readonly">👀 읽기</span>';
-    
     authStatus.innerHTML = `
-      <span class="auth-icon">${canEdit ? '👤' : '👁️'}</span>
-      <span class="auth-login">${currentUser.displayName}</span>
-      ${editBadge}
+      <img src="${currentUser.avatar_url}" class="auth-avatar" alt="">
+      <span class="auth-login">${currentUser.login}</span>
+      <span class="auth-edit">✏️ 편집</span>
       <button class="auth-logout" onclick="logout()" title="로그아웃">🚪</button>
     `;
     authStatus.style.display = 'flex';
   } else {
-    authStatus.innerHTML = `
-      <button class="auth-login-btn" onclick="showLoginModal()">🔐 로그인</button>
-    `;
+    authStatus.innerHTML = `<button class="auth-login-btn" onclick="showTokenModal()">🔐 로그인</button>`;
     authStatus.style.display = 'flex';
-  }
-  
-  // 편집 권한에 따라 저장 버튼 활성/비활성
-  const saveBtn = document.querySelector('.topbar button[onclick="manualSave()"]');
-  if(saveBtn){
-    if(canEdit){
-      saveBtn.disabled = false;
-      saveBtn.style.opacity = '1';
-      saveBtn.title = 'GitHub에 저장';
-    } else {
-      saveBtn.disabled = !isAuthenticated ? false : true;
-      saveBtn.style.opacity = !isAuthenticated ? '1' : '0.4';
-      saveBtn.title = isAuthenticated ? '편집 권한이 없습니다' : '로그인 필요';
-    }
   }
 }
 
 // =====================================
-// 페이지 로드 시 자동 인증
+// 자동 인증 (저장된 토큰)
 // =====================================
 
 async function initAuth(){
-  const stored = getStoredUser();
+  const token = getStoredToken();
   
-  if(!stored){
-    showLoginModal();
+  if(!token){
+    showTokenModal();
     return false;
   }
   
-  // 저장된 사용자 정보 복원 + 검증
-  const account = GITHUB_CONFIG.accounts.find(a => a.id === stored.id);
-  if(!account){
-    clearStoredUser();
-    showLoginModal('계정 정보가 변경되었습니다. 다시 로그인해주세요.');
+  const result = await verifyToken(token);
+  
+  if(!result.valid){
+    clearStoredToken();
+    showTokenModal('저장된 토큰이 만료되었습니다. 다시 입력해주세요.');
     return false;
   }
   
-  currentUser = {
-    id: account.id,
-    displayName: account.displayName,
-    canEdit: account.canEdit,
-    loginAt: stored.loginAt
-  };
+  currentUser = result.user;
   isAuthenticated = true;
-  canEdit = account.canEdit;
-  
-  console.log(`✅ 자동 로그인: ${currentUser.id}`);
   updateAuthUI();
   return true;
 }
+
+// 호환을 위한 변수 (canEdit 항상 true)
+let canEdit = true;
