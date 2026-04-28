@@ -3,12 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>기계설비 노후화 진단 어플리케이션</title>
-<!-- ExcelJS: 양식 보존 + 이미지 임베드 -->
+<!-- ExcelJS: 엑셀 생성 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <!-- FileSaver: 다운로드 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<!-- html2pdf: PDF 내보내기 -->
-<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <style>
   body{font-family:'Pretendard','Malgun Gothic',sans-serif;margin:0;background:#eef2f7;}
   .topbar{background:#1f2937;padding:12px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:center;flex-wrap:wrap;gap:6px;}
@@ -290,32 +288,6 @@
   .spinner{width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .loading-text{font-size:14px;font-weight:700;color:#1f2937;white-space:pre-line;}
-
-  /* PDF 캡처용 영역 (오프스크린) */
-  .pdf-render-zone{position:absolute;left:0;top:0;width:794px;background:#fff;padding:30px;font-family:'Pretendard','Malgun Gothic',sans-serif;opacity:0;pointer-events:none;z-index:-1;}
-  .pdf-render-zone.show{opacity:1;z-index:9999;}
-  .pdf-render-zone .pdf-page{page-break-after:always;background:#fff;}
-  .pdf-render-zone .pdf-page:last-child{page-break-after:auto;}
-  .pdf-title{font-size:22px;font-weight:800;color:#1f2937;margin-bottom:6px;}
-  .pdf-sub{font-size:13px;color:#6b7280;margin-bottom:20px;}
-  .pdf-meta{display:grid;grid-template-columns:120px 1fr;gap:0;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:18px;}
-  .pdf-meta .lbl{background:#f3f4f6;padding:8px 12px;font-weight:700;font-size:12px;color:#374151;border-bottom:1px solid #e5e7eb;}
-  .pdf-meta .val{padding:8px 12px;font-size:12px;color:#111827;border-bottom:1px solid #e5e7eb;}
-  .pdf-meta div:nth-last-child(-n+2){border-bottom:none;}
-  .pdf-section-h{background:#1f2937;color:#fff;padding:8px 12px;font-size:13px;font-weight:700;border-radius:6px 6px 0 0;}
-  .pdf-table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 6px 6px;overflow:hidden;margin-bottom:18px;}
-  .pdf-table th,.pdf-table td{border:1px solid #e5e7eb;padding:6px 8px;text-align:center;vertical-align:middle;}
-  .pdf-table th{background:#f3f4f6;font-weight:700;color:#111827;}
-  .pdf-table td.left{text-align:left;}
-  .pdf-rate-A{background:#d1fae5;color:#059669;font-weight:700;}
-  .pdf-rate-B{background:#fed7aa;color:#d97706;font-weight:700;}
-  .pdf-rate-C{background:#fecaca;color:#dc2626;font-weight:700;}
-  .pdf-opinion{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;font-size:12px;color:#111827;line-height:1.6;min-height:60px;margin-bottom:18px;white-space:pre-wrap;}
-  .pdf-photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-  .pdf-photo{border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;background:#fff;}
-  .pdf-photo .pdf-photo-desc{background:#eff6ff;color:#1e40AF;padding:6px 8px;font-size:11px;font-weight:700;border-bottom:1px solid #e5e7eb;}
-  .pdf-photo .pdf-photo-img{width:100%;height:230px;object-fit:cover;display:block;background:#f3f4f6;}
-  .pdf-photo .pdf-photo-empty{width:100%;height:230px;display:flex;align-items:center;justify-content:center;background:#f9fafb;color:#9ca3af;font-size:12px;}
 </style>
 </head>
 <body>
@@ -426,10 +398,13 @@
 
 <div id="result" class="page">
   <div class="diag-page">
-  <button class="btn" onclick="loadSummary()">저장 데이터 보기</button>
-  <button class="btn" style="background:#059669;" onclick="exportToExcel()">📊 엑셀 내보내기</button>
-  <button class="btn" style="background:#dc2626;" onclick="exportToPDF()">📄 PDF 내보내기</button>
-  <pre id="summaryBox"></pre>
+  <h2 style="margin-top:0;">📊 종합 결과</h2>
+  <div style="margin-bottom:20px;">
+    <button class="btn" onclick="loadSummary()">저장 데이터 보기</button>
+    <button class="btn" style="background:#059669;" onclick="exportToExcel()">📊 엑셀 내보내기</button>
+    <button class="btn" style="background:#dc2626;" onclick="exportToPDF()">📄 PDF 내보내기</button>
+  </div>
+  <pre id="summaryBox">[저장 데이터 보기] 버튼을 클릭하세요</pre>
   </div>
 </div>
 
@@ -471,31 +446,14 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- PDF 렌더링 영역 (오프스크린) -->
-<div class="pdf-render-zone" id="pdfRenderZone"></div>
-
 <script>
 const PHOTO_COUNT = 8;
 const PHOTO_MAX_SIZE = 1200;
 const PHOTO_QUALITY = 0.75;
 
-// 엑셀 양식 경로
-const TEMPLATE_PATH = {
-  turbo: 'templates/turbo_template.xlsx'
-};
-
-// 새 양식의 사진 위치 (br 좌표 사용 → 셀 영역에 정확히 맞춤)
-// ExcelJS 0-indexed: A=0, 1행=0
-const PHOTO_POSITIONS = [
-  { tl: {col:8,  row:4 }, br: {col:15, row:11} }, // 사진1: I5~O11
-  { tl: {col:15, row:4 }, br: {col:22, row:11} }, // 사진2: P5~V11
-  { tl: {col:8,  row:12}, br: {col:15, row:19} }, // 사진3: I13~O19
-  { tl: {col:15, row:12}, br: {col:22, row:19} }, // 사진4: P13~V19
-  { tl: {col:8,  row:20}, br: {col:15, row:27} }, // 사진5: I21~O27
-  { tl: {col:15, row:20}, br: {col:22, row:27} }, // 사진6: P21~V27
-  { tl: {col:8,  row:28}, br: {col:15, row:35} }, // 사진7: I29~O35
-  { tl: {col:15, row:28}, br: {col:22, row:35} }  // 사진8: P29~V35
-];
+// 엑셀 사진 통일 크기 (픽셀)
+const EXCEL_PHOTO_W = 350;
+const EXCEL_PHOTO_H = 230;
 
 const fieldConfig = {
   coldSource:['입구온도','출구온도','유량','전류'],
@@ -1230,8 +1188,25 @@ function saveData(){
   localStorage.setItem('facilityReport', JSON.stringify(data));
 }
 
+function loadSummary(){
+  const raw = localStorage.getItem('facilityReport');
+  if(!raw){ document.getElementById('summaryBox').textContent = '저장된 데이터 없음'; return; }
+  try{
+    const data = JSON.parse(raw);
+    const preview = JSON.parse(JSON.stringify(data));
+    if(preview.units){
+      Object.keys(preview.units).forEach(type=>{
+        preview.units[type].forEach(u=>{
+          if(u.photos){ u.photos = u.photos.map(p=> p && p.img ? {img:'[사진 데이터 생략]', desc:p.desc} : p); }
+        });
+      });
+    }
+    document.getElementById('summaryBox').textContent = JSON.stringify(preview, null, 2);
+  } catch(e){ document.getElementById('summaryBox').textContent = raw; }
+}
+
 // =====================================
-// 📊 엑셀 내보내기 (양식 기반 + 이미지 임베드)
+// 📊 엑셀 내보내기 (코드로 직접 생성)
 // =====================================
 function dataURLToArrayBuffer(dataURL){
   const base64 = dataURL.split(',')[1];
@@ -1241,120 +1216,61 @@ function dataURLToArrayBuffer(dataURL){
   return bytes.buffer;
 }
 
-async function cloneTemplateSheet(templateBuffer, targetWb, newSheetName){
-  const tempWb = new ExcelJS.Workbook();
-  await tempWb.xlsx.load(templateBuffer);
-  const srcWs = tempWb.worksheets[0];
+function collectColdSourceData(){
+  const container = document.getElementById('coldSourceUnits');
+  if(!container || container.querySelectorAll('.card').length === 0) return null;
 
-  const newWs = targetWb.addWorksheet(newSheetName, {
-    properties: {...srcWs.properties},
-    pageSetup: srcWs.pageSetup ? {...srcWs.pageSetup} : undefined,
-    views: srcWs.views ? srcWs.views.map(v=>({...v})) : undefined
-  });
-
-  if(srcWs.columns){
-    srcWs.columns.forEach((col, i) => {
-      if(col && col.width) newWs.getColumn(i+1).width = col.width;
-    });
-  }
-
-  srcWs.eachRow({includeEmpty:true}, (row, rowNum) => {
-    const newRow = newWs.getRow(rowNum);
-    if(row.height) newRow.height = row.height;
-    row.eachCell({includeEmpty:true}, (cell, colNum) => {
-      const newCell = newRow.getCell(colNum);
-      newCell.value = cell.value;
-      if(cell.style){
-        try { newCell.style = JSON.parse(JSON.stringify(cell.style)); } catch(e){}
-      }
-    });
-    newRow.commit();
-  });
-
-  if(srcWs._merges){
-    Object.keys(srcWs._merges).forEach(key => {
-      const m = srcWs._merges[key];
-      if(m && m.model){
-        try{
-          newWs.mergeCells(m.model.top, m.model.left, m.model.bottom, m.model.right);
-        }catch(e){}
-      }
-    });
-  }
-
-  return newWs;
-}
-
-function fillUnitSheet(ws, wb, info){
-  const { subtypeLabel, unitNum, projectName, photos, diag, opinion } = info;
-
-  const replacements = {
-    '{{종류}}': subtypeLabel,
-    '{{호기}}': `${unitNum}호기`,
-    '{{프로젝트명}}': projectName || '',
-    '{{주요 검토 의견}}': opinion || '',
-    '{{사용연수 평가}}': diag.usage_years?.rate || '',
-    '{{사용연수 주요내용}}': diag.usage_years?.content || '',
-    '{{보수이력 평가}}': diag.maint_history?.rate || '',
-    '{{보수이력 주요내용}}': diag.maint_history?.content || '',
-    '{{점검 상태 평가}}': diag.inspection_state?.rate || '',
-    '{{점검 상태 주요내용}}': diag.inspection_state?.content || '',
-    '{{설치 환경 평가}}': diag.install_env?.rate || '',
-    '{{설치 환경 주요내용}}': diag.install_env?.content || '',
-    '{{외관 평가}}': diag.appearance?.rate || '',
-    '{{외관 주요내용}}': diag.appearance?.content || '',
-    '{{온도 계측 평가}}': diag.temp_measure?.rate || '',
-    '{{온도 계측 주요내용}}': diag.temp_measure?.content || '',
-    '{{주위배관 및 연결부 평가}}': diag.piping_conn?.rate || '',
-    '{{주위배관 및 연결부 주요내용}}': diag.piping_conn?.content || '',
-    '{{MCC 및 현장 패널 평가}}': diag.mcc_panel?.rate || '',
-    '{{MCC 및 현장 패널 주요내용}}': diag.mcc_panel?.content || ''
+  const projectInfo = {
+    projectName: document.getElementById('projectName')?.value || '',
+    buildingName: document.getElementById('buildingName')?.value || '',
+    projectStartDate: document.getElementById('projectStartDate')?.value || '',
+    dateRange: document.getElementById('dateRange')?.value || ''
   };
 
-  photos.forEach((p, idx) => {
-    replacements[`{{사진 ${idx+1} 설명}}`] = p?.desc || `사진 ${idx+1}`;
-  });
-
-  ws.eachRow({includeEmpty:false}, (row) => {
-    row.eachCell({includeEmpty:false}, (cell) => {
-      let val = cell.value;
-      if(val && typeof val === 'object' && val.richText){
-        let combined = val.richText.map(r=>r.text).join('');
-        let replaced = combined;
-        Object.keys(replacements).forEach(ph => {
-          if(replaced.includes(ph)){ replaced = replaced.split(ph).join(replacements[ph]); }
-        });
-        if(replaced !== combined) cell.value = replaced;
-        return;
+  const cards = Array.from(container.querySelectorAll('.card'));
+  const ordered = [];
+  subtypeMap.coldSource.forEach(st=>{
+    cards.forEach(card=>{
+      if(getUnitSubtype('coldSource', card.dataset.id) === st.key){
+        ordered.push({card, st});
       }
-      if(typeof val !== 'string') return;
-      let v = val;
-      Object.keys(replacements).forEach(ph => {
-        if(v.includes(ph)){ v = v.split(ph).join(replacements[ph]); }
-      });
-      if(v !== val) cell.value = v;
     });
   });
 
-  // 이미지 임베드 - br 좌표 사용으로 셀 영역에 정확히 맞춤
-  for(let i=0; i<PHOTO_POSITIONS.length; i++){
-    const pos = PHOTO_POSITIONS[i];
-    const photo = photos[i];
-    if(!photo || !photo.img) continue;
-    try{
-      const imgId = wb.addImage({
-        buffer: dataURLToArrayBuffer(photo.img),
-        extension: 'jpeg'
-      });
-      ws.addImage(imgId, {
-        tl: pos.tl,
-        br: pos.br,        // ← br 좌표로 셀 영역에 정확히 맞춤!
-        editAs: 'oneCell'
-      });
-    }catch(e){
-      console.error(`이미지 ${i+1} 임베드 실패:`, e);
-    }
-  }
+  const allUnits = [];
+  let counter = {};
+  ordered.forEach(({card, st})=>{
+    const id = card.dataset.id;
+    counter[st.key] = (counter[st.key]||0) + 1;
+    const unitNum = counter[st.key];
+
+    const diag = {};
+    turboDiagItems.forEach(item=>{
+      const baseKey = `coldSource_${id}_diag_${item.key}`;
+      const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
+      const contentEl = document.getElementById(`${baseKey}_content`);
+      diag[item.key] = { rate: rateEl ? rateEl.value : '', content: contentEl ? contentEl.value : '' };
+    });
+
+    let a=0,b=0,c=0;
+    Object.values(diag).forEach(d=>{ if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++; });
+    let grade='-';
+    if(a+b+c>0){ if(c>0)grade='C'; else if(b>0)grade='B'; else grade='A'; }
+
+    const photos = unitPhotos[`coldSource_${id}`] || new Array(PHOTO_COUNT).fill(null).map(()=>({img:null,desc:''}));
+    const opinion = document.getElementById(`coldSource_${id}_opinion`)?.value || '';
+    const status = getUnitStatus('coldSource', id);
+
+    allUnits.push({
+      id, st, subtypeLabel: st.label, unitNum,
+      diag, opinion, photos,
+      statusText: statusText(status),
+      diagRates: turboDiagItems.map(item => diag[item.key]?.rate || '-'),
+      grade
+    });
+  });
+
+  return { projectInfo, allUnits };
 }
 
 function buildSummarySheet(wb, projectInfo, allUnits){
@@ -1459,88 +1375,272 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   });
 }
 
+function buildUnitSheet(wb, sheetName, u, projectInfo){
+  const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: false }] });
+
+  // 컬럼 너비 (A~V 22개)
+  const colWidths = [3.5, 14, 7, 30, 12, 14, 12, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13];
+  colWidths.forEach((w, i) => ws.getColumn(i+1).width = w);
+
+  const thinBorder = { style:'thin', color:{argb:'FFCBD5E1'} };
+  const border = { top:thinBorder, bottom:thinBorder, left:thinBorder, right:thinBorder };
+
+  // ========== 제목 ==========
+  ws.mergeCells('A1:V2');
+  const title = ws.getCell('A1');
+  title.value = `🔍 1차 진단 Check : ${u.subtypeLabel} - ${u.unitNum}호기`;
+  title.font = { name:'맑은 고딕', size:18, bold:true, color:{argb:'FFFFFFFF'} };
+  title.alignment = { vertical:'middle', horizontal:'center' };
+  title.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
+  ws.getRow(1).height = 28;
+  ws.getRow(2).height = 28;
+
+  // ========== 좌측 정보 박스 (A4~G7) ==========
+  const infoStartRow = 4;
+  const infoData = [
+    ['프로젝트명', projectInfo.projectName || '-'],
+    ['장비명', `${u.subtypeLabel} - ${u.unitNum}호기`],
+    ['장비번호', `${u.unitNum}호기`],
+    ['상태', u.statusText]
+  ];
+  infoData.forEach((row, i) => {
+    const r = infoStartRow + i;
+    ws.mergeCells(`A${r}:B${r}`);
+    ws.mergeCells(`C${r}:G${r}`);
+    const labelCell = ws.getCell(`A${r}`);
+    labelCell.value = row[0];
+    labelCell.font = { name:'맑은 고딕', bold:true, size:11, color:{argb:'FF374151'} };
+    labelCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF3F4F6'} };
+    labelCell.alignment = { vertical:'middle', horizontal:'center' };
+    labelCell.border = border;
+    const valCell = ws.getCell(`C${r}`);
+    valCell.value = row[1];
+    valCell.font = { name:'맑은 고딕', size:11 };
+    valCell.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+    valCell.border = border;
+    ws.getRow(r).height = 22;
+  });
+
+  // ========== 우측 사진 영역 헤더 (I4) ==========
+  ws.mergeCells('I4:V4');
+  const photoTitle = ws.getCell('I4');
+  photoTitle.value = '📸 현장 사진';
+  photoTitle.font = { name:'맑은 고딕', bold:true, size:13, color:{argb:'FFFFFFFF'} };
+  photoTitle.alignment = { vertical:'middle', horizontal:'center' };
+  photoTitle.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
+  ws.getRow(4).height = 24;
+
+  // ========== 사진 영역 (4개씩 2열로 배치) ==========
+  const photoLayout = [
+    { descRow: 5,  imgStartRow: 6,  leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' },
+    { descRow: 13, imgStartRow: 14, leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' },
+    { descRow: 21, imgStartRow: 22, leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' },
+    { descRow: 29, imgStartRow: 30, leftCol: 'I', leftEnd: 'O', rightCol: 'P', rightEnd: 'V' }
+  ];
+
+  photoLayout.forEach((layout, layoutIdx) => {
+    const photoIdxLeft = layoutIdx * 2;
+    const photoIdxRight = layoutIdx * 2 + 1;
+
+    // 좌측 사진 설명
+    ws.mergeCells(`${layout.leftCol}${layout.descRow}:${layout.leftEnd}${layout.descRow}`);
+    const leftDesc = ws.getCell(`${layout.leftCol}${layout.descRow}`);
+    leftDesc.value = `📷 사진${photoIdxLeft+1}: ${u.photos[photoIdxLeft]?.desc || ''}`;
+    leftDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
+    leftDesc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
+    leftDesc.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+    leftDesc.border = border;
+
+    // 우측 사진 설명
+    ws.mergeCells(`${layout.rightCol}${layout.descRow}:${layout.rightEnd}${layout.descRow}`);
+    const rightDesc = ws.getCell(`${layout.rightCol}${layout.descRow}`);
+    rightDesc.value = `📷 사진${photoIdxRight+1}: ${u.photos[photoIdxRight]?.desc || ''}`;
+    rightDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
+    rightDesc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
+    rightDesc.alignment = { vertical:'middle', horizontal:'left', indent:1 };
+    rightDesc.border = border;
+
+    ws.getRow(layout.descRow).height = 20;
+
+    // 사진 영역 셀 테두리
+    for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
+      ws.getRow(r).height = 22;
+      ['I','J','K','L','M','N','O','P','Q','R','S','T','U','V'].forEach(col => {
+        ws.getCell(`${col}${r}`).border = border;
+      });
+    }
+
+    // 사진 임베드 (모두 동일 크기 350x230)
+    [photoIdxLeft, photoIdxRight].forEach((pIdx, side) => {
+      const photo = u.photos[pIdx];
+      if(!photo || !photo.img) return;
+      try{
+        const imgId = wb.addImage({
+          buffer: dataURLToArrayBuffer(photo.img),
+          extension: 'jpeg'
+        });
+        const colStart = side === 0 ? 8 : 15;
+        ws.addImage(imgId, {
+          tl: { col: colStart + 0.1, row: layout.imgStartRow - 1 + 0.1 },
+          ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
+          editAs: 'oneCell'
+        });
+      }catch(e){
+        console.error(`이미지 ${pIdx+1} 임베드 실패:`, e);
+      }
+    });
+  });
+
+  // ========== 진단 체크리스트 (A9 부터) ==========
+  const checkStartRow = 9;
+  ws.mergeCells(`A${checkStartRow}:G${checkStartRow}`);
+  const checkTitle = ws.getCell(`A${checkStartRow}`);
+  checkTitle.value = '🔍 1차 진단 Check-list (육안점검)';
+  checkTitle.font = { name:'맑은 고딕', bold:true, size:13, color:{argb:'FFFFFFFF'} };
+  checkTitle.alignment = { vertical:'middle', horizontal:'center' };
+  checkTitle.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
+  ws.getRow(checkStartRow).height = 24;
+
+  // 진단 헤더
+  const headerRow = checkStartRow + 1;
+  ws.mergeCells(`D${headerRow}:E${headerRow}`);
+  ws.mergeCells(`F${headerRow}:G${headerRow}`);
+  
+  const headers = [
+    {col:'A', text:'번호'},
+    {col:'B', text:'인자'},
+    {col:'C', text:'평가'},
+    {col:'D', text:'주요 내용'},
+    {col:'F', text:'조사 대상'}
+  ];
+  headers.forEach(h => {
+    const cell = ws.getCell(`${h.col}${headerRow}`);
+    cell.value = h.text;
+    cell.font = { name:'맑은 고딕', bold:true, size:11, color:{argb:'FFFFFFFF'} };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF374151'} };
+    cell.alignment = { vertical:'middle', horizontal:'center' };
+    cell.border = border;
+  });
+  ['E','G'].forEach(col => {
+    const cell = ws.getCell(`${col}${headerRow}`);
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF374151'} };
+    cell.border = border;
+  });
+  ws.getRow(headerRow).height = 26;
+
+  // 진단 데이터 행
+  turboDiagItems.forEach((item, idx) => {
+    const r = headerRow + 1 + idx;
+    ws.getRow(r).height = 30;
+
+    // 번호
+    const numCell = ws.getCell(`A${r}`);
+    numCell.value = idx + 1;
+    numCell.font = { name:'맑은 고딕', bold:true, size:11 };
+    numCell.alignment = { vertical:'middle', horizontal:'center' };
+    numCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
+    numCell.border = border;
+
+    // 인자
+    const factorCell = ws.getCell(`B${r}`);
+    factorCell.value = item.factor;
+    factorCell.font = { name:'맑은 고딕', bold:true, size:10 };
+    factorCell.alignment = { vertical:'middle', horizontal:'left', indent:1, wrapText:true };
+    factorCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF9FAFB'} };
+    factorCell.border = border;
+
+    // 평가 (A/B/C)
+    const rateCell = ws.getCell(`C${r}`);
+    const rate = u.diag[item.key]?.rate || '';
+    rateCell.value = rate;
+    rateCell.alignment = { vertical:'middle', horizontal:'center' };
+    if(rate === 'A') {
+      rateCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD1FAE5'} };
+      rateCell.font = { name:'맑은 고딕', bold:true, size:14, color:{argb:'FF059669'} };
+    } else if(rate === 'B') {
+      rateCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFED7AA'} };
+      rateCell.font = { name:'맑은 고딕', bold:true, size:14, color:{argb:'FFD97706'} };
+    } else if(rate === 'C') {
+      rateCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFECACA'} };
+      rateCell.font = { name:'맑은 고딕', bold:true, size:14, color:{argb:'FFDC2626'} };
+    } else {
+      rateCell.font = { name:'맑은 고딕', bold:true, size:14 };
+    }
+    rateCell.border = border;
+
+    // 주요 내용 (D~E 병합)
+    ws.mergeCells(`D${r}:E${r}`);
+    const contentCell = ws.getCell(`D${r}`);
+    contentCell.value = u.diag[item.key]?.content || '';
+    contentCell.font = { name:'맑은 고딕', size:10 };
+    contentCell.alignment = { vertical:'middle', horizontal:'left', indent:1, wrapText:true };
+    contentCell.border = border;
+    ws.getCell(`E${r}`).border = border;
+
+    // 조사 대상 (F~G 병합)
+    ws.mergeCells(`F${r}:G${r}`);
+    const targetCell = ws.getCell(`F${r}`);
+    targetCell.value = item.target;
+    targetCell.font = { name:'맑은 고딕', size:10, color:{argb:'FF6B7280'} };
+    targetCell.alignment = { vertical:'middle', horizontal:'center', wrapText:true };
+    targetCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFAFAFA'} };
+    targetCell.border = border;
+    ws.getCell(`G${r}`).border = border;
+  });
+
+  // ========== 주요 검토 의견 ==========
+  const opinionTitleRow = headerRow + 1 + turboDiagItems.length + 1;
+  ws.mergeCells(`A${opinionTitleRow}:G${opinionTitleRow}`);
+  const opTitle = ws.getCell(`A${opinionTitleRow}`);
+  opTitle.value = '📝 주요 검토 의견';
+  opTitle.font = { name:'맑은 고딕', bold:true, size:13, color:{argb:'FFFFFFFF'} };
+  opTitle.alignment = { vertical:'middle', horizontal:'center' };
+  opTitle.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
+  ws.getRow(opinionTitleRow).height = 24;
+
+  // 검토 의견 내용
+  const opStartRow = opinionTitleRow + 1;
+  const opEndRow = opStartRow + 6;
+  ws.mergeCells(`A${opStartRow}:G${opEndRow}`);
+  const opCell = ws.getCell(`A${opStartRow}`);
+  opCell.value = u.opinion || '(미입력)';
+  opCell.font = { name:'맑은 고딕', size:11 };
+  opCell.alignment = { vertical:'top', horizontal:'left', wrapText:true, indent:1 };
+  opCell.border = border;
+  for(let r = opStartRow; r <= opEndRow; r++){
+    ws.getRow(r).height = 22;
+  }
+
+  // 페이지 설정
+  ws.pageSetup = {
+    paperSize: 9,
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    margins: { left:0.4, right:0.4, top:0.5, bottom:0.5, header:0.3, footer:0.3 }
+  };
+}
+
 async function exportToExcel(){
   if(typeof ExcelJS === 'undefined'){
     alert('ExcelJS 라이브러리가 아직 로드되지 않았습니다.');
     return;
   }
 
-  const container = document.getElementById('coldSourceUnits');
-  if(!container || container.querySelectorAll('.card').length === 0){
+  const collected = collectColdSourceData();
+  if(!collected){
     alert('⚠️ 내보낼 냉열원 데이터가 없습니다.');
     return;
   }
 
-  showLoading('양식 파일 로딩 중...');
+  showLoading('엑셀 생성 중...');
 
   try{
-    let templateBuffer;
-    try{
-      const res = await fetch(TEMPLATE_PATH.turbo);
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      templateBuffer = await res.arrayBuffer();
-    }catch(e){
-      hideLoading();
-      alert(`❌ 양식 파일을 찾을 수 없습니다.\n\n경로: ${TEMPLATE_PATH.turbo}\n\n에러: ${e.message}`);
-      return;
-    }
-
-    showLoading('데이터 수집 중...');
-
+    const { projectInfo, allUnits } = collected;
     const wb = new ExcelJS.Workbook();
     wb.creator = 'HIMEC 진단 시스템';
     wb.created = new Date();
-
-    const cards = Array.from(container.querySelectorAll('.card'));
-    const ordered = [];
-    subtypeMap.coldSource.forEach(st=>{
-      cards.forEach(card=>{
-        if(getUnitSubtype('coldSource', card.dataset.id) === st.key){
-          ordered.push({card, st});
-        }
-      });
-    });
-
-    const projectInfo = {
-      projectName: document.getElementById('projectName')?.value || '',
-      buildingName: document.getElementById('buildingName')?.value || '',
-      projectStartDate: document.getElementById('projectStartDate')?.value || '',
-      dateRange: document.getElementById('dateRange')?.value || ''
-    };
-
-    const allUnits = [];
-    let counter = {};
-    ordered.forEach(({card, st})=>{
-      const id = card.dataset.id;
-      counter[st.key] = (counter[st.key]||0) + 1;
-      const unitNum = counter[st.key];
-
-      const diag = {};
-      turboDiagItems.forEach(item=>{
-        const baseKey = `coldSource_${id}_diag_${item.key}`;
-        const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
-        const contentEl = document.getElementById(`${baseKey}_content`);
-        diag[item.key] = { rate: rateEl ? rateEl.value : '', content: contentEl ? contentEl.value : '' };
-      });
-
-      let a=0,b=0,c=0;
-      Object.values(diag).forEach(d=>{ if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++; });
-      let grade='-';
-      if(a+b+c>0){ if(c>0)grade='C'; else if(b>0)grade='B'; else grade='A'; }
-
-      const photos = unitPhotos[`coldSource_${id}`] || new Array(PHOTO_COUNT).fill(null).map(()=>({img:null,desc:''}));
-      const opinion = document.getElementById(`coldSource_${id}_opinion`)?.value || '';
-      const status = getUnitStatus('coldSource', id);
-
-      allUnits.push({
-        id, st, subtypeLabel: st.label, unitNum,
-        projectName: projectInfo.projectName,
-        diag, opinion, photos,
-        statusText: statusText(status),
-        diagRates: turboDiagItems.map(item => diag[item.key]?.rate || '-'),
-        grade
-      });
-    });
 
     showLoading('종합 요약 시트 생성 중...');
     buildSummarySheet(wb, projectInfo, allUnits);
@@ -1556,8 +1656,7 @@ async function exportToExcel(){
         finalName = sheetName.substring(0, 28) + `_${suffix}`;
         suffix++;
       }
-      const ws = await cloneTemplateSheet(templateBuffer, wb, finalName);
-      fillUnitSheet(ws, wb, u);
+      buildUnitSheet(wb, finalName, u, projectInfo);
     }
 
     showLoading('파일 저장 중...');
@@ -1577,205 +1676,174 @@ async function exportToExcel(){
 }
 
 // =====================================
-// 📄 PDF 내보내기 (화면 그대로)
+// 📄 PDF 내보내기 (새 창 인쇄 방식)
 // =====================================
-function buildPDFContent(allUnits, projectInfo){
-  const zone = document.getElementById('pdfRenderZone');
-  let html = '';
-
-  // 표지 페이지
-  html += `<div class="pdf-page">`;
-  html += `<div class="pdf-title">📊 기계설비 노후화 진단 보고서</div>`;
-  html += `<div class="pdf-sub">Mechanical Facility Aging Diagnosis Report</div>`;
-  html += `<div class="pdf-meta">
-    <div class="lbl">프로젝트명</div><div class="val">${escapeHtml(projectInfo.projectName)||'-'}</div>
-    <div class="lbl">건물명</div><div class="val">${escapeHtml(projectInfo.buildingName)||'-'}</div>
-    <div class="lbl">과업 시작일</div><div class="val">${escapeHtml(projectInfo.projectStartDate)||'-'}</div>
-    <div class="lbl">점검 기간</div><div class="val">${escapeHtml(projectInfo.dateRange)||'-'}</div>
-    <div class="lbl">생성일시</div><div class="val">${new Date().toLocaleString('ko-KR')}</div>
-  </div>`;
-
-  // 종합 요약 표
-  html += `<div class="pdf-section-h">📊 냉열원 진단 종합 요약</div>`;
-  html += `<table class="pdf-table"><thead><tr>`;
-  html += `<th>종류</th><th>호기</th><th>상태</th>`;
-  turboDiagItems.forEach(it => html += `<th>${it.short}</th>`);
-  html += `<th>종합</th></tr></thead><tbody>`;
-  allUnits.forEach(u => {
-    html += `<tr>`;
-    html += `<td class="left">${escapeHtml(u.subtypeLabel)}</td>`;
-    html += `<td>${u.unitNum}호기</td>`;
-    html += `<td>${escapeHtml(u.statusText)}</td>`;
-    u.diagRates.forEach(r => {
-      const cls = r==='A'?'pdf-rate-A':r==='B'?'pdf-rate-B':r==='C'?'pdf-rate-C':'';
-      html += `<td class="${cls}">${r}</td>`;
-    });
-    const gcls = u.grade==='A'?'pdf-rate-A':u.grade==='B'?'pdf-rate-B':u.grade==='C'?'pdf-rate-C':'';
-    html += `<td class="${gcls}"><strong>${u.grade}</strong></td>`;
-    html += `</tr>`;
-  });
-  html += `</tbody></table>`;
-  html += `</div>`;
-
-  // 호기별 상세 페이지
-  allUnits.forEach(u => {
-    html += `<div class="pdf-page">`;
-    html += `<div class="pdf-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기</div>`;
-    html += `<div class="pdf-sub">상태: ${escapeHtml(u.statusText)}</div>`;
-
-    // 진단 체크리스트
-    html += `<div class="pdf-section-h">🔍 1차 진단 Check-list</div>`;
-    html += `<table class="pdf-table"><thead><tr>`;
-    html += `<th style="width:40px;">번호</th><th style="width:120px;">인자</th><th style="width:55px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
-    turboDiagItems.forEach((it, idx)=>{
-      const d = u.diag[it.key] || {};
-      const r = d.rate || '-';
-      const cls = r==='A'?'pdf-rate-A':r==='B'?'pdf-rate-B':r==='C'?'pdf-rate-C':'';
-      html += `<tr>`;
-      html += `<td>${idx+1}</td>`;
-      html += `<td class="left"><strong>${escapeHtml(it.factor)}</strong></td>`;
-      html += `<td class="${cls}"><strong>${r}</strong></td>`;
-      html += `<td class="left">${escapeHtml(d.content||'')}</td>`;
-      html += `<td>${escapeHtml(it.target)}</td>`;
-      html += `</tr>`;
-    });
-    html += `</tbody></table>`;
-
-    // 검토 의견
-    html += `<div class="pdf-section-h">📝 주요 검토 의견</div>`;
-    html += `<div class="pdf-opinion">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
-
-    // 사진 (사진 있는 것만)
-    const validPhotos = (u.photos||[]).map((p,i)=>({...p, idx:i})).filter(p=>p.img);
-    if(validPhotos.length > 0){
-      html += `<div class="pdf-section-h">📸 현장 사진</div>`;
-      html += `<div class="pdf-photo-grid">`;
-      validPhotos.forEach(p=>{
-        html += `<div class="pdf-photo">`;
-        html += `<div class="pdf-photo-desc">📷 사진${p.idx+1}: ${escapeHtml(p.desc)||'-'}</div>`;
-        html += `<img class="pdf-photo-img" src="${p.img}" alt="사진${p.idx+1}">`;
-        html += `</div>`;
-      });
-      html += `</div>`;
-    }
-
-    html += `</div>`;
-  });
-
-  zone.innerHTML = html;
-}
-
-async function exportToPDF(){
-  if(typeof html2pdf === 'undefined'){
-    alert('PDF 라이브러리가 아직 로드되지 않았습니다.');
-    return;
-  }
-
-  const container = document.getElementById('coldSourceUnits');
-  if(!container || container.querySelectorAll('.card').length === 0){
+function exportToPDF(){
+  const collected = collectColdSourceData();
+  if(!collected){
     alert('⚠️ 내보낼 냉열원 데이터가 없습니다.');
     return;
   }
 
-  showLoading('PDF 생성 준비 중...');
+  showLoading('PDF 미리보기 준비 중...');
 
   try{
-    const projectInfo = {
-      projectName: document.getElementById('projectName')?.value || '',
-      buildingName: document.getElementById('buildingName')?.value || '',
-      projectStartDate: document.getElementById('projectStartDate')?.value || '',
-      dateRange: document.getElementById('dateRange')?.value || ''
-    };
+    const { projectInfo, allUnits } = collected;
 
-    // 데이터 수집
-    const cards = Array.from(container.querySelectorAll('.card'));
-    const ordered = [];
-    subtypeMap.coldSource.forEach(st=>{
-      cards.forEach(card=>{
-        if(getUnitSubtype('coldSource', card.dataset.id) === st.key){
-          ordered.push({card, st});
-        }
-      });
-    });
-
-    const allUnits = [];
-    let counter = {};
-    ordered.forEach(({card, st})=>{
-      const id = card.dataset.id;
-      counter[st.key] = (counter[st.key]||0) + 1;
-      const unitNum = counter[st.key];
-      const diag = {};
-      turboDiagItems.forEach(item=>{
-        const baseKey = `coldSource_${id}_diag_${item.key}`;
-        const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
-        const contentEl = document.getElementById(`${baseKey}_content`);
-        diag[item.key] = { rate: rateEl ? rateEl.value : '', content: contentEl ? contentEl.value : '' };
-      });
-      let a=0,b=0,c=0;
-      Object.values(diag).forEach(d=>{ if(d.rate==='A')a++; else if(d.rate==='B')b++; else if(d.rate==='C')c++; });
-      let grade='-';
-      if(a+b+c>0){ if(c>0)grade='C'; else if(b>0)grade='B'; else grade='A'; }
-      const photos = unitPhotos[`coldSource_${id}`] || [];
-      const opinion = document.getElementById(`coldSource_${id}_opinion`)?.value || '';
-      const status = getUnitStatus('coldSource', id);
-      allUnits.push({
-        id, subtypeLabel: st.label, unitNum,
-        diag, opinion, photos,
-        statusText: statusText(status),
-        diagRates: turboDiagItems.map(item => diag[item.key]?.rate || '-'),
-        grade
-      });
-    });
-
-showLoading('PDF 콘텐츠 렌더링 중...');
-buildPDFContent(allUnits, projectInfo);
-
-// 렌더 영역을 보이게 변경 (캡처를 위해)
-const renderZone = document.getElementById('pdfRenderZone');
-renderZone.classList.add('show');
-
-// 이미지 로딩 대기 (충분한 시간)
-await new Promise(r=>setTimeout(r, 1500));
-
-// 모든 이미지 로딩 완료 대기
-const imgs = renderZone.querySelectorAll('img');
-await Promise.all(Array.from(imgs).map(img => {
-  if(img.complete) return Promise.resolve();
-  return new Promise(resolve => {
-    img.onload = resolve;
-    img.onerror = resolve;
-  });
-}));
-
-
-    showLoading(`PDF 파일 변환 중...\n(${allUnits.length}개 호기, 시간이 걸릴 수 있습니다)`);
+    const printWindow = window.open('', '_blank', 'width=900,height=1000');
+    if(!printWindow){
+      hideLoading();
+      alert('❌ 팝업이 차단되었습니다.\n\n주소창 우측의 팝업 차단 아이콘을 클릭해 "허용"으로 변경 후 다시 시도해주세요.');
+      return;
+    }
 
     const safeName = (projectInfo.projectName || '냉동기진단').replace(/[\\/:*?"<>|]/g,'_');
     const today = new Date().toISOString().slice(0,10);
-    
-    const opt = {
-      margin: [10, 10, 10, 10],
-      filename: `${safeName}_${today}.pdf`,
-      image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: { 
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 794
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'] }
-    };
 
-    await html2pdf().set(opt).from(document.getElementById('pdfRenderZone')).save();
+    let bodyHTML = '';
 
-// 클린업
-renderZone.classList.remove('show');
-renderZone.innerHTML = '';
+    // === 표지 페이지 ===
+    bodyHTML += `<div class="page cover">`;
+    bodyHTML += `<div class="cover-box">`;
+    bodyHTML += `<div class="cover-title">📊 기계설비 노후화 진단 보고서</div>`;
+    bodyHTML += `<div class="cover-sub">Mechanical Facility Aging Diagnosis Report</div>`;
+    bodyHTML += `<table class="info-table">
+      <tr><th>프로젝트명</th><td>${escapeHtml(projectInfo.projectName)||'-'}</td></tr>
+      <tr><th>건물명</th><td>${escapeHtml(projectInfo.buildingName)||'-'}</td></tr>
+      <tr><th>과업 시작일</th><td>${escapeHtml(projectInfo.projectStartDate)||'-'}</td></tr>
+      <tr><th>점검 기간</th><td>${escapeHtml(projectInfo.dateRange)||'-'}</td></tr>
+      <tr><th>생성일시</th><td>${new Date().toLocaleString('ko-KR')}</td></tr>
+    </table>`;
 
+    bodyHTML += `<div class="section-h">📊 냉열원 진단 종합 요약</div>`;
+    bodyHTML += `<table class="data-table"><thead><tr>`;
+    bodyHTML += `<th>종류</th><th>호기</th><th>상태</th>`;
+    turboDiagItems.forEach(it => bodyHTML += `<th>${it.short}</th>`);
+    bodyHTML += `<th>종합</th></tr></thead><tbody>`;
+    allUnits.forEach(u => {
+      bodyHTML += `<tr>`;
+      bodyHTML += `<td class="left">${escapeHtml(u.subtypeLabel)}</td>`;
+      bodyHTML += `<td>${u.unitNum}호기</td>`;
+      bodyHTML += `<td>${escapeHtml(u.statusText)}</td>`;
+      u.diagRates.forEach(r => {
+        const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
+        bodyHTML += `<td class="${cls}">${r}</td>`;
+      });
+      const gcls = u.grade==='A'?'rate-A':u.grade==='B'?'rate-B':u.grade==='C'?'rate-C':'';
+      bodyHTML += `<td class="${gcls}"><strong>${u.grade}</strong></td>`;
+      bodyHTML += `</tr>`;
+    });
+    bodyHTML += `</tbody></table>`;
+    bodyHTML += `</div></div>`;
+
+    // === 호기별 페이지 ===
+    allUnits.forEach(u => {
+      bodyHTML += `<div class="page">`;
+      bodyHTML += `<div class="unit-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기</div>`;
+      bodyHTML += `<div class="unit-sub">상태: ${escapeHtml(u.statusText)} | 종합 등급: <strong class="grade-${u.grade}">${u.grade}</strong></div>`;
+
+      bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
+      bodyHTML += `<table class="data-table"><thead><tr>`;
+      bodyHTML += `<th style="width:40px;">번호</th><th style="width:130px;">인자</th><th style="width:55px;">평가</th><th>주요 내용</th><th style="width:100px;">조사 대상</th></tr></thead><tbody>`;
+      turboDiagItems.forEach((it, idx)=>{
+        const d = u.diag[it.key] || {};
+        const r = d.rate || '-';
+        const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
+        bodyHTML += `<tr>`;
+        bodyHTML += `<td>${idx+1}</td>`;
+        bodyHTML += `<td class="left"><strong>${escapeHtml(it.factor)}</strong></td>`;
+        bodyHTML += `<td class="${cls}"><strong>${r}</strong></td>`;
+        bodyHTML += `<td class="left">${escapeHtml(d.content||'')}</td>`;
+        bodyHTML += `<td>${escapeHtml(it.target)}</td>`;
+        bodyHTML += `</tr>`;
+      });
+      bodyHTML += `</tbody></table>`;
+
+      bodyHTML += `<div class="section-h">📝 주요 검토 의견</div>`;
+      bodyHTML += `<div class="opinion-box">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
+
+      const validPhotos = (u.photos||[]).map((p,i)=>({...p, idx:i})).filter(p=>p.img);
+      if(validPhotos.length > 0){
+        bodyHTML += `<div class="section-h">📸 현장 사진</div>`;
+        bodyHTML += `<div class="photo-grid">`;
+        validPhotos.forEach(p=>{
+          bodyHTML += `<div class="photo-card">`;
+          bodyHTML += `<div class="photo-desc">📷 사진${p.idx+1}: ${escapeHtml(p.desc)||'-'}</div>`;
+          bodyHTML += `<img class="photo-img" src="${p.img}" alt="사진${p.idx+1}">`;
+          bodyHTML += `</div>`;
+        });
+        bodyHTML += `</div>`;
+      }
+
+      bodyHTML += `</div>`;
+    });
+
+    const fullHTML = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>${safeName}_${today}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Malgun Gothic', '맑은 고딕', sans-serif; color: #1f2937; background: #e5e7eb; }
+  .toolbar { position: sticky; top: 0; background: #1f2937; padding: 12px; text-align: center; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+  .toolbar button { background: #dc2626; color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin: 0 5px; }
+  .toolbar button.cancel { background: #6b7280; }
+  .toolbar .info { color: #d1d5db; font-size: 12px; margin-top: 8px; }
+  .page { background: #fff; max-width: 794px; margin: 20px auto; padding: 30px 35px; box-shadow: 0 4px 20px rgba(0,0,0,.1); page-break-after: always; min-height: 1050px; }
+  .page:last-child { page-break-after: auto; }
+  .cover-box { width: 100%; }
+  .cover-title { font-size: 26px; font-weight: 800; color: #1f2937; margin-bottom: 6px; }
+  .cover-sub { font-size: 14px; color: #6b7280; margin-bottom: 30px; }
+  .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+  .info-table th, .info-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
+  .info-table tr:last-child th, .info-table tr:last-child td { border-bottom: none; }
+  .info-table th { background: #f3f4f6; color: #374151; font-weight: 700; text-align: left; width: 130px; }
+  .info-table td { color: #111827; }
+  .unit-title { font-size: 22px; font-weight: 800; color: #1f2937; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
+  .unit-sub { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
+  .section-h { background: #1f2937; color: #fff; padding: 8px 14px; font-size: 13px; font-weight: 700; border-radius: 6px 6px 0 0; margin-top: 18px; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb; border-top: none; }
+  .data-table th, .data-table td { border: 1px solid #e5e7eb; padding: 7px 8px; text-align: center; vertical-align: middle; }
+  .data-table th { background: #f3f4f6; font-weight: 700; color: #111827; }
+  .data-table td.left { text-align: left; }
+  .rate-A { background: #d1fae5; color: #059669; font-weight: 700; }
+  .rate-B { background: #fed7aa; color: #d97706; font-weight: 700; }
+  .rate-C { background: #fecaca; color: #dc2626; font-weight: 700; }
+  .grade-A { color: #059669; }
+  .grade-B { color: #d97706; }
+  .grade-C { color: #dc2626; }
+  .opinion-box { background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; padding: 14px; font-size: 12px; color: #111827; line-height: 1.7; min-height: 70px; white-space: pre-wrap; border-radius: 0 0 6px 6px; }
+  .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+  .photo-card { border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; background: #fff; }
+  .photo-desc { background: #eff6ff; color: #1e40af; padding: 6px 10px; font-size: 11px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
+  .photo-img { width: 100%; height: 230px; object-fit: cover; display: block; background: #f3f4f6; }
+
+  @media print {
+    body { background: #fff; }
+    .toolbar { display: none !important; }
+    .page { box-shadow: none; margin: 0; max-width: 100%; padding: 15mm 12mm; min-height: auto; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    @page { size: A4 portrait; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button onclick="window.print()">🖨️ PDF로 저장 / 인쇄</button>
+  <button class="cancel" onclick="window.close()">닫기</button>
+  <div class="info">💡 "PDF로 저장" 버튼 클릭 후 → 대상에서 <strong>"PDF로 저장"</strong> 선택 → 저장</div>
+</div>
+${bodyHTML}
+</body>
+</html>`;
+
+    printWindow.document.open();
+    printWindow.document.write(fullHTML);
+    printWindow.document.close();
 
     hideLoading();
-    showToast(`✅ PDF 다운로드 완료 (${allUnits.length}개 호기)`);
+    showToast(`✅ PDF 미리보기 창이 열렸습니다 (${allUnits.length}개 호기)`);
   }catch(e){
     hideLoading();
     console.error(e);
@@ -1819,23 +1887,6 @@ window.onload = function(){
   ['coldSource','heatSource','coolingTower'].forEach(t=>renderGroupSummary(t));
   renderCalendar();
 };
-
-function loadSummary(){
-  const raw = localStorage.getItem('facilityReport');
-  if(!raw){ summaryBox.textContent = '저장된 데이터 없음'; return; }
-  try{
-    const data = JSON.parse(raw);
-    const preview = JSON.parse(JSON.stringify(data));
-    if(preview.units){
-      Object.keys(preview.units).forEach(type=>{
-        preview.units[type].forEach(u=>{
-          if(u.photos){ u.photos = u.photos.map(p=> p && p.img ? {img:'[사진 데이터 생략]', desc:p.desc} : p); }
-        });
-      });
-    }
-    summaryBox.textContent = JSON.stringify(preview, null, 2);
-  } catch(e){ summaryBox.textContent = raw; }
-}
 </script>
 
 </body>
