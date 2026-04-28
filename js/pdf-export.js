@@ -31,23 +31,23 @@ function exportToPDF(){
     bodyHTML += `<div class="cover-box">`;
     bodyHTML += `<div class="cover-title">📊 기계설비 노후화 진단 보고서</div>`;
     bodyHTML += `<div class="cover-sub">Mechanical Facility Aging Diagnosis Report</div>`;
+    // 과업시작일, 점검기간 제거
     bodyHTML += `<table class="info-table">
       <tr><th>프로젝트명</th><td>${escapeHtml(projectInfo.projectName)||'-'}</td></tr>
       <tr><th>건물명</th><td>${escapeHtml(projectInfo.buildingName)||'-'}</td></tr>
-      <tr><th>과업 시작일</th><td>${escapeHtml(projectInfo.projectStartDate)||'-'}</td></tr>
-      <tr><th>점검 기간</th><td>${escapeHtml(projectInfo.dateRange)||'-'}</td></tr>
       <tr><th>생성일시</th><td>${new Date().toLocaleString('ko-KR')}</td></tr>
     </table>`;
 
     bodyHTML += `<div class="section-h">📊 냉열원 진단 종합 요약</div>`;
     bodyHTML += `<table class="data-table summary-table"><thead><tr>`;
-    bodyHTML += `<th>종류</th><th>호기</th><th>상태</th>`;
-    turboDiagItems.forEach(it => bodyHTML += `<th>${it.short}<br><small>(${Math.round(it.weight*100)}%)</small></th>`);
-    bodyHTML += `<th>점수</th><th>종합</th></tr></thead><tbody>`;
+    // "종류 / 호기" 통합 컬럼 + 가중치(%) 제거
+    bodyHTML += `<th style="width:90px;">종류 / 호기</th><th style="width:55px;">상태</th>`;
+    turboDiagItems.forEach(it => bodyHTML += `<th>${it.short}</th>`);
+    bodyHTML += `<th style="width:42px;">점수</th><th style="width:42px;">종합</th></tr></thead><tbody>`;
     allUnits.forEach(u => {
       bodyHTML += `<tr>`;
-      bodyHTML += `<td class="left">${escapeHtml(u.subtypeLabel)}</td>`;
-      bodyHTML += `<td>${u.unitNum}호기</td>`;
+      // 종류 / 호기를 한 셀에 줄바꿈으로 표시
+      bodyHTML += `<td class="unit-info"><div class="unit-type">${escapeHtml(u.subtypeLabel)}</div><div class="unit-num">${u.unitNum}호기</div></td>`;
       bodyHTML += `<td>${escapeHtml(u.statusText)}</td>`;
       u.diagRates.forEach(r => {
         const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
@@ -78,7 +78,7 @@ function exportToPDF(){
 
       bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
       bodyHTML += `<table class="data-table check-table"><thead><tr>`;
-      bodyHTML += `<th style="width:32px;">번호</th><th style="width:165px;">인자 (가중치)</th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
+      bodyHTML += `<th style="width:32px;">번호</th><th style="width:140px;">인자 (가중치)</th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
       turboDiagItems.forEach((it, idx)=>{
         const d = u.diag[it.key] || {};
         const r = d.rate || '-';
@@ -142,28 +142,30 @@ function exportToPDF(){
   .unit-sub { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
   .page-tag { font-size: 14px; font-weight: 600; color: #2563eb; background: #dbeafe; padding: 4px 10px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
   .section-h { background: #1f2937; color: #fff; padding: 8px 14px; font-size: 13px; font-weight: 700; border-radius: 6px 6px 0 0; margin-top: 18px; }
-  .data-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb; border-top: none; table-layout: fixed; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #e5e7eb; border-top: none; }
   .data-table th, .data-table td { border: 1px solid #e5e7eb; padding: 7px 8px; text-align: center; vertical-align: middle; }
   .data-table th { background: #f3f4f6; font-weight: 700; color: #111827; }
   .data-table th small { font-weight: 500; color: #6b7280; font-size: 9px; }
   .data-table td.left { text-align: left; }
 
-  /* 표지의 종합 요약 표 (13컬럼이 좁은 페이지에 들어가야 함) */
-  .summary-table { font-size: 9.5px; letter-spacing: -0.3px; }
-  .summary-table th, .summary-table td { padding: 5px 3px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .summary-table th { font-size: 9.5px; }
-  .summary-table th small { font-size: 8.5px; letter-spacing: 0; }
-  .summary-table td.left { font-size: 9.5px; padding: 5px 6px; }
+  /* 표지의 종합 요약 표 */
+  .summary-table { font-size: 11px; }
+  .summary-table th, .summary-table td { padding: 8px 6px; line-height: 1.4; }
+  .summary-table th { font-size: 11px; word-break: keep-all; }
+  
+  /* 종류/호기 통합 셀 (가운데 정렬, 두 줄 표시) */
+  .summary-table .unit-info { padding: 8px 4px; line-height: 1.4; text-align: center; vertical-align: middle; }
+  .summary-table .unit-info .unit-type { font-size: 11px; font-weight: 700; color: #1f2937; word-break: keep-all; }
+  .summary-table .unit-info .unit-num { font-size: 10.5px; color: #4b5563; font-weight: 600; margin-top: 2px; }
 
   /* 호기별 진단 체크리스트 표 */
-  .check-table { font-size: 10.5px; letter-spacing: -0.2px; }
-  .check-table th, .check-table td { padding: 5px 6px; line-height: 1.4; }
-  .check-table th { white-space: nowrap; }
-  .check-table .factor-cell { white-space: nowrap; font-size: 10.5px; letter-spacing: -0.3px; overflow: hidden; text-overflow: ellipsis; }
+  .check-table { font-size: 10.5px; }
+  .check-table th, .check-table td { padding: 6px 7px; line-height: 1.4; }
+  .check-table .factor-cell { font-size: 10.5px; word-break: keep-all; }
   .check-table .factor-cell strong { font-size: 10.5px; }
-  .check-table .weight-tag { color: #6b7280; font-size: 9.5px; font-weight: 500; letter-spacing: 0; }
-  .check-table .content-cell { font-size: 10px; letter-spacing: -0.3px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .check-table .target-cell { font-size: 10px; letter-spacing: -0.3px; color: #4b5563; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .check-table .weight-tag { color: #6b7280; font-size: 9.5px; font-weight: 500; }
+  .check-table .content-cell { font-size: 10px; line-height: 1.4; word-break: keep-all; }
+  .check-table .target-cell { font-size: 10px; color: #4b5563; line-height: 1.35; word-break: keep-all; }
 
   .rate-A { background: #d1fae5; color: #059669; font-weight: 700; }
   .rate-B { background: #fed7aa; color: #d97706; font-weight: 700; }
