@@ -10,7 +10,7 @@ const GITHUB_CONFIG = {
   
   // ⚠️ 여기에 본인의 GitHub Token을 입력하세요!
   // 시연 후 GitHub에서 이 토큰을 즉시 삭제하세요!
-  token: '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',
+  token: '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',
   
   // ID/PW 등록 (간단 시연용)
   accounts: [
