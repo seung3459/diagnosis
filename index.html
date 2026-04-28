@@ -1279,7 +1279,6 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     { width: 10 }
   ];
 
-  // L열 이후 사용 안 하는 컬럼 숨기기
   for(let i = 13; i <= 30; i++){
     ws.getColumn(i).hidden = true;
   }
@@ -1379,19 +1378,20 @@ function buildSummarySheet(wb, projectInfo, allUnits){
 function buildUnitSheet(wb, sheetName, u, projectInfo){
   const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: false }] });
 
-  const colWidths = [3.5, 14, 7, 30, 12, 14, 12, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13];
+  // A~P 16개 컬럼만 사용 (사진 영역 4컬럼씩으로 축소)
+  const colWidths = [3.5, 14, 7, 30, 12, 14, 12, 14, 14, 14, 14, 14, 14, 14, 14, 14];
   colWidths.forEach((w, i) => ws.getColumn(i+1).width = w);
 
-  // V열(22) 이후 사용 안 하는 컬럼 숨기기
-  for(let i = 23; i <= 30; i++){
+  // P열(16) 이후 사용 안 하는 컬럼 숨기기
+  for(let i = 17; i <= 30; i++){
     ws.getColumn(i).hidden = true;
   }
 
   const thinBorder = { style:'thin', color:{argb:'FFCBD5E1'} };
   const border = { top:thinBorder, bottom:thinBorder, left:thinBorder, right:thinBorder };
 
-  // ========== 제목 ==========
-  ws.mergeCells('A1:V2');
+  // ========== 제목 (A1:P2) ==========
+  ws.mergeCells('A1:P2');
   const title = ws.getCell('A1');
   title.value = `🔍 1차 진단 Check : ${u.subtypeLabel} - ${u.unitNum}호기`;
   title.font = { name:'맑은 고딕', size:18, bold:true, color:{argb:'FFFFFFFF'} };
@@ -1426,11 +1426,12 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     ws.getRow(r).height = 22;
   });
 
-  // ========== 우측 사진 영역 (사진 있는 것만) ==========
+  // ========== 우측 사진 영역 (사진 있는 것만, 4컬럼씩) ==========
   const validPhotos = (u.photos || []).map((p,i)=>({photo:p, idx:i})).filter(x=>x.photo && x.photo.img);
   
   if(validPhotos.length > 0){
-    ws.mergeCells('I4:V4');
+    // 사진 헤더 (I4:P4)
+    ws.mergeCells('I4:P4');
     const photoTitle = ws.getCell('I4');
     photoTitle.value = '📸 현장 사진';
     photoTitle.font = { name:'맑은 고딕', bold:true, size:13, color:{argb:'FFFFFFFF'} };
@@ -1439,7 +1440,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     ws.getRow(4).height = 24;
 
     const photoLayout = [
-      { descRow: 5,  imgStartRow: 6 },
+      { descRow: 5,  imgStartRow: 6  },
       { descRow: 13, imgStartRow: 14 },
       { descRow: 21, imgStartRow: 22 },
       { descRow: 29, imgStartRow: 30 }
@@ -1450,9 +1451,9 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
       const leftPhoto = validPhotos[row * 2];
       const rightPhoto = validPhotos[row * 2 + 1];
 
-      // 좌측 사진
+      // 좌측 사진 (I~L, 4컬럼)
       if(leftPhoto){
-        ws.mergeCells(`I${layout.descRow}:O${layout.descRow}`);
+        ws.mergeCells(`I${layout.descRow}:L${layout.descRow}`);
         const leftDesc = ws.getCell(`I${layout.descRow}`);
         leftDesc.value = `📷 사진${leftPhoto.idx+1}: ${leftPhoto.photo.desc || ''}`;
         leftDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
@@ -1461,7 +1462,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
         leftDesc.border = border;
 
         for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
-          ['I','J','K','L','M','N','O'].forEach(col => {
+          ['I','J','K','L'].forEach(col => {
             ws.getCell(`${col}${r}`).border = border;
           });
         }
@@ -1472,17 +1473,17 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
             extension: 'jpeg'
           });
           ws.addImage(imgId, {
-            tl: { col: 8 + 0.1, row: layout.imgStartRow - 1 + 0.1 },
+            tl: { col: 8 + 0.05, row: layout.imgStartRow - 1 + 0.05 },
             ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
             editAs: 'oneCell'
           });
         }catch(e){ console.error(`이미지 임베드 실패:`, e); }
       }
 
-      // 우측 사진
+      // 우측 사진 (M~P, 4컬럼)
       if(rightPhoto){
-        ws.mergeCells(`P${layout.descRow}:V${layout.descRow}`);
-        const rightDesc = ws.getCell(`P${layout.descRow}`);
+        ws.mergeCells(`M${layout.descRow}:P${layout.descRow}`);
+        const rightDesc = ws.getCell(`M${layout.descRow}`);
         rightDesc.value = `📷 사진${rightPhoto.idx+1}: ${rightPhoto.photo.desc || ''}`;
         rightDesc.font = { name:'맑은 고딕', bold:true, size:10, color:{argb:'FF1E40AF'} };
         rightDesc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
@@ -1490,7 +1491,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
         rightDesc.border = border;
 
         for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
-          ['P','Q','R','S','T','U','V'].forEach(col => {
+          ['M','N','O','P'].forEach(col => {
             ws.getCell(`${col}${r}`).border = border;
           });
         }
@@ -1501,7 +1502,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
             extension: 'jpeg'
           });
           ws.addImage(imgId, {
-            tl: { col: 15 + 0.1, row: layout.imgStartRow - 1 + 0.1 },
+            tl: { col: 12 + 0.05, row: layout.imgStartRow - 1 + 0.05 },
             ext: { width: EXCEL_PHOTO_W, height: EXCEL_PHOTO_H },
             editAs: 'oneCell'
           });
@@ -1510,7 +1511,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
 
       ws.getRow(layout.descRow).height = 20;
       for(let r = layout.imgStartRow; r < layout.imgStartRow + 7; r++){
-        ws.getRow(r).height = 22;
+        ws.getRow(r).height = 25;
       }
     }
   }
@@ -1745,7 +1746,7 @@ function exportToPDF(){
     bodyHTML += `</tbody></table>`;
     bodyHTML += `</div></div>`;
 
-    // === 호기별 페이지 (호기당 2페이지: 검토결과 + 사진) ===
+    // === 호기별 페이지 ===
     allUnits.forEach(u => {
       // 페이지 A: 검토 결과
       bodyHTML += `<div class="page">`;
@@ -1773,7 +1774,7 @@ function exportToPDF(){
       bodyHTML += `<div class="opinion-box-large">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
       bodyHTML += `</div>`;
 
-      // 페이지 B: 현장 사진 (사진이 있을 때만)
+      // 페이지 B: 현장 사진
       const validPhotos = (u.photos||[]).map((p,i)=>({...p, idx:i})).filter(p=>p.img);
       if(validPhotos.length > 0){
         bodyHTML += `<div class="page">`;
