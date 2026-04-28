@@ -2,15 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>기계설비 노후화 진단 (1차진단)</title>
+<title>기계설비 노후화 진단 어플리케이션</title>
 <link rel="stylesheet" href="css/style.css">
-<!-- 외부 라이브러리 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
 
-<div class="topbar">
+<div class="topbar" id="topbar">
+  <button onclick="goToProjects()">📂 프로젝트 목록</button>
   <button onclick="showPage('main')">메인</button>
   <button onclick="showPage('diag')">설비 진단</button>
   <button onclick="showPage('result')">종합 결과</button>
@@ -19,9 +19,62 @@
   <button class="pdf-btn" onclick="exportToPDF()">📄 PDF</button>
 </div>
 
+<!-- 🆕 인트로 페이지 -->
+<div id="intro" class="page active intro-page">
+  <div class="intro-content">
+    <div class="intro-logo-wrap" onclick="goToProjects()">
+      <img src="assets/logo.png" class="intro-logo-img" alt="HIMEC" 
+           onerror="this.outerHTML='<div class=&quot;text-logo&quot;><span class=&quot;tl-h&quot;>H</span><span class=&quot;tl-rest&quot;>IMEC</span></div>'">
+      <div class="intro-logo-overlay">
+        <div class="overlay-text">📂 프로젝트</div>
+        <div class="overlay-sub">클릭하여 진입</div>
+      </div>
+    </div>
+    <div class="intro-tagline">
+      <div class="intro-title">기계설비 노후화 진단 시스템</div>
+      <div class="intro-subtitle">Mechanical Facility Aging Diagnosis System</div>
+    </div>
+  </div>
+</div>
+
+<!-- 🆕 프로젝트 목록 페이지 -->
+<div id="projects" class="page projects-page">
+  <div class="projects-container">
+    <div class="projects-header">
+      <div>
+        <button class="back-btn" onclick="showPage('intro')">← 처음으로</button>
+        <h1 class="projects-title">📂 프로젝트 목록</h1>
+        <div class="projects-subtitle">진단을 진행할 프로젝트를 선택하세요</div>
+      </div>
+      <button class="add-project-btn" onclick="addProjectPrompt()">+ 새 프로젝트</button>
+    </div>
+
+    <div class="projects-table-wrap">
+      <table class="projects-table">
+        <thead>
+          <tr>
+            <th style="width:80px;">No</th>
+            <th style="width:100px;">연도</th>
+            <th>프로젝트명</th>
+            <th style="width:200px;">비고</th>
+            <th style="width:80px;"></th>
+          </tr>
+        </thead>
+        <tbody id="projectsTableBody">
+          <!-- 프로젝트 행이 여기에 동적으로 생성됩니다 -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="projects-info">
+      💡 <strong>프로젝트명을 클릭하면 진단 페이지로 이동합니다.</strong>
+    </div>
+  </div>
+</div>
+
 <div class="container">
 
-<div id="main" class="page active">
+<div id="main" class="page">
   <div class="main-hero">
     <div class="logo-row">
       <div class="himec-logo"><span class="h">H</span><span class="rest">IMEC</span></div>
@@ -175,7 +228,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- 자바스크립트 (순서 중요!) -->
+<!-- 자바스크립트 -->
 <script src="js/config.js"></script>
 <script src="js/grade.js"></script>
 <script src="js/calendar.js"></script>
@@ -184,6 +237,7 @@
 <script src="js/card.js"></script>
 <script src="js/summary.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/projects.js"></script>
 <script src="js/excel-export.js"></script>
 <script src="js/pdf-export.js"></script>
 <script src="js/main.js"></script>
