@@ -10,6 +10,10 @@ const defaultProjects = [
 let projectsList = [];
 let currentProject = null;
 
+// 모달 상태 추적
+let projectModalMode = 'add';
+let projectModalEditIdx = -1;
+
 // 프로젝트 목록 로드
 function loadProjectsList(){
   const raw = localStorage.getItem('projectsList');
@@ -56,7 +60,7 @@ function renderProjectsTable(){
         <td class="project-name-cell">${escapeHtml(p.name)}</td>
         <td class="note-cell">${escapeHtml(p.note) || '-'}</td>
         <td class="project-action">
-          <button class="action-edit" onclick="event.stopPropagation();editProject(${idx})" title="수정">✏️</button>
+          <button class="action-edit" onclick="event.stopPropagation();openProjectModal('edit', ${idx})" title="수정">✏️</button>
           <button class="action-delete" onclick="event.stopPropagation();deleteProject(${idx})" title="삭제">🗑️</button>
         </td>
       </tr>
@@ -65,16 +69,16 @@ function renderProjectsTable(){
   tbody.innerHTML = html;
 }
 
-// 프로젝트 선택 → 진단 페이지로 이동
+// 🆕 프로젝트 선택 → 진단 페이지로 이동 (프로젝트명 항상 덮어쓰기)
 function selectProject(idx){
   const project = projectsList[idx];
   if(!project) return;
   
   currentProject = project;
   
-  // 프로젝트명 자동 입력 (비어있을 때만)
+  // 🆕 프로젝트명 항상 덮어쓰기 (기존 값 무시)
   const projectNameEl = document.getElementById('projectName');
-  if(projectNameEl && !projectNameEl.value){
+  if(projectNameEl){
     projectNameEl.value = project.name;
     updateHeroBadge();
   }
@@ -83,68 +87,114 @@ function selectProject(idx){
   showToast(`✅ "${project.name}" 프로젝트 진입`);
 }
 
-// 새 프로젝트 추가 (간단한 prompt)
-function addProjectPrompt(){
-  const year = prompt('연도를 입력하세요 (예: 2026)', new Date().getFullYear());
-  if(year === null) return;
-  if(!year.trim()){
-    showToast('❌ 연도를 입력해주세요');
-    return;
+// =====================================
+// 프로젝트 추가/수정 모달
+// =====================================
+
+function openProjectModal(mode, idx){
+  projectModalMode = mode;
+  projectModalEditIdx = (typeof idx === 'number') ? idx : -1;
+  
+  const titleEl = document.getElementById('projectModalTitle');
+  const submitBtn = document.getElementById('pmSubmitBtn');
+  const yearInput = document.getElementById('pmYear');
+  const nameInput = document.getElementById('pmName');
+  const noteInput = document.getElementById('pmNote');
+  
+  // 에러 스타일 제거
+  [yearInput, nameInput].forEach(el => el.classList.remove('error'));
+  
+  if(mode === 'edit' && projectModalEditIdx >= 0){
+    const project = projectsList[projectModalEditIdx];
+    if(!project) return;
+    
+    titleEl.textContent = '✏️ 프로젝트 수정';
+    submitBtn.textContent = '수정';
+    yearInput.value = project.year || '';
+    nameInput.value = project.name || '';
+    noteInput.value = project.note || '';
+  } else {
+    titleEl.textContent = '📝 새 프로젝트 추가';
+    submitBtn.textContent = '추가';
+    yearInput.value = new Date().getFullYear();
+    nameInput.value = '';
+    noteInput.value = '';
   }
   
-  const name = prompt('프로젝트명을 입력하세요');
-  if(name === null) return;
-  if(!name.trim()){
-    showToast('❌ 프로젝트명을 입력해주세요');
-    return;
-  }
+  document.getElementById('projectModal').classList.add('active');
   
-  const note = prompt('비고 (선택사항, 없으면 그냥 확인)') || '';
-  if(note === null) return;
-  
-  projectsList.push({
-    year: year.trim(),
-    name: name.trim(),
-    note: note.trim()
-  });
-  
-  saveProjectsList();
-  renderProjectsTable();
-  showToast(`✅ "${name}" 프로젝트 추가됨`);
+  setTimeout(() => {
+    if(mode === 'edit'){
+      nameInput.focus();
+      nameInput.select();
+    } else {
+      nameInput.focus();
+    }
+  }, 100);
 }
 
-// 🆕 프로젝트 수정
-function editProject(idx){
-  const project = projectsList[idx];
-  if(!project) return;
+function closeProjectModal(e){
+  if(e && e.target.id !== 'projectModal' && e.type === 'click') return;
+  document.getElementById('projectModal').classList.remove('active');
+  projectModalMode = 'add';
+  projectModalEditIdx = -1;
+}
+
+function submitProjectForm(){
+  const yearInput = document.getElementById('pmYear');
+  const nameInput = document.getElementById('pmName');
+  const noteInput = document.getElementById('pmNote');
   
-  // 1단계: 프로젝트명 수정
-  const newName = prompt('📝 프로젝트명을 수정하세요', project.name);
-  if(newName === null) return; // 취소
-  if(!newName.trim()){
-    showToast('❌ 프로젝트명은 비울 수 없습니다');
+  const year = yearInput.value.trim();
+  const name = nameInput.value.trim();
+  const note = noteInput.value.trim();
+  
+  let hasError = false;
+  
+  if(!year){
+    yearInput.classList.add('error');
+    hasError = true;
+  } else {
+    yearInput.classList.remove('error');
+  }
+  
+  if(!name){
+    nameInput.classList.add('error');
+    hasError = true;
+  } else {
+    nameInput.classList.remove('error');
+  }
+  
+  if(hasError){
+    showToast('❌ 필수 항목(연도, 프로젝트명)을 입력해주세요');
     return;
   }
   
-  // 2단계: 연도 수정
-  const newYear = prompt('📅 연도를 수정하세요', project.year);
-  if(newYear === null) return;
-  
-  // 3단계: 비고 수정
-  const newNote = prompt('📌 비고를 수정하세요 (선택사항)', project.note || '');
-  if(newNote === null) return;
-  
-  // 변경사항 적용
-  projectsList[idx] = {
-    year: newYear.trim() || project.year,
-    name: newName.trim(),
-    note: newNote.trim()
-  };
+  if(projectModalMode === 'edit' && projectModalEditIdx >= 0){
+    projectsList[projectModalEditIdx] = { year, name, note };
+    showToast(`✅ "${name}" 수정 완료`);
+  } else {
+    projectsList.push({ year, name, note });
+    showToast(`✅ "${name}" 프로젝트 추가됨`);
+  }
   
   saveProjectsList();
   renderProjectsTable();
-  showToast(`✅ "${newName}" 수정 완료`);
+  closeProjectModal();
 }
+
+// 키보드 이벤트: Enter로 저장, ESC로 닫기
+document.addEventListener('keydown', function(e){
+  const modal = document.getElementById('projectModal');
+  if(!modal || !modal.classList.contains('active')) return;
+  
+  if(e.key === 'Enter' && e.target.classList.contains('form-input')){
+    e.preventDefault();
+    submitProjectForm();
+  } else if(e.key === 'Escape'){
+    closeProjectModal();
+  }
+});
 
 // 프로젝트 삭제
 function deleteProject(idx){
