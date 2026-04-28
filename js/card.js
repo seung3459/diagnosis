@@ -2,10 +2,23 @@
 // 🃏 호기 카드 렌더링 및 관리
 // =====================================
 
-// 페이지 전환
+// 페이지 전환 (topbar 제어 포함)
 function showPage(id){ 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
   document.getElementById(id).classList.add('active'); 
+  
+  // 인트로/프로젝트 목록 페이지에서는 topbar 숨김
+  const topbar = document.getElementById('topbar');
+  if(topbar){
+    if(id === 'intro' || id === 'projects'){
+      topbar.style.display = 'none';
+    } else {
+      topbar.style.display = 'flex';
+    }
+  }
+  
+  // 페이지 진입 시 스크롤 맨 위로
+  window.scrollTo(0, 0);
 }
 
 function showSection(id, btn){
@@ -176,7 +189,6 @@ function refreshCardLabels(type){
   });
 }
 
-// 상태 변경
 function onStatusChange(type, id){
   const segment = document.querySelector(`.status-segment[data-unit="${type}_${id}"]`);
   if(segment){
@@ -192,7 +204,6 @@ function onStatusChange(type, id){
 function getUnitStatus(type, id){ const checked = document.querySelector(`input[name="${type}_${id}_status"]:checked`); return checked ? checked.value : ''; }
 function setUnitStatus(type, id, status){ const radios = document.getElementsByName(`${type}_${id}_status`); radios.forEach(r=>{ r.checked = (r.value === status); }); onStatusChange(type, id); }
 
-// 종류 변경
 function changeSubtype(type, id){
   const sel = document.getElementById(`${type}_${id}_subtype`);
   if(!sel) return;
@@ -202,7 +213,6 @@ function changeSubtype(type, id){
   renderGroupSummary(type);
 }
 
-// 카드 펼치기/접기
 function toggleCard(cardId, e){
   if(e && e.target && (e.target.tagName==='INPUT' || e.target.tagName==='BUTTON' || e.target.tagName==='SELECT' || e.target.tagName==='LABEL' || e.target.closest('.delete-btn') || e.target.closest('.photo-slot'))) return;
   const card = document.getElementById(cardId);
@@ -224,7 +234,6 @@ function scrollToCard(cardId){
   setTimeout(()=>{ card.classList.remove('highlight'); }, 1800); 
 }
 
-// 카운트 갱신
 function updateCount(type){
   const el = document.getElementById(`${type}_count`);
   if(!el) return;
@@ -233,7 +242,6 @@ function updateCount(type){
   el.textContent = `${cnt} 대`;
 }
 
-// 카드 헤더 요약 갱신
 function updateSummary(type, id){
   const el = document.getElementById(`${type}_${id}_summary`);
   if(!el) return;
@@ -268,7 +276,6 @@ function updateSummary(type, id){
   el.innerHTML = chips.length ? chips.join('') : '<span style="color:#9ca3af;">상태 미입력</span>';
 }
 
-// 라디오 스타일 갱신
 function updateRatingStyle(radio){
   const group = radio.closest('.rating-group');
   if(!group) return;
@@ -277,7 +284,6 @@ function updateRatingStyle(radio){
   if(selectedLabel) selectedLabel.classList.add('sel-'+radio.value);
 }
 
-// 인버터 토글
 function toggleInverter(type, id){
   const chk = document.getElementById(`${type}_${id}_inverter`);
   const wrap = document.getElementById(`${type}_${id}_inverterWrap`);
