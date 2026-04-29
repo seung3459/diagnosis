@@ -119,18 +119,21 @@ function renderCard(type, id){
     ahuExtraCheck = `<label><input type="checkbox" id="${type}_${id}_supplyFan"> 급기팬</label><label><input type="checkbox" id="${type}_${id}_exhaustFan"> 배기팬</label>`;
   }
 
-  // ⭐ 운전 상태 블록 (라디오 + 인버터/AHU 체크)
-  const stateBlock = `
+// ⭐ 운전 상태 블록 (라디오 + 인버터/AHU 체크) - 높이 맞춤
+const stateBlock = `
     <div class="state-field">
       <label class="state-label">📊 운전 상태</label>
-      <div class="status-segment" data-unit="${type}_${id}">
-        <label data-val="use"><input type="radio" name="${type}_${id}_status" value="use" onchange="onStatusChange('${type}',${id})">🟢 사용</label>
-        <label data-val="fail"><input type="radio" name="${type}_${id}_status" value="fail" onchange="onStatusChange('${type}',${id})">🔴 고장</label>
-        <label data-val="unused"><input type="radio" name="${type}_${id}_status" value="unused" onchange="onStatusChange('${type}',${id})">⚪ 미사용</label>
+      <div class="state-controls">
+        <div class="status-segment" data-unit="${type}_${id}">
+          <label data-val="use"><input type="radio" name="${type}_${id}_status" value="use" onchange="onStatusChange('${type}',${id})">🟢 사용</label>
+          <label data-val="fail"><input type="radio" name="${type}_${id}_status" value="fail" onchange="onStatusChange('${type}',${id})">🔴 고장</label>
+          <label data-val="unused"><input type="radio" name="${type}_${id}_status" value="unused" onchange="onStatusChange('${type}',${id})">⚪ 미사용</label>
+        </div>
+        ${(inverterCheckbox || ahuExtraCheck) ? `<div class="extra-check-row">${inverterCheckbox}${ahuExtraCheck}</div>` : ''}
       </div>
-      ${(inverterCheckbox || ahuExtraCheck) ? `<div class="extra-check-row">${inverterCheckbox}${ahuExtraCheck}</div>` : ''}
     </div>
   `;
+
 
   // ⭐ 상단 카드: subtype 있으면 2열(설비 종류 + 상태), 없으면 1열(상태만)
   let topCard = '';
