@@ -629,10 +629,11 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
 /* ⭐ 설비 종류 + 운전 상태 2열 그리드 (type-select-card 내부) */
 .select-state-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr 1.3fr;   /* ⭐ 우측을 더 넓게 */
   gap:16px;
   align-items:start;
 }
+
 @media (max-width:700px){
   .select-state-grid{grid-template-columns:1fr;}
 }
@@ -685,7 +686,7 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   align-self:flex-start;
 }
 .status-segment label{
-  padding:7px 14px;
+  padding:7px 11px;
   cursor:pointer;
   border-radius:8px;
   transition:all .2s;
@@ -718,12 +719,15 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   white-space:nowrap;
   cursor:pointer;
   background:#fff;
-  padding:6px 12px;
-  border-radius:8px;
+  padding:9px 14px;          /* ⭐ 6px 12px → 9px 14px */
+  border-radius:10px;        /* ⭐ 8px → 10px (라디오 그룹과 동일) */
   border:1.5px solid #cbd5e1;
   color:#475569;
+  font-size:13px;            /* ⭐ 명시적으로 13px */
+  font-weight:700;           /* ⭐ 600 → 700 (라디오와 동일) */
   transition:all .15s;
 }
+
 .extra-check-row label:hover{
   border-color:#3b82f6;
   background:#eff6ff;
