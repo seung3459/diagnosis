@@ -2,7 +2,7 @@
 // 🃏 호기 카드 렌더링 및 관리
 // =====================================
 
-// 페이지 전환 (topbar 제어 포함)
+// 페이지 전환 (topbar + FAB 제어 포함)
 function showPage(id){ 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
   document.getElementById(id).classList.add('active'); 
@@ -15,6 +15,18 @@ function showPage(id){
       topbar.style.display = 'flex';
     }
   }
+  
+  // 🆕 FAB 표시/숨김 (intro/projects에서는 숨김)
+  const fab = document.getElementById('fabContainer');
+  if(fab){
+    if(id === 'intro' || id === 'projects'){
+      fab.style.display = 'none';
+      document.getElementById('fabMenu')?.classList.remove('active');
+    } else {
+      fab.style.display = 'block';
+    }
+  }
+  
   window.scrollTo(0, 0);
 }
 
@@ -30,7 +42,7 @@ function showAirType(id, btn){ ['ahuSection','fanSection'].forEach(s=>document.g
 function showPumpType(id, btn){ ['chilledPumpSection','hotPumpSection','coolingPumpSection'].forEach(s=>document.getElementById(s).style.display='none'); document.getElementById(id).style.display='block'; setActiveSubTab(btn); }
 function setActiveSubTab(btn){ if(!btn) return; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
 
-// 호기 추가
+// 호기 추가 (🆕 기본 접힘 상태로 생성)
 function addUnit(type){
   if(!unitCount[type]) unitCount[type]=0;
   unitCount[type]++;
@@ -50,13 +62,13 @@ function renderCard(type, id){
   const displayName = getDisplayName(type, id);
   const icon = getDisplayIcon(type, id);
 
-// ⭐ coldSource subtype 판별 (터보 / 흡수식냉동기 / 흡수식냉온수기)
+  // ⭐ coldSource subtype 판별 (터보 / 흡수식냉동기 / 흡수식냉온수기)
   const csSubtype = (type === 'coldSource')
     ? (unitSubtype[`${type}_${id}`] || (subtypeMap[type] && subtypeMap[type][0].key) || 'turbo')
     : null;
   const isAbsorption   = csSubtype === 'absorption';     // 흡수식 냉동기
-  const isAbsorptionHC = csSubtype === 'abs_hw';   // 흡수식 냉온수기
-  const isAbsorptionLike = isAbsorption || isAbsorptionHC;  // 두 흡수식 공통 처리용
+  const isAbsorptionHC = csSubtype === 'abs_hw';         // 흡수식 냉온수기
+  const isAbsorptionLike = isAbsorption || isAbsorptionHC;
 
   // 일반 측정값 (coldSource 아닐 때 사용)
   let measureFields = '';
@@ -105,7 +117,7 @@ function renderCard(type, id){
 
   // ⭐ 명판사항 (subtype별 분기)
   let nameplateSection = '';
-if(type === 'coldSource'){
+  if(type === 'coldSource'){
     if(isAbsorptionLike){
       // 🔥 흡수식 명판 (냉동기 + 냉온수기 공통)
       // 냉온수기는 온수 유량 / 난방능력 2필드 추가
@@ -131,7 +143,6 @@ if(type === 'coldSource'){
         </div>
       `;
     } else {
-
       // ❄️ 터보냉동기 명판
       nameplateSection = `
         <div class="section-title">📋 명판사항</div>
@@ -149,10 +160,10 @@ if(type === 'coldSource'){
     }
   }
 
-  // ⭐ 운전상태 부가옵션 (인버터 / 온열원 / AHU팬)
+  // ⭐ 운전상태 부가옵션 (인버터 / 온열원 / 냉방·난방 / AHU팬)
   let inverterCheckbox = '';
   let heatSourceRadio = '';
-if(type === 'coldSource'){
+  if(type === 'coldSource'){
     if(isAbsorptionLike){
       heatSourceRadio = `
         <div class="status-segment heatsrc-segment" data-unit="${type}_${id}_hs">
@@ -219,7 +230,7 @@ if(type === 'coldSource'){
 
   // ⭐ 측정값 (subtype별 분기)
   let measureBlock;
-if(type === 'coldSource' && isAbsorptionLike){
+  if(type === 'coldSource' && isAbsorptionLike){
     // 🔥 흡수식: 냉수(또는 냉수/온수) / 냉각수 / 가열원
     // 냉온수기는 좌측 컬럼에 냉수+온수 둘 다 두고 모드별로 토글 (데이터는 양쪽 보존)
     const leftCol = isAbsorptionHC ? `
@@ -274,7 +285,7 @@ if(type === 'coldSource' && isAbsorptionLike){
       </div>
     `;
   } else if(type === 'coldSource'){
-    // ❄️ 터보냉동기 (기존)
+    // ❄️ 터보냉동기
     measureBlock = `
       <div class="section-title">📊 운전 측정값</div>
       <div class="cs-sub-card">
@@ -319,8 +330,9 @@ if(type === 'coldSource' && isAbsorptionLike){
     `
     : `${nameplateSection}${measureBlock}`;
 
+  // 🆕 카드는 기본 접힘 상태로 생성 (expanded 클래스 제거)
   return `
-    <div class="card expanded" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
+    <div class="card" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
       <div class="card-header" onclick="toggleCard('${type}_${id}_card', event)">
         <div class="header-icon">${icon}</div>
         <div class="header-title">
@@ -406,7 +418,8 @@ function changeSubtype(type, id){
 
     const newCard = document.getElementById(`${type}_${id}_card`);
     if(newCard){
-      if(!wasExpanded) newCard.classList.remove('expanded');
+      // 🆕 기본이 접힘이므로, 이전에 펼쳐져 있었다면 펼친 상태로 복원
+      if(wasExpanded) newCard.classList.add('expanded');
 
       const newSel = document.getElementById(`${type}_${id}_subtype`);
       if(newSel) newSel.value = newSubtype;
@@ -430,7 +443,7 @@ function changeSubtype(type, id){
         }
       });
 
-// 흡수식 온열원 / 운전 모드 동기화
+      // 흡수식 온열원 / 운전 모드 동기화
       onHeatSourceChange(type, id);
       if(typeof onOperationModeChange === 'function'){
         onOperationModeChange(type, id);
@@ -461,7 +474,9 @@ function scrollToCard(cardId){
   const card = document.getElementById(cardId); 
   if(!card) return; 
   card.classList.add('expanded'); 
-  card.scrollIntoView({behavior:'smooth', block:'start'}); 
+  setTimeout(()=>{
+    card.scrollIntoView({behavior:'smooth', block:'start'}); 
+  }, 50);
   card.classList.add('highlight'); 
   setTimeout(()=>{ card.classList.remove('highlight'); }, 1800); 
 }
@@ -521,7 +536,7 @@ function onHeatSourceChange(type, id){
     }
   }
 
-  // 필드 표시 토글 (display:contents로 wrapper를 layout에서 제외 → 좌측 컬럼과 동일 정렬)
+  // 필드 표시 토글
   const emptyEl = document.getElementById(`${type}_${id}_heatsrc_empty`);
   const steamEl = document.getElementById(`${type}_${id}_heatsrc_steam`);
   const hotEl   = document.getElementById(`${type}_${id}_heatsrc_hot`);
@@ -566,7 +581,9 @@ function onOperationModeChange(type, id){
 
 
 // =====================================
-// 🆕 라디오 재클릭 시 선택 해제 (status-segment, heatsrc-segment 공통)
+// 🆕 라디오 재클릭 시 선택 해제
+// (status-segment, heatsrc-segment, opmode-segment 공통)
+// ※ opmode-segment는 status-segment 클래스를 함께 가지므로 자동 적용됨
 // =====================================
 (function setupRadioToggle(){
   document.addEventListener('click', function(e){
