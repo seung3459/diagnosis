@@ -7,7 +7,7 @@ function collectUnitData(type, id){
   const data = {};
   if(hasSubtype(type)) data.subtype = getUnitSubtype(type, id);
   data.status = getUnitStatus(type, id);
-  ['inverter','supplyFan','exhaustFan'].forEach(k=>{ 
+  ['inverter','supplyFan','exhaustFan','ventMode'].forEach(k=>{ 
     const el = document.getElementById(`${type}_${id}_${k}`); 
     if(el) data[k] = el.checked; 
   });
@@ -15,15 +15,27 @@ function collectUnitData(type, id){
     const el = document.getElementById(`${type}_${id}_f${idx+1}`); 
     if(el) data[`f${idx+1}`] = el.value; 
   });
-  if(type === 'coldSource'){
-    data.nameplate = {};
-    ['maker','model','date','cooling','flow','power'].forEach(f=>{ 
-      const el = document.getElementById(`${type}_${id}_np_${f}`); 
-      if(el) data.nameplate[f] = el.value; 
-    });
-    const invEl = document.getElementById(`${type}_${id}_inverterValue`);
-    if(invEl) data.inverterValue = invEl.value;
-  }
+
+if(type === 'coldSource'){
+  data.nameplate = {};
+  // 🆕 흡수식 필드까지 포함
+  ['maker','model','date','cooling','flow','power','cwflow','fueltype','fuelheat','hwflow','heating'].forEach(f=>{ 
+    const el = document.getElementById(`${type}_${id}_np_${f}`); 
+    if(el) data.nameplate[f] = el.value; 
+  });
+  const invEl = document.getElementById(`${type}_${id}_inverterValue`);
+  if(invEl) data.inverterValue = invEl.value;
+}
+
+// 🆕 공조기 명판 저장 (가습 포함)
+if(type === 'ahu'){
+  data.nameplate = {};
+  ['no','date','flow','staticp','cooling','heating','power','humid'].forEach(f=>{
+    const el = document.getElementById(`${type}_${id}_np_${f}`);
+    if(el) data.nameplate[f] = el.value;
+  });
+}
+
   if(diagApplyTypes.includes(type)){
     data.diag = {};
     // 🆕 타입별 진단 항목 사용
@@ -58,7 +70,7 @@ function applyUnitData(type, id, data){
     if(data.fail) status = 'fail'; else if(data.use) status = 'use'; else status = '';
   }
   if(status) setUnitStatus(type, id, status);
-  ['inverter','supplyFan','exhaustFan'].forEach(k=>{ 
+  ['inverter','supplyFan','exhaustFan','ventMode'].forEach(k=>{ 
     const el = document.getElementById(`${type}_${id}_${k}`); 
     if(el && data[k] !== undefined) el.checked = data[k]; 
   });
@@ -66,19 +78,30 @@ function applyUnitData(type, id, data){
     const el = document.getElementById(`${type}_${id}_f${idx+1}`); 
     if(el && data[`f${idx+1}`] !== undefined) el.value = data[`f${idx+1}`]; 
   });
-  if(type === 'coldSource'){
-    if(data.nameplate){ 
-      ['maker','model','date','cooling','flow','power'].forEach(f=>{ 
-        const el = document.getElementById(`${type}_${id}_np_${f}`); 
-        if(el && data.nameplate[f] !== undefined) el.value = data.nameplate[f]; 
-      }); 
-    }
-    if(data.inverterValue !== undefined){ 
-      const invEl = document.getElementById(`${type}_${id}_inverterValue`); 
-      if(invEl) invEl.value = data.inverterValue; 
-    }
-    toggleInverter(type, id);
+
+if(type === 'coldSource'){
+  if(data.nameplate){ 
+    // 🆕 흡수식 필드까지 포함
+    ['maker','model','date','cooling','flow','power','cwflow','fueltype','fuelheat','hwflow','heating'].forEach(f=>{ 
+      const el = document.getElementById(`${type}_${id}_np_${f}`); 
+      if(el && data.nameplate[f] !== undefined) el.value = data.nameplate[f]; 
+    }); 
   }
+  if(data.inverterValue !== undefined){ 
+    const invEl = document.getElementById(`${type}_${id}_inverterValue`); 
+    if(invEl) invEl.value = data.inverterValue; 
+  }
+  toggleInverter(type, id);
+}
+
+// 🆕 공조기 명판 복원 (가습 포함)
+if(type === 'ahu' && data.nameplate){
+  ['no','date','flow','staticp','cooling','heating','power','humid'].forEach(f=>{
+    const el = document.getElementById(`${type}_${id}_np_${f}`);
+    if(el && data.nameplate[f] !== undefined) el.value = data.nameplate[f];
+  });
+}
+
   if(diagApplyTypes.includes(type) && data.diag){
     // 🆕 타입별 진단 항목 사용
     const diagItems = (typeof getDiagItems === 'function') ? getDiagItems(type) : turboDiagItems;
