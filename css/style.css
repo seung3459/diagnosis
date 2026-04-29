@@ -602,6 +602,24 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
 @media (max-width:900px){ .grid-3{grid-template-columns:repeat(2,1fr);} }
 @media (max-width:560px){ .grid-3,.grid-2{grid-template-columns:1fr;} }
 
+/* ⭐ 명판사항 ↔ 운전 측정값 2열 배치 (coldSource 카드) */
+.np-meas-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  align-items:start;
+  margin-bottom:8px;
+}
+.np-meas-col{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+.np-meas-col .section-title{margin-top:0;}
+@media (max-width:900px){
+  .np-meas-grid{grid-template-columns:1fr;gap:8px;}
+}
+
 .field{display:flex;flex-direction:column;gap:4px;}
 .field > label{font-size:12px;font-weight:600;color:#6b7280;margin:0;}
 .field .input-wrap{position:relative;}
@@ -754,7 +772,6 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   display:flex;
   align-items:center;
   gap:8px;
-  margin-left:auto;
   padding:6px 12px;
   background:rgba(255,255,255,.1);
   border-radius:999px;
@@ -959,7 +976,6 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
     font-size:11px;
   }
   .auth-status{
-    margin-left:0;
     margin-top:4px;
     width:100%;
     justify-content:center;
