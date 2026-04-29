@@ -1207,3 +1207,15 @@ input[type="number"]{
 .heatsrc-meas-col .field > label{
   font-size:11px;
 }
+
+/* 🆕 흡수식 냉온수기 - 운전 모드 토글 (냉방/난방) */
+.opmode-segment label[data-val="cooling"].active{
+  background:#dbeafe;
+  border-color:#3b82f6;
+  color:#1e40af;
+}
+.opmode-segment label[data-val="heating"].active{
+  background:#fee2e2;
+  border-color:#ef4444;
+  color:#b91c1c;
+}
