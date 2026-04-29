@@ -111,7 +111,7 @@ if(type === 'coldSource'){
   let inverterCheckbox = '', inverterField = '';
   if(type === 'coldSource'){
     inverterCheckbox = `<label><input type="checkbox" id="${type}_${id}_inverter" onchange="toggleInverter('${type}',${id});updateSummary('${type}',${id});"> 인버터 여부</label>`;
-    inverterField = `<div class="inverter-field" id="${type}_${id}_inverterWrap"><div class="field" style="margin-top:12px;"><label>⚙️ 인버터 주파수</label><div class="input-wrap"><input type="number" step="0.1" id="${type}_${id}_inverterValue" placeholder="0.0"><span class="unit">Hz</span></div></div></div>`;
+    inverterField = ` `;
   }
 
   let ahuExtraCheck = '';
@@ -326,7 +326,5 @@ function updateRatingStyle(radio){
 }
 
 function toggleInverter(type, id){
-  const chk = document.getElementById(`${type}_${id}_inverter`);
-  const wrap = document.getElementById(`${type}_${id}_inverterWrap`);
-  if(chk && wrap) wrap.classList.toggle('active', chk.checked);
+
 }
