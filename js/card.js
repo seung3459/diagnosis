@@ -2,19 +2,6 @@
 // 🃏 호기 카드 렌더링 및 관리
 // =====================================
 
-// 설비별 그라데이션 색상 (컴팩트 헤더용)
-const equipGradient = {
-  coldSource:   'linear-gradient(135deg,#1e3a8a,#3b82f6,#60a5fa)',
-  heatSource:   'linear-gradient(135deg,#dc2626,#f97316,#fb923c)',
-  coolingTower: 'linear-gradient(135deg,#0e7490,#06b6d4,#22d3ee)',
-  ahu:          'linear-gradient(135deg,#6d28d9,#7c3aed,#a78bfa)',
-  fan:          'linear-gradient(135deg,#7c3aed,#8b5cf6,#c4b5fd)',
-  chilled_pump: 'linear-gradient(135deg,#0369a1,#0284c7,#38bdf8)',
-  hot_pump:     'linear-gradient(135deg,#b91c1c,#dc2626,#f87171)',
-  cooling_pump: 'linear-gradient(135deg,#0f766e,#14b8a6,#5eead4)',
-  pipe:         'linear-gradient(135deg,#78350f,#b45309,#d97706)'
-};
-
 // 페이지 전환 (topbar 제어 포함)
 function showPage(id){ 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
@@ -62,13 +49,6 @@ function addUnit(type){
 function renderCard(type, id){
   const displayName = getDisplayName(type, id);
   const icon = getDisplayIcon(type, id);
-  const gradient = equipGradient[type] || 'linear-gradient(135deg,#475569,#64748b)';
-
-  let typeSelectHTML = '';
-  if(hasSubtype(type)){
-    const options = subtypeMap[type].map(s=>`<option value="${s.key}">${s.icon} ${s.label}</option>`).join('');
-    typeSelectHTML = `<div class="type-select-card"><div class="field"><label>🏷️ 설비 종류 선택</label><div class="input-wrap"><select id="${type}_${id}_subtype" onchange="changeSubtype('${type}',${id})">${options}</select></div></div></div>`;
-  }
 
   let measureFields = '';
   fieldConfig[type].forEach((lbl,i)=>{
@@ -139,13 +119,39 @@ function renderCard(type, id){
     ahuExtraCheck = `<label><input type="checkbox" id="${type}_${id}_supplyFan"> 급기팬</label><label><input type="checkbox" id="${type}_${id}_exhaustFan"> 배기팬</label>`;
   }
 
-  const statusSegment = `
-    <div class="status-segment" data-unit="${type}_${id}">
-      <label data-val="use"><input type="radio" name="${type}_${id}_status" value="use" onchange="onStatusChange('${type}',${id})">🟢 사용</label>
-      <label data-val="fail"><input type="radio" name="${type}_${id}_status" value="fail" onchange="onStatusChange('${type}',${id})">🔴 고장</label>
-      <label data-val="unused"><input type="radio" name="${type}_${id}_status" value="unused" onchange="onStatusChange('${type}',${id})">⚪ 미사용</label>
+  // ⭐ 운전 상태 블록 (라디오 + 인버터/AHU 체크)
+  const stateBlock = `
+    <div class="state-field">
+      <label class="state-label">📊 운전 상태</label>
+      <div class="status-segment" data-unit="${type}_${id}">
+        <label data-val="use"><input type="radio" name="${type}_${id}_status" value="use" onchange="onStatusChange('${type}',${id})">🟢 사용</label>
+        <label data-val="fail"><input type="radio" name="${type}_${id}_status" value="fail" onchange="onStatusChange('${type}',${id})">🔴 고장</label>
+        <label data-val="unused"><input type="radio" name="${type}_${id}_status" value="unused" onchange="onStatusChange('${type}',${id})">⚪ 미사용</label>
+      </div>
+      ${(inverterCheckbox || ahuExtraCheck) ? `<div class="extra-check-row">${inverterCheckbox}${ahuExtraCheck}</div>` : ''}
     </div>
   `;
+
+  // ⭐ 상단 카드: subtype 있으면 2열(설비 종류 + 상태), 없으면 1열(상태만)
+  let topCard = '';
+  if(hasSubtype(type)){
+    const options = subtypeMap[type].map(s=>`<option value="${s.key}">${s.icon} ${s.label}</option>`).join('');
+    topCard = `
+      <div class="type-select-card">
+        <div class="select-state-grid">
+          <div class="field">
+            <label>🏷️ 설비 종류 선택</label>
+            <div class="input-wrap">
+              <select id="${type}_${id}_subtype" onchange="changeSubtype('${type}',${id})">${options}</select>
+            </div>
+          </div>
+          ${stateBlock}
+        </div>
+      </div>
+    `;
+  } else {
+    topCard = `<div class="type-select-card">${stateBlock}</div>`;
+  }
 
   // 측정값 섹션 HTML (재사용)
   const measureBlock = `
@@ -166,20 +172,6 @@ function renderCard(type, id){
     `
     : `${nameplateSection}${measureBlock}`;
 
-  // ⭐ 컴팩트 헤더 (이미지 대신 그라데이션 + 아이콘 + 제목 + 상태)
-  const equipHeader = `
-    <div class="equip-header" style="background:${gradient};">
-      <div class="equip-header-left">
-        <div class="equip-header-icon">${icon}</div>
-        <div class="equip-header-title">${displayName}</div>
-      </div>
-      <div class="equip-header-right">
-        ${statusSegment}
-        ${(inverterCheckbox || ahuExtraCheck) ? `<div class="extra-check-row">${inverterCheckbox}${ahuExtraCheck}</div>` : ''}
-      </div>
-    </div>
-  `;
-
   return `
     <div class="card expanded" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
       <div class="card-header" onclick="toggleCard('${type}_${id}_card', event)">
@@ -192,9 +184,8 @@ function renderCard(type, id){
         <button class="delete-btn" onclick="event.stopPropagation();removeUnit('${type}',${id})">삭제</button>
       </div>
       <div class="card-content">
-        ${equipHeader}
         <div class="card-body">
-          ${typeSelectHTML}
+          ${topCard}
           ${bodyMain}
           ${diagSection}
         </div>
@@ -214,11 +205,6 @@ function refreshCardLabels(type){
     if(headerName) headerName.textContent = displayName;
     const iconBox = card.querySelector('.header-icon');
     if(iconBox) iconBox.textContent = getDisplayIcon(type, id);
-    // ⭐ 컴팩트 헤더 라벨/아이콘 갱신
-    const equipTitle = card.querySelector('.equip-header-title');
-    if(equipTitle) equipTitle.textContent = displayName;
-    const equipIcon = card.querySelector('.equip-header-icon');
-    if(equipIcon) equipIcon.textContent = getDisplayIcon(type, id);
     const photoTitle = card.querySelector('.photo-section-title');
     if(photoTitle) photoTitle.textContent = `📸 현장 사진 (${displayName})`;
   });
