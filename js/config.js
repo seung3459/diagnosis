@@ -58,7 +58,7 @@ const imageMap = {
   pipe:"https://images.unsplash.com/photo-1581093588401-c0cabd2b1d0a"
 };
 
-// 가중치 포함된 진단 항목 (현재는 터보냉동기만)
+// 가중치 포함된 진단 항목 (터보냉동기 등 열원설비용)
 const turboDiagItems = [
   {key:'usage_years', factor:'사용연수', short:'사용연수', weight:0.30, A:'9년 이하', B:'10년 이상 ~ 14년 이하', C:'15년 이상', target:'관리대장'},
   {key:'maint_history', factor:'보수이력', short:'보수이력', weight:0.15, A:'고장 없음', B:'경미한 고장 (1년간 1회 / 과거 2회)', C:'중대한 고장 (과거 4년간 1회 또는 과거 2회 이상)', target:'운전일지, 안전부'},
@@ -70,8 +70,60 @@ const turboDiagItems = [
   {key:'mcc_panel', factor:'MCC 및 현장 패널<br>(마이컴)', short:'MCC 패널', weight:0.05, A:'계측값 양호', B:'기기 성능은 정상, 계측값만 이상', C:'고장', target:'육안, 안전부'}
 ];
 
+// 🆕 공조기(AHU) 진단 항목
+const ahuDiagItems = [
+  {key:'usage_years', factor:'사용연수', short:'사용연수', weight:0.45,
+    A:'9년 이하',
+    B:'10년 이상 ~ 14년 이하',
+    C:'15년 이상',
+    target:'관리대장'},
+  {key:'maint_history', factor:'보수이력', short:'보수이력', weight:0.10,
+    A:'고장 없음',
+    B:'경미한 고장 (1년간 1회 / 과거 2회)',
+    C:'중대한 고장 (과거 1년간 1회 또는 과거 2회 이상)',
+    target:'운전일지, 인터뷰'},
+  {key:'inspection_state', factor:'점검 상태', short:'점검상태', weight:0.05,
+    A:'양호, 정기점검',
+    B:'보통, 간헐점검',
+    C:'불량, 정기점검 미실시',
+    target:'관리대장, 인터뷰'},
+  {key:'install_env', factor:'설치 환경', short:'설치환경', weight:0.05,
+    A:'실내, 유지관리 용이, 점검공간 확보, 방진 양호',
+    B:'실내, 유지보수 불편, 점검공간 부족, 방진 부식',
+    C:'옥외, 방진 불량, 보수 불가',
+    target:'육안'},
+  {key:'external_state', factor:'외부상태<br>(부식, 소음)', short:'외부상태', weight:0.05,
+    A:'초기상태와 유사, 양호',
+    B:'부분 변형 및 부분 부식(경화) 발생',
+    C:'심한 부식으로 누수 및 파손',
+    target:'육안'},
+  {key:'internal_state', factor:'내부상태', short:'내부상태', weight:0.10,
+    A:'코일, 필터, 드레인 등 상태 양호',
+    B:'코일, 필터 약간 오염 및 부식',
+    C:'심한 오염, 부식, 동파 발생',
+    target:'육안'},
+  {key:'fan_state', factor:'Fan', short:'Fan', weight:0.10,
+    A:'고장 없음',
+    B:'부분 부식 및 약간 오염',
+    C:'심하게 손상 및 부식',
+    target:'육안'},
+  {key:'control_state', factor:'제어부', short:'제어부', weight:0.10,
+    A:'계측값 양호',
+    B:'기기성능 정상, 계측값 이상',
+    C:'고장',
+    target:'육안'}
+];
+
+// 🆕 장비 타입(+서브타입) → 진단 항목 매핑
+function getDiagItems(type, subtype){
+  if(type === 'ahu') return ahuDiagItems;
+  // coldSource는 모든 서브타입에서 turbo와 동일 항목 사용 (필요 시 서브타입별 분기 가능)
+  if(type === 'coldSource') return turboDiagItems;
+  return turboDiagItems;  // 기본값
+}
+
 // 진단을 적용할 설비 타입
-const diagApplyTypes = ['coldSource'];
+const diagApplyTypes = ['coldSource', 'ahu'];  // 🆕 'ahu' 추가
 
 // 전역 상태
 let unitCount = {};
