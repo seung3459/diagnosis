@@ -1,5 +1,6 @@
 // =====================================
 // 📊 엑셀 내보내기
+// 🆕 타입별 진단 항목 지원 (coldSource + ahu)
 // =====================================
 
 function dataURLToArrayBuffer(dataURL){
@@ -10,8 +11,18 @@ function dataURLToArrayBuffer(dataURL){
   return bytes.buffer;
 }
 
-function collectColdSourceData(){
-  const container = document.getElementById('coldSourceUnits');
+// 🆕 타입별 라벨/이모지 매핑
+function getTypeMeta(type){
+  const meta = {
+    coldSource: { label:'냉열원',   icon:'❄️', sheetTitle:'냉열원 진단 요약',   defaultName:'냉열원진단' },
+    ahu:        { label:'공조기',   icon:'💨', sheetTitle:'공조기 진단 요약',   defaultName:'공조기진단' }
+  };
+  return meta[type] || { label: labelKor(type) || type, icon:'🔧', sheetTitle:`${labelKor(type)||type} 진단 요약`, defaultName:`${type}진단` };
+}
+
+// 🆕 일반화된 데이터 수집 함수 (coldSource + ahu 등 모든 진단 적용 타입)
+function collectUnitsData(type){
+  const container = document.getElementById(`${type}Units`);
   if(!container || container.querySelectorAll('.card').length === 0) return null;
 
   const projectInfo = {
@@ -23,13 +34,25 @@ function collectColdSourceData(){
 
   const cards = Array.from(container.querySelectorAll('.card'));
   const ordered = [];
-  subtypeMap.coldSource.forEach(st=>{
-    cards.forEach(card=>{
-      if(getUnitSubtype('coldSource', card.dataset.id) === st.key){
-        ordered.push({card, st});
-      }
+  
+  // subtype 있으면 subtype 순서로 정렬, 없으면 등록순
+  if(hasSubtype(type)){
+    subtypeMap[type].forEach(st=>{
+      cards.forEach(card=>{
+        if(getUnitSubtype(type, card.dataset.id) === st.key){
+          ordered.push({card, st});
+        }
+      });
     });
-  });
+  } else {
+    const meta = getTypeMeta(type);
+    cards.forEach(card=>{
+      ordered.push({card, st: { key: type, label: meta.label, icon: meta.icon }});
+    });
+  }
+
+  // 🆕 타입별 진단 항목
+  const diagItems = (typeof getDiagItems === 'function') ? getDiagItems(type) : turboDiagItems;
 
   const allUnits = [];
   let counter = {};
@@ -39,49 +62,80 @@ function collectColdSourceData(){
     const unitNum = counter[st.key];
 
     const diag = {};
-    turboDiagItems.forEach(item=>{
-      const baseKey = `coldSource_${id}_diag_${item.key}`;
+    diagItems.forEach(item=>{
+      const baseKey = `${type}_${id}_diag_${item.key}`;
       const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
       const contentEl = document.getElementById(`${baseKey}_content`);
       diag[item.key] = { rate: rateEl ? rateEl.value : '', content: contentEl ? contentEl.value : '' };
     });
 
-    const gradeResult = calculateGrade(diag);
+    const gradeResult = calculateGrade(diag, type);  // 🆕 type 전달
 
-    const photos = unitPhotos[`coldSource_${id}`] || new Array(PHOTO_COUNT).fill(null).map(()=>({img:null,desc:''}));
-    const opinion = document.getElementById(`coldSource_${id}_opinion`)?.value || '';
-    const status = getUnitStatus('coldSource', id);
+    const photos = unitPhotos[`${type}_${id}`] || new Array(PHOTO_COUNT).fill(null).map(()=>({img:null,desc:''}));
+    const opinion = document.getElementById(`${type}_${id}_opinion`)?.value || '';
+    const status = getUnitStatus(type, id);
 
     allUnits.push({
-      id, st, subtypeLabel: st.label, unitNum,
+      type, id, st, subtypeLabel: st.label, unitNum,
       diag, opinion, photos,
       statusText: statusText(status),
-      diagRates: turboDiagItems.map(item => diag[item.key]?.rate || '-'),
+      diagRates: diagItems.map(item => diag[item.key]?.rate || '-'),
       grade: gradeResult.grade,
-      score: gradeResult.score
+      score: gradeResult.score,
+      diagItems  // 🆕 시트 생성 시 사용
     });
   });
 
-  return { projectInfo, allUnits };
+  return { projectInfo, allUnits, type, diagItems };
 }
 
-function buildSummarySheet(wb, projectInfo, allUnits){
-  const ws = wb.addWorksheet('종합 요약', { views: [{ showGridLines: false }] });
+// 🔁 기존 함수명 유지 (호환성)
+function collectColdSourceData(){
+  return collectUnitsData('coldSource');
+}
 
-  ws.columns = [
-    { width: 18 }, { width: 10 }, { width: 11 },
-    { width: 11 }, { width: 11 }, { width: 11 }, { width: 11 },
-    { width: 11 }, { width: 13 }, { width: 13 }, { width: 11 },
-    { width: 10 }, { width: 10 }
+// 🆕 일반화된 종합 요약 시트
+function buildSummarySheet(wb, projectInfo, allUnits, type){
+  const meta = getTypeMeta(type);
+  const diagItems = (typeof getDiagItems === 'function') ? getDiagItems(type) : turboDiagItems;
+  const itemCount = diagItems.length;
+  
+  const ws = wb.addWorksheet(`${meta.label} 종합 요약`, { views: [{ showGridLines: false }] });
+
+  // 🆕 컬럼 너비: [종류, 호기, 상태, ...진단항목들, 점수, 종합]
+  // 진단 항목 개수만큼 컬럼 추가 (최소 8개 이상도 유연하게)
+  const cols = [
+    { width: 18 },  // 종류
+    { width: 10 },  // 호기
+    { width: 11 }   // 상태
   ];
+  for(let i=0; i<itemCount; i++) cols.push({ width: 11 });
+  cols.push({ width: 11 });  // 점수
+  cols.push({ width: 10 });  // 종합
+  ws.columns = cols;
 
-  for(let i = 14; i <= 30; i++){
+  const totalCols = 3 + itemCount + 2;  // 🆕 동적 컬럼 수
+  
+  // 안 쓰는 컬럼 숨김
+  for(let i = totalCols + 1; i <= 30; i++){
     ws.getColumn(i).hidden = true;
   }
 
-  ws.mergeCells('A1:M1');
+  // 컬럼 인덱스를 엑셀 글자(A,B,C...)로 변환
+  const colLetter = (n) => {
+    let s = '';
+    while(n > 0){
+      const m = (n - 1) % 26;
+      s = String.fromCharCode(65 + m) + s;
+      n = Math.floor((n - 1) / 26);
+    }
+    return s;
+  };
+  const lastCol = colLetter(totalCols);
+
+  ws.mergeCells(`A1:${lastCol}1`);
   const titleCell = ws.getCell('A1');
-  titleCell.value = '📊 기계설비 노후화 진단 종합 요약';
+  titleCell.value = `📊 ${meta.label} 노후화 진단 종합 요약`;
   titleCell.font = { name:'맑은 고딕', size:18, bold:true, color:{argb:'FF1F2937'} };
   titleCell.alignment = { vertical:'middle', horizontal:'center' };
   titleCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
@@ -101,7 +155,7 @@ function buildSummarySheet(wb, projectInfo, allUnits){
     keyCell.font = { bold:true, color:{argb:'FF6B7280'}, name:'맑은 고딕' };
     keyCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF9FAFB'} };
     keyCell.alignment = { vertical:'middle' };
-    ws.mergeCells(`B${r}:M${r}`);
+    ws.mergeCells(`B${r}:${lastCol}${r}`);
     const valCell = ws.getCell(`B${r}`);
     valCell.value = v || '';
     valCell.alignment = { vertical:'middle' };
@@ -116,15 +170,15 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   });
 
   r += 2;
-  ws.mergeCells(`A${r}:M${r}`);
+  ws.mergeCells(`A${r}:${lastCol}${r}`);
   const subTitle = ws.getCell(`A${r}`);
-  subTitle.value = '❄️ 냉열원 진단 요약';
+  subTitle.value = `${meta.icon} ${meta.sheetTitle}`;
   subTitle.font = { name:'맑은 고딕', size:14, bold:true };
   subTitle.alignment = { vertical:'middle' };
   ws.getRow(r).height = 28;
   r++;
 
-  ws.mergeCells(`A${r}:M${r}`);
+  ws.mergeCells(`A${r}:${lastCol}${r}`);
   const noteCell = ws.getCell(`A${r}`);
   noteCell.value = '💡 등급 기준: 평가점수 A=1.0, B=0.6, C=0.2 / 가중치 적용 후 100점 만점 / 60점 초과 A, 40~60점 B, 40점 이하 C';
   noteCell.font = { name:'맑은 고딕', size:10, color:{argb:'FF6B7280'}, italic:true };
@@ -133,8 +187,9 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   ws.getRow(r).height = 22;
   r++;
 
+  // 🆕 헤더: 동적 진단 항목
   const headerRow = ['종류','호기','상태'];
-  turboDiagItems.forEach(item => headerRow.push(item.short));
+  diagItems.forEach(item => headerRow.push(item.short));
   headerRow.push('점수', '종합');
 
   const hRow = ws.getRow(r);
@@ -151,6 +206,12 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   hRow.height = 32;
   r++;
 
+  // 🆕 진단 항목 컬럼 범위 (4 ~ 3+itemCount), 점수 컬럼 (3+itemCount+1), 종합 컬럼 (3+itemCount+2)
+  const rateColStart = 4;
+  const rateColEnd = 3 + itemCount;
+  const scoreCol = rateColEnd + 1;
+  const gradeCol = rateColEnd + 2;
+
   allUnits.forEach(u => {
     const row = ws.getRow(r);
     const scoreText = u.score !== null ? `${u.score}점` : '-';
@@ -162,17 +223,20 @@ function buildSummarySheet(wb, projectInfo, allUnits){
         top:{style:'thin',color:{argb:'FFE5E7EB'}}, bottom:{style:'thin',color:{argb:'FFE5E7EB'}},
         left:{style:'thin',color:{argb:'FFE5E7EB'}}, right:{style:'thin',color:{argb:'FFE5E7EB'}}
       };
-      if(col >= 4 && col <= 11){
+      // 🆕 진단 항목 셀 색상 (동적 범위)
+      if(col >= rateColStart && col <= rateColEnd){
         const v = cell.value;
         if(v==='A') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD1FAE5'} };
         else if(v==='B') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFED7AA'} };
         else if(v==='C') cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFECACA'} };
       }
-      if(col === 12){
+      // 점수 컬럼
+      if(col === scoreCol){
         cell.font = { name:'맑은 고딕', bold:true, color:{argb:'FF1E40AF'} };
         cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF6FF'} };
       }
-      if(col === 13){
+      // 종합 등급 컬럼
+      if(col === gradeCol){
         cell.font = { name:'맑은 고딕', bold:true, size:14 };
         const v = cell.value;
         if(v==='A'){ cell.font = {...cell.font, color:{argb:'FF059669'}}; cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFD1FAE5'} }; }
@@ -185,6 +249,7 @@ function buildSummarySheet(wb, projectInfo, allUnits){
   });
 }
 
+// 🆕 일반화된 호기별 시트 (diagItems를 u에서 받아 처리)
 function buildUnitSheet(wb, sheetName, u, projectInfo){
   const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: false }] });
 
@@ -358,7 +423,10 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   });
   ws.getRow(headerRow).height = 26;
 
-  turboDiagItems.forEach((item, idx) => {
+  // 🆕 u.diagItems 사용 (타입별 진단 항목)
+  const diagItems = u.diagItems || turboDiagItems;
+  
+  diagItems.forEach((item, idx) => {
     const r = headerRow + 1 + idx;
     ws.getRow(r).height = 30;
 
@@ -370,7 +438,9 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     numCell.border = border;
 
     const factorCell = ws.getCell(`B${r}`);
-    factorCell.value = `${item.factor} (${Math.round(item.weight*100)}%)`;
+    // 🆕 <br> 태그 제거
+    const factorText = item.factor.replace(/<br>/g, ' ');
+    factorCell.value = `${factorText} (${Math.round(item.weight*100)}%)`;
     factorCell.font = { name:'맑은 고딕', bold:true, size:10 };
     factorCell.alignment = { vertical:'middle', horizontal:'left', indent:1, wrapText:true };
     factorCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF9FAFB'} };
@@ -412,7 +482,8 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
     ws.getCell(`G${r}`).border = border;
   });
 
-  const opinionTitleRow = headerRow + 1 + turboDiagItems.length + 1;
+  // 🆕 diagItems.length 사용
+  const opinionTitleRow = headerRow + 1 + diagItems.length + 1;
   ws.mergeCells(`A${opinionTitleRow}:G${opinionTitleRow}`);
   const opTitle = ws.getCell(`A${opinionTitleRow}`);
   opTitle.value = '📝 주요 검토 의견';
@@ -440,52 +511,68 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   };
 }
 
+// 🆕 메인 엑셀 내보내기 - 진단 적용 모든 타입 통합 출력
 async function exportToExcel(){
   if(typeof ExcelJS === 'undefined'){
     alert('ExcelJS 라이브러리가 아직 로드되지 않았습니다.');
     return;
   }
 
-  const collected = collectColdSourceData();
-  if(!collected){
-    alert('⚠️ 내보낼 냉열원 데이터가 없습니다.');
+  // 🆕 진단 적용 타입 중 데이터 있는 것 모두 수집
+  const allCollected = [];
+  diagApplyTypes.forEach(type=>{
+    const collected = collectUnitsData(type);
+    if(collected) allCollected.push(collected);
+  });
+
+  if(allCollected.length === 0){
+    alert('⚠️ 내보낼 진단 데이터가 없습니다.\n\n냉열원 또는 공조기를 추가하고 진단을 입력해주세요.');
     return;
   }
 
   showLoading('엑셀 생성 중...');
 
   try{
-    const { projectInfo, allUnits } = collected;
+    const projectInfo = allCollected[0].projectInfo;  // 첫 타입의 프로젝트 정보 사용
     const wb = new ExcelJS.Workbook();
     wb.creator = 'HIMEC 진단 시스템';
     wb.created = new Date();
 
-    showLoading('종합 요약 시트 생성 중...');
-    buildSummarySheet(wb, projectInfo, allUnits);
+    // 🆕 타입별로 종합 요약 시트 + 호기별 시트 생성
+    let totalUnits = 0;
+    for(const collected of allCollected){
+      const { allUnits, type } = collected;
+      const meta = getTypeMeta(type);
+      
+      showLoading(`${meta.label} 종합 요약 시트 생성 중...`);
+      buildSummarySheet(wb, projectInfo, allUnits, type);
 
-    for(let i=0; i<allUnits.length; i++){
-      const u = allUnits[i];
-      showLoading(`호기별 시트 생성 중... (${i+1}/${allUnits.length})\n${u.subtypeLabel} ${u.unitNum}호기`);
-      let sheetName = `${u.subtypeLabel.replace(/\s+/g,'')}_${u.unitNum}호기`;
-      if(sheetName.length > 31) sheetName = sheetName.substring(0, 31);
-      let suffix = 1;
-      let finalName = sheetName;
-      while(wb.getWorksheet(finalName)){
-        finalName = sheetName.substring(0, 28) + `_${suffix}`;
-        suffix++;
+      for(let i=0; i<allUnits.length; i++){
+        const u = allUnits[i];
+        showLoading(`호기별 시트 생성 중... (${++totalUnits})\n${u.subtypeLabel} ${u.unitNum}호기`);
+        
+        // 🆕 시트 이름에 설비종류 prefix
+        let sheetName = `${meta.icon}${u.subtypeLabel.replace(/\s+/g,'')}_${u.unitNum}호기`;
+        if(sheetName.length > 31) sheetName = sheetName.substring(0, 31);
+        let suffix = 1;
+        let finalName = sheetName;
+        while(wb.getWorksheet(finalName)){
+          finalName = sheetName.substring(0, 28) + `_${suffix}`;
+          suffix++;
+        }
+        buildUnitSheet(wb, finalName, u, projectInfo);
       }
-      buildUnitSheet(wb, finalName, u, projectInfo);
     }
 
     showLoading('파일 저장 중...');
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const safeName = (projectInfo.projectName || '냉동기진단').replace(/[\\/:*?"<>|]/g,'_');
+    const safeName = (projectInfo.projectName || '기계설비진단').replace(/[\\/:*?"<>|]/g,'_');
     const today = new Date().toISOString().slice(0,10);
     saveAs(blob, `${safeName}_${today}.xlsx`);
 
     hideLoading();
-    showToast(`✅ 엑셀 파일 다운로드 완료 (${allUnits.length}개 호기)`);
+    showToast(`✅ 엑셀 파일 다운로드 완료 (${totalUnits}개 호기, ${allCollected.length}개 설비유형)`);
   }catch(e){
     hideLoading();
     console.error(e);
