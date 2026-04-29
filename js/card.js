@@ -71,7 +71,7 @@ function renderCard(type, id){
       const base = `${type}_${id}_diag_${item.key}`;
       diagRows += `
         <tr>
-          <td class="factor"><div class="factor-inner"><div class="factor-num">${idx+1}</div><div class="factor-name">${item.factor}<div class="factor-weight">가중치 ${Math.round(item.weight*100)}%</div></div></div></td>
+          <td class="factor"><div class="factor-inner"><div class="factor-num">${idx+1}</div><div class="factor-name">${item.factor}</div></div></td>
           <td class="rating-cell">
             <div class="rating-group" data-base="${base}">
               <label><input type="radio" name="${base}_rate" value="A" onchange="updateRatingStyle(this);updateSummary('${type}',${id});renderGroupSummary('${type}');"><span class="rating-A">A</span></label>
@@ -89,7 +89,7 @@ function renderCard(type, id){
     diagSection = `
       <div class="section-title">🔍 1차 진단 Check-list (육안점검)</div>
       <div class="diag-table-wrap"><table class="diag-table">
-        <thead><tr><th style="width:170px;">인자 (가중치)</th><th style="width:85px;">평가</th><th>주요 내용</th><th style="width:70px;">진단 기준</th><th style="width:110px;">조사대상</th><th style="width:160px;">비고</th></tr></thead>
+        <thead><tr><th style="width:170px;">인자</th><th style="width:85px;">평가</th><th>주요 내용</th><th style="width:70px;">진단 기준</th><th style="width:110px;">조사대상</th><th style="width:160px;">비고</th></tr></thead>
         <tbody>${diagRows}</tbody>
       </table></div>
       <div class="section-title">📝 주요 검토 의견</div>
@@ -105,12 +105,12 @@ function renderCard(type, id){
     nameplateSection = `
       <div class="section-title">📋 명판사항</div>
       <div class="cs-sub-card">
-        <div class="grid grid-3">
+        <div class="grid grid-2">
           <div class="field"><label>제조사</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_maker" placeholder="예: 캐리어"></div></div>
           <div class="field"><label>모델명</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_model" placeholder="예: 19XR"></div></div>
           <div class="field"><label>설치일자</label><div class="input-wrap"><input type="date" id="${type}_${id}_np_date"></div></div>
           <div class="field"><label>냉방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cooling" placeholder="0"><span class="unit">RT</span></div></div>
-          <div class="field"><label>정격 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_flow" placeholder="0"><span class="unit">m³/h</span></div></div>
+          <div class="field"><label>정격 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_flow" placeholder="0"><span class="unit">LPM</span></div></div>
           <div class="field"><label>정격 동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_power" placeholder="0"><span class="unit">kW</span></div></div>
         </div>
       </div>
@@ -136,6 +136,24 @@ function renderCard(type, id){
     </div>
   `;
 
+  // ⭐ 명판사항 ↔ 운전 측정값 2열 배치 (coldSource만 적용)
+  const measureBlock = `
+    <div class="section-title">📊 운전 측정값</div>
+    <div class="cs-sub-card">
+      <div class="grid grid-2">${measureFields}</div>
+      ${inverterField}
+    </div>
+  `;
+
+  const bodyMain = (type === 'coldSource')
+    ? `
+      <div class="np-meas-grid">
+        <div class="np-meas-col">${nameplateSection}</div>
+        <div class="np-meas-col">${measureBlock}</div>
+      </div>
+    `
+    : `${nameplateSection}${measureBlock}`;
+
   return `
     <div class="card expanded" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
       <div class="card-header" onclick="toggleCard('${type}_${id}_card', event)">
@@ -158,12 +176,7 @@ function renderCard(type, id){
         </div>
         <div class="card-body">
           ${typeSelectHTML}
-          ${nameplateSection}
-          <div class="section-title">📊 운전 측정값</div>
-          <div class="cs-sub-card">
-            <div class="grid grid-2">${measureFields}</div>
-            ${inverterField}
-          </div>
+          ${bodyMain}
           ${diagSection}
         </div>
       </div>
@@ -242,37 +255,27 @@ function updateCount(type){
   el.textContent = `${cnt} 대`;
 }
 
+// ⭐ 카드 헤더 chips: 상태(사용/고장/미사용) + 등급 만 표시
 function updateSummary(type, id){
   const el = document.getElementById(`${type}_${id}_summary`);
   if(!el) return;
   const chips = [];
+
+  // ① 상태
   const status = getUnitStatus(type, id);
-  if(status === 'use') chips.push(`<span class="status-chip chip-use">🟢 사용중</span>`);
-  else if(status === 'fail') chips.push(`<span class="status-chip chip-fail">🔴 고장</span>`);
+  if(status === 'use')         chips.push(`<span class="status-chip chip-use">🟢 사용중</span>`);
+  else if(status === 'fail')   chips.push(`<span class="status-chip chip-fail">🔴 고장</span>`);
   else if(status === 'unused') chips.push(`<span class="status-chip chip-unused">⚪ 미사용</span>`);
-  const invEl = document.getElementById(`${type}_${id}_inverter`);
-  if(invEl && invEl.checked) chips.push(`<span class="status-chip chip-inv">인버터</span>`);
+
+  // ② 등급 (진단 적용 타입만)
   if(diagApplyTypes.includes(type)){
-    let a=0,b=0,c=0;
-    turboDiagItems.forEach(item=>{
-      const rateEl = document.querySelector(`input[name="${type}_${id}_diag_${item.key}_rate"]:checked`);
-      if(rateEl){ if(rateEl.value==='A') a++; else if(rateEl.value==='B') b++; else if(rateEl.value==='C') c++; }
-    });
-    if(a) chips.push(`<span class="status-chip chip-A">A ${a}</span>`);
-    if(b) chips.push(`<span class="status-chip chip-B">B ${b}</span>`);
-    if(c) chips.push(`<span class="status-chip chip-C">C ${c}</span>`);
-    
     const diagData = collectDiagFromForm(type, id);
     const result = calculateGrade(diagData);
     if(result.score !== null){
       chips.push(`<span class="status-chip chip-grade">종합 ${result.grade} (${result.score}점)</span>`);
     }
   }
-  const photos = unitPhotos[`${type}_${id}`];
-  if(photos){
-    const filled = photos.filter(p=>p && p.img).length;
-    if(filled>0) chips.push(`<span class="status-chip" style="background:#06b6d4;color:#fff;">📸 ${filled}/${PHOTO_COUNT}</span>`);
-  }
+
   el.innerHTML = chips.length ? chips.join('') : '<span style="color:#9ca3af;">상태 미입력</span>';
 }
 
