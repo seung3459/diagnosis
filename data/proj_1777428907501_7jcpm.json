@@ -101,13 +101,99 @@
     ],
     "heatSource": [],
     "coolingTower": [],
-    "ahu": [],
+    "ahu": [
+      {
+        "status": "",
+        "supplyFan": false,
+        "exhaustFan": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "diag": {
+          "usage_years": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "install_env": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "external_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "control_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          }
+        },
+        "opinion": "",
+        "photos": [
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          }
+        ]
+      }
+    ],
     "fan": [],
     "chilled_pump": [],
     "hot_pump": [],
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-29T06:22:25.213Z",
+  "lastModified": "2026-04-29T06:57:00.954Z",
   "lastModifiedBy": "seung3459"
 }
