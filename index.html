@@ -152,7 +152,10 @@
 
   <div id="airSection" style="display:none;">
     <div class="sub-tabs"><button data-sub="ahuSection" onclick="showAirType('ahuSection', this)">공조기(AHU)</button><button data-sub="fanSection" onclick="showAirType('fanSection', this)">급·배기팬</button></div>
-    <div id="ahuSection"><div class="card-controls"><button class="btn" onclick="addUnit('ahu')">+ 공조기 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="ahu_count">0 대</span><button class="toggle-all" onclick="toggleAll('ahu', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('ahu', false)">모두 접기</button></div></div><div id="ahuUnits"></div></div>
+    <div id="ahuSection"><div class="card-controls"><button class="btn" onclick="addUnit('ahu')">+ 공조기 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="ahu_count">0 대</span><button class="toggle-all" onclick="toggleAll('ahu', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('ahu', false)">모두 접기</button></div></div>
+<div id="ahuSummaryWrap" class="summary-warp"></div>
+<div id="ahuUnits"></div>
+</div>
     <div id="fanSection" style="display:none;"><div class="card-controls"><button class="btn" onclick="addUnit('fan')">+ 급·배기팬 추가</button><div style="display:flex;gap:8px;align-items:center;"><span class="count-badge" id="fan_count">0 대</span><button class="toggle-all" onclick="toggleAll('fan', true)">모두 펼치기</button><button class="toggle-all" onclick="toggleAll('fan', false)">모두 접기</button></div></div><div id="fanUnits"></div></div>
   </div>
 
