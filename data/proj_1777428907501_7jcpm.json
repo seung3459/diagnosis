@@ -469,99 +469,6 @@
             "desc": ""
           }
         ]
-      },
-      {
-        "subtype": "turbo",
-        "status": "",
-        "inverter": false,
-        "f1": "",
-        "f2": "",
-        "f3": "",
-        "f4": "",
-        "nameplate": {
-          "maker": "",
-          "date": "",
-          "cooling": "",
-          "flow": "",
-          "power": ""
-        },
-        "diag": {
-          "usage_years": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "maint_history": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "inspection_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "install_env": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "appearance": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "temp_measure": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "piping_conn": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "mcc_panel": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          }
-        },
-        "opinion": "",
-        "photos": [
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          }
-        ]
       }
     ],
     "heatSource": [],
@@ -573,6 +480,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-29T06:18:17.171Z",
+  "lastModified": "2026-04-29T06:18:19.248Z",
   "lastModifiedBy": "seung3459"
 }
