@@ -637,20 +637,26 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   .select-state-grid{grid-template-columns:1fr;}
 }
 
-/* 운전 상태 블록 - 라벨 한 줄 차지, 그 아래 가로 배치 */
+/* 운전 상태 블록 - 좌측 select와 높이 맞춤 */
 .state-field{
   display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:10px;
+  flex-direction:column;
+  gap:4px;
 }
 .state-label{
   font-size:13px;
   font-weight:700;
   color:#1e40af;
-  flex-basis:100%;   /* ⭐ 라벨이 한 줄 모두 차지 */
-  margin:0 0 4px 0;
+  margin:0;
 }
+.state-controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  min-height:44px;  /* ⭐ select 박스와 동일 높이 */
+}
+
 
 /* 상태 세그먼트 (밝은 배경용) */
 .status-segment{
