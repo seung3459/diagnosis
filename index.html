@@ -304,7 +304,25 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- 🆕 플로팅 빠른이동 버튼 (FAB) -->
+<div class="fab-container" id="fabContainer">
+  <div class="fab-menu" id="fabMenu" onclick="event.stopPropagation()">
+    <div class="fab-menu-header">
+      <span>📋 빠른 이동</span>
+      <button class="fab-menu-close" onclick="toggleFabMenu(event)">✕</button>
+    </div>
+    <div class="fab-menu-list" id="fabMenuList"></div>
+    <div class="fab-menu-actions">
+      <button onclick="fabCollapseAll()">📦 모두 접기</button>
+      <button onclick="fabScrollTop()">⬆️ 맨 위로</button>
+    </div>
+  </div>
+  <button class="fab-btn" onclick="toggleFabMenu(event)" title="빠른 이동">📋</button>
+</div>
+
+
 <!-- 자바스크립트 -->
+
 <script src="js/config.js"></script>
 <script src="js/grade.js"></script>
 <script src="js/calendar.js"></script>
@@ -319,6 +337,7 @@
 <script src="js/projects.js"></script>
 <script src="js/excel-export.js"></script>
 <script src="js/pdf-export.js"></script>
+<script src="js/fab.js"></script>
 <script src="js/main.js"></script>
 
 </body>
