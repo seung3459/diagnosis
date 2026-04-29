@@ -15,12 +15,13 @@
         "f4": "",
         "nameplate": {
           "maker": "",
+          "model": "",
           "date": "",
           "cooling": "",
           "flow": "",
-          "power": "",
-          "cwflow": ""
+          "power": ""
         },
+        "inverterValue": "",
         "diag": {
           "usage_years": {
             "rate": null,
@@ -107,64 +108,9 @@
         "status": "",
         "supplyFan": true,
         "exhaustFan": false,
-        "ventMode": false,
         "f1": "",
         "f2": "",
         "f3": "",
-        "f4": "",
-        "nameplate": {
-          "no": "",
-          "date": "",
-          "flow": "",
-          "staticp": "",
-          "cooling": "",
-          "heating": "",
-          "power": "",
-          "humid": ""
-        },
-        "diag": {
-          "usage_years": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "maint_history": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "inspection_state": {
-            "rate": "A",
-            "content": "",
-            "note": ""
-          },
-          "install_env": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "external_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "internal_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "fan_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "control_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          }
-        },
-        "opinion": "",
         "photos": [
           {
             "img": null,
@@ -247,6 +193,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-29T07:41:43.148Z",
+  "lastModified": "2026-04-29T09:02:13.412Z",
   "lastModifiedBy": "seung3459"
 }
