@@ -490,3 +490,29 @@ function onHeatSourceChange(type, id){
 
   updateSummary(type, id);
 }
+
+// =====================================
+// 🆕 라디오 재클릭 시 선택 해제 (status-segment, heatsrc-segment 공통)
+// =====================================
+(function setupRadioToggle(){
+  document.addEventListener('click', function(e){
+    // ⭐ input 자체의 click은 무시 (label 클릭 시 자동 전파되는 중복 이벤트 방지)
+    if(e.target.tagName === 'INPUT') return;
+
+    const label = e.target.closest('label');
+    if(!label) return;
+    if(!label.closest('.status-segment, .heatsrc-segment')) return;
+
+    const radio = label.querySelector('input[type="radio"]');
+    if(!radio) return;
+
+    // click 핸들러는 default action(checked 변경) 전에 실행됨
+    // → 이 시점의 radio.checked는 클릭 직전 상태
+    if(radio.checked){
+      // 이미 체크된 라디오를 다시 클릭 → 해제
+      e.preventDefault();
+      radio.checked = false;
+      radio.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+  });
+})();
