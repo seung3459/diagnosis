@@ -651,11 +651,26 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
 }
 .state-controls{
   display:flex;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;       /* ⭐ 줄바꿈 방지 */
   align-items:center;
   gap:10px;
-  min-height:44px;  /* ⭐ select 박스와 동일 높이 */
+  min-height:44px;
 }
+.state-controls .status-segment{
+  flex-shrink:0;          /* 라디오는 줄어들지 않음 */
+}
+.state-controls .extra-check-row{
+  flex-wrap:nowrap;       /* 체크박스도 한 줄 유지 */
+}
+
+/* 모바일에서만 자연스럽게 줄바꿈 허용 */
+@media (max-width:600px){
+  .state-controls,
+  .state-controls .extra-check-row{
+    flex-wrap:wrap;
+  }
+}
+
 
 
 /* 상태 세그먼트 (밝은 배경용) */
