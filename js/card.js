@@ -2,12 +2,24 @@
 // 🃏 호기 카드 렌더링 및 관리
 // =====================================
 
+// 설비별 그라데이션 색상 (컴팩트 헤더용)
+const equipGradient = {
+  coldSource:   'linear-gradient(135deg,#1e3a8a,#3b82f6,#60a5fa)',
+  heatSource:   'linear-gradient(135deg,#dc2626,#f97316,#fb923c)',
+  coolingTower: 'linear-gradient(135deg,#0e7490,#06b6d4,#22d3ee)',
+  ahu:          'linear-gradient(135deg,#6d28d9,#7c3aed,#a78bfa)',
+  fan:          'linear-gradient(135deg,#7c3aed,#8b5cf6,#c4b5fd)',
+  chilled_pump: 'linear-gradient(135deg,#0369a1,#0284c7,#38bdf8)',
+  hot_pump:     'linear-gradient(135deg,#b91c1c,#dc2626,#f87171)',
+  cooling_pump: 'linear-gradient(135deg,#0f766e,#14b8a6,#5eead4)',
+  pipe:         'linear-gradient(135deg,#78350f,#b45309,#d97706)'
+};
+
 // 페이지 전환 (topbar 제어 포함)
 function showPage(id){ 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
   document.getElementById(id).classList.add('active'); 
   
-  // 인트로/프로젝트 목록 페이지에서는 topbar 숨김
   const topbar = document.getElementById('topbar');
   if(topbar){
     if(id === 'intro' || id === 'projects'){
@@ -16,8 +28,6 @@ function showPage(id){
       topbar.style.display = 'flex';
     }
   }
-  
-  // 페이지 진입 시 스크롤 맨 위로
   window.scrollTo(0, 0);
 }
 
@@ -52,6 +62,7 @@ function addUnit(type){
 function renderCard(type, id){
   const displayName = getDisplayName(type, id);
   const icon = getDisplayIcon(type, id);
+  const gradient = equipGradient[type] || 'linear-gradient(135deg,#475569,#64748b)';
 
   let typeSelectHTML = '';
   if(hasSubtype(type)){
@@ -155,6 +166,20 @@ function renderCard(type, id){
     `
     : `${nameplateSection}${measureBlock}`;
 
+  // ⭐ 컴팩트 헤더 (이미지 대신 그라데이션 + 아이콘 + 제목 + 상태)
+  const equipHeader = `
+    <div class="equip-header" style="background:${gradient};">
+      <div class="equip-header-left">
+        <div class="equip-header-icon">${icon}</div>
+        <div class="equip-header-title">${displayName}</div>
+      </div>
+      <div class="equip-header-right">
+        ${statusSegment}
+        ${(inverterCheckbox || ahuExtraCheck) ? `<div class="extra-check-row">${inverterCheckbox}${ahuExtraCheck}</div>` : ''}
+      </div>
+    </div>
+  `;
+
   return `
     <div class="card expanded" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
       <div class="card-header" onclick="toggleCard('${type}_${id}_card', event)">
@@ -167,14 +192,7 @@ function renderCard(type, id){
         <button class="delete-btn" onclick="event.stopPropagation();removeUnit('${type}',${id})">삭제</button>
       </div>
       <div class="card-content">
-        <div class="equip-image">
-          <img src="${imageMap[type]}">
-          <div class="overlay">
-            <div class="title">${displayName}</div>
-            ${statusSegment}
-            ${(inverterCheckbox || ahuExtraCheck) ? `<div class="extra-check-row">${inverterCheckbox}${ahuExtraCheck}</div>` : ''}
-          </div>
-        </div>
+        ${equipHeader}
         <div class="card-body">
           ${typeSelectHTML}
           ${bodyMain}
@@ -196,8 +214,11 @@ function refreshCardLabels(type){
     if(headerName) headerName.textContent = displayName;
     const iconBox = card.querySelector('.header-icon');
     if(iconBox) iconBox.textContent = getDisplayIcon(type, id);
-    const overlayTitle = card.querySelector('.overlay .title');
-    if(overlayTitle) overlayTitle.textContent = displayName;
+    // ⭐ 컴팩트 헤더 라벨/아이콘 갱신
+    const equipTitle = card.querySelector('.equip-header-title');
+    if(equipTitle) equipTitle.textContent = displayName;
+    const equipIcon = card.querySelector('.equip-header-icon');
+    if(equipIcon) equipIcon.textContent = getDisplayIcon(type, id);
     const photoTitle = card.querySelector('.photo-section-title');
     if(photoTitle) photoTitle.textContent = `📸 현장 사진 (${displayName})`;
   });
@@ -256,19 +277,16 @@ function updateCount(type){
   el.textContent = `${cnt} 대`;
 }
 
-// ⭐ 카드 헤더 chips: 상태(사용/고장/미사용) + 등급 만 표시
 function updateSummary(type, id){
   const el = document.getElementById(`${type}_${id}_summary`);
   if(!el) return;
   const chips = [];
 
-  // ① 상태
   const status = getUnitStatus(type, id);
   if(status === 'use')         chips.push(`<span class="status-chip chip-use">🟢 사용중</span>`);
   else if(status === 'fail')   chips.push(`<span class="status-chip chip-fail">🔴 고장</span>`);
   else if(status === 'unused') chips.push(`<span class="status-chip chip-unused">⚪ 미사용</span>`);
 
-  // ② 등급 (진단 적용 타입만)
   if(diagApplyTypes.includes(type)){
     const diagData = collectDiagFromForm(type, id);
     const result = calculateGrade(diagData);
