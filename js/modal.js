@@ -1,13 +1,39 @@
 // =====================================
 // 🪟 모달, 토스트, 로딩
+// 🆕 타입별 진단 항목 지원 (turbo / ahu)
 // =====================================
 
 // 진단 기준 모달
-function showCriteria(key){
-  const item = turboDiagItems.find(d=>d.key===key);
+// 🆕 type 인자 추가 - 어떤 진단 항목 세트에서 찾을지 결정
+function showCriteria(key, type){
+  // 🆕 type 기반으로 진단 항목 세트 선택
+  const items = (typeof getDiagItems === 'function' && type)
+    ? getDiagItems(type)
+    : turboDiagItems;
+  
+  let item = items.find(d => d.key === key);
+  
+  // 🆕 안전장치: type이 없거나 못 찾으면 모든 세트에서 검색
+  if(!item){
+    const allSets = [turboDiagItems];
+    if(typeof ahuDiagItems !== 'undefined') allSets.push(ahuDiagItems);
+    for(const set of allSets){
+      item = set.find(d => d.key === key);
+      if(item) break;
+    }
+  }
+  
   if(!item) return;
-  document.getElementById('modalTitle').textContent = `${item.factor} - 진단 기준`;
-  document.getElementById('modalBody').innerHTML = `<div class="criteria-item"><div class="criteria-badge A">A</div><div class="criteria-text">${item.A}</div></div><div class="criteria-item"><div class="criteria-badge B">B</div><div class="criteria-text">${item.B}</div></div><div class="criteria-item"><div class="criteria-badge C">C</div><div class="criteria-text">${item.C}</div></div><div style="margin-top:14px;padding:10px;background:#f3f4f6;border-radius:8px;font-size:12px;color:#6b7280;">📂 <strong>조사대상:</strong> ${item.target} <br>⚖️ <strong>가중치:</strong> ${Math.round(item.weight*100)}%</div>`;
+  
+  document.getElementById('modalTitle').textContent = `${item.factor.replace(/<br>/g,' ')} - 진단 기준`;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="criteria-item"><div class="criteria-badge A">A</div><div class="criteria-text">${item.A}</div></div>
+    <div class="criteria-item"><div class="criteria-badge B">B</div><div class="criteria-text">${item.B}</div></div>
+    <div class="criteria-item"><div class="criteria-badge C">C</div><div class="criteria-text">${item.C}</div></div>
+    <div style="margin-top:14px;padding:10px;background:#f3f4f6;border-radius:8px;font-size:12px;color:#6b7280;">
+      📂 <strong>조사대상:</strong> ${item.target} <br>
+      ⚖️ <strong>가중치:</strong> ${Math.round(item.weight*100)}%
+    </div>`;
   document.getElementById('criteriaModal').classList.add('active');
 }
 
@@ -17,10 +43,21 @@ function closeCriteriaModal(e){
 }
 
 // 종합 등급 산정 기준 모달
-function showGradeInfo(){
+// 🆕 type 인자 추가 - 어떤 설비의 가중치를 표시할지 결정
+function showGradeInfo(type){
+  // 🆕 type 기반으로 진단 항목 세트 선택
+  const items = (typeof getDiagItems === 'function' && type)
+    ? getDiagItems(type)
+    : turboDiagItems;
+  
+  // 🆕 설비명 표시
+  const equipLabel = type ? labelKor(type) : '';
+  const titleSuffix = equipLabel ? ` <span style="color:#6b7280;font-size:13px;font-weight:500;">(${equipLabel})</span>` : '';
+  
   let weightRows = '';
-  turboDiagItems.forEach(item => {
-    weightRows += `<tr><td>${item.factor}</td><td class="weight-val">${Math.round(item.weight*100)}%</td></tr>`;
+  items.forEach(item => {
+    const factorName = item.factor.replace(/<br>/g, ' ');
+    weightRows += `<tr><td>${factorName}</td><td class="weight-val">${Math.round(item.weight*100)}%</td></tr>`;
   });
   
   const html = `
@@ -34,7 +71,7 @@ function showGradeInfo(){
     </div>
     
     <div class="grade-info-section">
-      <div class="grade-info-section-title">⚖️ 인자별 가중치</div>
+      <div class="grade-info-section-title">⚖️ 인자별 가중치${titleSuffix}</div>
       <table class="weight-table">
         <thead><tr><th>인자</th><th style="text-align:right;">가중치</th></tr></thead>
         <tbody>${weightRows}<tr style="background:#eff6ff;font-weight:700;"><td>합계</td><td class="weight-val">100%</td></tr></tbody>
