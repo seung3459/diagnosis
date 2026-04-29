@@ -111,16 +111,16 @@ function exportToPDF(){
 
         bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
         bodyHTML += `<table class="data-table check-table"><thead><tr>`;
-        bodyHTML += `<th style="width:32px;">번호</th><th style="width:140px;">인자 (가중치)</th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
+        bodyHTML += `<th style="width:32px;">번호</th><th style="width:140px;">인자 </th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
         diagItems.forEach((it, idx)=>{
           const d = u.diag[it.key] || {};
           const r = d.rate || '-';
           const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
           // 🆕 <br> → 공백 (PDF에서 깔끔하게)
-          const factorText = it.factor.replace(/<br>/g, ' ');
+          const factorText = it.factor.replace(/<br>/g, '\n');
           bodyHTML += `<tr>`;
           bodyHTML += `<td>${idx+1}</td>`;
-          bodyHTML += `<td class="left factor-cell"><strong>${escapeHtml(factorText)}</strong> <span class="weight-tag">(${Math.round(it.weight*100)}%)</span></td>`;
+          bodyHTML += `<td class="left factor-cell"><strong>${escapeHtml(factorText)}</strong></td>`;
           bodyHTML += `<td class="${cls}"><strong>${r}</strong></td>`;
           bodyHTML += `<td class="left content-cell">${escapeHtml(d.content||'')}</td>`;
           bodyHTML += `<td class="target-cell">${escapeHtml(it.target)}</td>`;
@@ -202,14 +202,21 @@ function exportToPDF(){
   .summary-table .unit-info .unit-type { font-size: 11px; font-weight: 700; color: #1f2937; word-break: keep-all; }
   .summary-table .unit-info .unit-num { font-size: 10.5px; color: #4b5563; font-weight: 600; margin-top: 2px; }
 
-  /* 호기별 진단 체크리스트 표 */
-  .check-table { font-size: 10.5px; }
-  .check-table th, .check-table td { padding: 6px 7px; line-height: 1.4; }
-  .check-table .factor-cell { font-size: 10.5px; word-break: keep-all; }
-  .check-table .factor-cell strong { font-size: 10.5px; }
-  .check-table .weight-tag { color: #6b7280; font-size: 9.5px; font-weight: 500; }
-  .check-table .content-cell { font-size: 10px; line-height: 1.4; word-break: keep-all; }
-  .check-table .target-cell { font-size: 10px; color: #4b5563; line-height: 1.35; word-break: keep-all; }
+/* 호기별 진단 체크리스트 표 - 🆕 모든 행 높이 균일하게 */
+.check-table { font-size: 10.5px; table-layout: fixed; }
+.check-table th, .check-table td { 
+  padding: 6px 7px; 
+  line-height: 1.4; 
+  height: 42px;          /* 🆕 모든 셀 동일 높이 */
+  vertical-align: middle;/* 🆕 세로 가운데 */
+  overflow: hidden;       
+}
+.check-table tbody tr { height: 42px; }  /* 🆕 행 높이 고정 */
+.check-table .factor-cell { font-size: 10.5px; word-break: keep-all; }
+.check-table .factor-cell strong { font-size: 10.5px; }
+.check-table .content-cell { font-size: 10px; line-height: 1.4; word-break: keep-all; }
+.check-table .target-cell { font-size: 10px; color: #4b5563; line-height: 1.35; word-break: keep-all; }
+
 
   .rate-A { background: #d1fae5; color: #059669; font-weight: 700; }
   .rate-B { background: #fed7aa; color: #d97706; font-weight: 700; }
