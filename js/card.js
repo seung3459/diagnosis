@@ -50,11 +50,13 @@ function renderCard(type, id){
   const displayName = getDisplayName(type, id);
   const icon = getDisplayIcon(type, id);
 
-  // ⭐ coldSource subtype 판별 (터보 / 흡수식)
+// ⭐ coldSource subtype 판별 (터보 / 흡수식냉동기 / 흡수식냉온수기)
   const csSubtype = (type === 'coldSource')
     ? (unitSubtype[`${type}_${id}`] || (subtypeMap[type] && subtypeMap[type][0].key) || 'turbo')
     : null;
-  const isAbsorption = csSubtype === 'absorption';
+  const isAbsorption   = csSubtype === 'absorption';     // 흡수식 냉동기
+  const isAbsorptionHC = csSubtype === 'abs_hw';   // 흡수식 냉온수기
+  const isAbsorptionLike = isAbsorption || isAbsorptionHC;  // 두 흡수식 공통 처리용
 
   // 일반 측정값 (coldSource 아닐 때 사용)
   let measureFields = '';
@@ -104,7 +106,7 @@ function renderCard(type, id){
   // ⭐ 명판사항 (subtype별 분기)
   let nameplateSection = '';
   if(type === 'coldSource'){
-    if(isAbsorption){
+    if(isAbsorptionLike){
       // 🔥 흡수식 냉동기 명판
       nameplateSection = `
         <div class="section-title">📋 명판사항</div>
@@ -143,7 +145,7 @@ function renderCard(type, id){
   let inverterCheckbox = '';
   let heatSourceRadio = '';
   if(type === 'coldSource'){
-    if(isAbsorption){
+    if(isAbsorptionLike){
       heatSourceRadio = `
         <div class="status-segment heatsrc-segment" data-unit="${type}_${id}_hs">
           <label data-val="steam"><input type="radio" name="${type}_${id}_heatsrc" value="steam" onchange="onHeatSourceChange('${type}',${id})">♨️ 증기</label>
@@ -200,7 +202,7 @@ function renderCard(type, id){
 
   // ⭐ 측정값 (subtype별 분기)
   let measureBlock;
-  if(type === 'coldSource' && isAbsorption){
+  if(type === 'coldSource' && isAbsorptionLike){
     // 🔥 흡수식: 냉수 / 냉각수 / 가열원
     measureBlock = `
       <div class="section-title">📊 운전 측정값</div>
