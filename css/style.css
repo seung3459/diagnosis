@@ -767,12 +767,15 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
 
 /* ========== 🆕 GitHub 인증 UI ========== */
 
-/* topbar 인증 상태 표시 - ⭐ 우측 정렬 */
+/* topbar 인증 상태 표시 - ⭐ 우측 절대 고정 (메인 버튼 중앙정렬 유지) */
 .auth-status{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
   display:flex;
   align-items:center;
   gap:8px;
-  margin-left:auto;
   padding:6px 12px;
   background:rgba(255,255,255,.1);
   border-radius:999px;
@@ -971,16 +974,19 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   .topbar{
     gap:4px;
     padding:8px;
+    padding-bottom:48px; /* auth-status 공간 확보 */
   }
   .topbar button{
     padding:8px 10px;
     font-size:11px;
   }
+  /* ⭐ 모바일에서는 absolute 풀고 자연스럽게 아래로 */
   .auth-status{
-    margin-left:0;
-    margin-top:4px;
-    width:100%;
-    justify-content:center;
+    position:absolute;
+    right:8px;
+    bottom:6px;
+    top:auto;
+    transform:none;
     font-size:11px;
     padding:4px 10px;
   }
