@@ -1,18 +1,25 @@
 // =====================================
 // 📄 PDF 내보내기 (새 창 인쇄 방식)
+// 🆕 타입별 진단 항목 지원 (coldSource + ahu)
 // =====================================
 
 function exportToPDF(){
-  const collected = collectColdSourceData();
-  if(!collected){
-    alert('⚠️ 내보낼 냉열원 데이터가 없습니다.');
+  // 🆕 진단 적용 모든 타입에서 데이터 수집
+  const allCollected = [];
+  diagApplyTypes.forEach(type=>{
+    const collected = collectUnitsData(type);
+    if(collected) allCollected.push(collected);
+  });
+
+  if(allCollected.length === 0){
+    alert('⚠️ 내보낼 진단 데이터가 없습니다.\n\n냉열원 또는 공조기를 추가하고 진단을 입력해주세요.');
     return;
   }
 
   showLoading('PDF 미리보기 준비 중...');
 
   try{
-    const { projectInfo, allUnits } = collected;
+    const projectInfo = allCollected[0].projectInfo;
 
     const printWindow = window.open('', '_blank', 'width=900,height=1000');
     if(!printWindow){
@@ -21,12 +28,12 @@ function exportToPDF(){
       return;
     }
 
-    const safeName = (projectInfo.projectName || '냉동기진단').replace(/[\\/:*?"<>|]/g,'_');
+    const safeName = (projectInfo.projectName || '기계설비진단').replace(/[\\/:*?"<>|]/g,'_');
     const today = new Date().toISOString().slice(0,10);
 
     let bodyHTML = '';
 
-    // 표지 페이지
+    // ===== 표지 페이지 =====
     bodyHTML += `<div class="page cover">`;
     bodyHTML += `<div class="cover-box">`;
     bodyHTML += `<div class="cover-title">📊 기계설비 노후화 진단 보고서</div>`;
@@ -37,82 +44,112 @@ function exportToPDF(){
       <tr><th>생성일시</th><td>${new Date().toLocaleString('ko-KR')}</td></tr>
     </table>`;
 
-    bodyHTML += `<div class="section-h">📊 냉열원 진단 종합 요약</div>`;
-    bodyHTML += `<table class="data-table summary-table"><thead><tr>`;
-    bodyHTML += `<th style="width:90px;">종류 / 호기</th><th style="width:55px;">상태</th>`;
-    turboDiagItems.forEach(it => bodyHTML += `<th>${it.short}</th>`);
-    bodyHTML += `<th style="width:42px;">점수</th><th style="width:42px;">종합</th></tr></thead><tbody>`;
-    allUnits.forEach(u => {
-      bodyHTML += `<tr>`;
-      bodyHTML += `<td class="unit-info"><div class="unit-type">${escapeHtml(u.subtypeLabel)}</div><div class="unit-num">${u.unitNum}호기</div></td>`;
-      bodyHTML += `<td>${escapeHtml(u.statusText)}</td>`;
-      u.diagRates.forEach(r => {
-        const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
-        bodyHTML += `<td class="${cls}">${r}</td>`;
-      });
-      bodyHTML += `<td><strong>${u.score !== null ? u.score : '-'}</strong></td>`;
-      const gcls = u.grade==='A'?'rate-A':u.grade==='B'?'rate-B':u.grade==='C'?'rate-C':'';
-      bodyHTML += `<td class="${gcls}"><strong>${u.grade}</strong></td>`;
-      bodyHTML += `</tr>`;
-    });
-    bodyHTML += `</tbody></table>`;
-    
-    bodyHTML += `<div class="grade-criteria-info">
-      <div class="grade-criteria-title">📌 종합 등급 산정 기준</div>
-      <div>• 평가점수: <strong>A=1.0, B=0.6, C=0.2</strong></div>
-      <div>• 점수 = Σ(가중치 × 평가결과) × 100</div>
-      <div>• 등급: <span class="rate-A" style="padding:2px 6px;">60점 초과 A</span> / <span class="rate-B" style="padding:2px 6px;">40~60점 B</span> / <span class="rate-C" style="padding:2px 6px;">40점 이하 C</span></div>
-    </div>`;
+    // 🆕 진단 대상 설비 목록
+    const setSummary = allCollected.map(c=>{
+      const meta = getTypeMeta(c.type);
+      return `${meta.icon} ${meta.label} ${c.allUnits.length}대`;
+    }).join(' / ');
+    bodyHTML += `<div class="cover-equipment-list">📋 진단 대상: ${setSummary}</div>`;
+
     bodyHTML += `</div></div>`;
 
-    // 호기별 페이지
-    allUnits.forEach(u => {
-      // 페이지 A: 검토 결과
-      bodyHTML += `<div class="page">`;
-      bodyHTML += `<div class="unit-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기 <span class="page-tag">[검토 결과]</span></div>`;
-      const scoreInfo = u.score !== null ? ` (${u.score}점)` : '';
-      bodyHTML += `<div class="unit-sub">상태: ${escapeHtml(u.statusText)} | 종합 등급: <strong class="grade-${u.grade}">${u.grade}${scoreInfo}</strong></div>`;
+    // 🆕 ===== 타입별 종합 요약 페이지 =====
+    let totalUnits = 0;
+    allCollected.forEach((collected, typeIdx)=>{
+      const { allUnits, type, diagItems } = collected;
+      const meta = getTypeMeta(type);
+      totalUnits += allUnits.length;
 
-      bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
-      bodyHTML += `<table class="data-table check-table"><thead><tr>`;
-      // 헤더에서 "(가중치)" 제거
-      bodyHTML += `<th style="width:32px;">번호</th><th style="width:130px;">인자</th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
-      turboDiagItems.forEach((it, idx)=>{
-        const d = u.diag[it.key] || {};
-        const r = d.rate || '-';
-        const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
+      // 종합 요약 페이지
+      bodyHTML += `<div class="page">`;
+      bodyHTML += `<div class="section-h">${meta.icon} ${meta.label} 진단 종합 요약</div>`;
+      bodyHTML += `<table class="data-table summary-table"><thead><tr>`;
+      bodyHTML += `<th style="width:90px;">종류 / 호기</th><th style="width:55px;">상태</th>`;
+      diagItems.forEach(it => bodyHTML += `<th>${it.short}</th>`);
+      bodyHTML += `<th style="width:42px;">점수</th><th style="width:42px;">종합</th></tr></thead><tbody>`;
+      
+      allUnits.forEach(u => {
         bodyHTML += `<tr>`;
-        bodyHTML += `<td>${idx+1}</td>`;
-        // (가중치 %) 표시 제거
-        bodyHTML += `<td class="left factor-cell"><strong>${escapeHtml(it.factor)}</strong></td>`;
-        bodyHTML += `<td class="${cls}"><strong>${r}</strong></td>`;
-        bodyHTML += `<td class="left content-cell">${escapeHtml(d.content||'')}</td>`;
-        bodyHTML += `<td class="target-cell">${escapeHtml(it.target)}</td>`;
+        bodyHTML += `<td class="unit-info"><div class="unit-type">${escapeHtml(u.subtypeLabel)}</div><div class="unit-num">${u.unitNum}호기</div></td>`;
+        bodyHTML += `<td>${escapeHtml(u.statusText)}</td>`;
+        u.diagRates.forEach(r => {
+          const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
+          bodyHTML += `<td class="${cls}">${r}</td>`;
+        });
+        bodyHTML += `<td><strong>${u.score !== null ? u.score : '-'}</strong></td>`;
+        const gcls = u.grade==='A'?'rate-A':u.grade==='B'?'rate-B':u.grade==='C'?'rate-C':'';
+        bodyHTML += `<td class="${gcls}"><strong>${u.grade}</strong></td>`;
         bodyHTML += `</tr>`;
       });
       bodyHTML += `</tbody></table>`;
-
-      bodyHTML += `<div class="section-h">📝 주요 검토 의견</div>`;
-      bodyHTML += `<div class="opinion-box-large">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
+      
+      // 🆕 가중치 정보 박스
+      const weightInfo = diagItems.map(it => 
+        `${it.short} ${Math.round(it.weight*100)}%`
+      ).join(' / ');
+      
+      bodyHTML += `<div class="weight-info-box">
+        <div class="weight-info-title">⚖️ ${meta.label} 인자별 가중치</div>
+        <div class="weight-info-content">${weightInfo}</div>
+      </div>`;
+      
+      bodyHTML += `<div class="grade-criteria-info">
+        <div class="grade-criteria-title">📌 종합 등급 산정 기준</div>
+        <div>• 평가점수: <strong>A=1.0, B=0.6, C=0.2</strong></div>
+        <div>• 점수 = Σ(가중치 × 평가결과) × 100</div>
+        <div>• 등급: <span class="rate-A" style="padding:2px 6px;">60점 초과 A</span> / <span class="rate-B" style="padding:2px 6px;">40~60점 B</span> / <span class="rate-C" style="padding:2px 6px;">40점 이하 C</span></div>
+      </div>`;
       bodyHTML += `</div>`;
 
-      // 페이지 B: 현장 사진
-      const validPhotos = (u.photos||[]).map((p,i)=>({...p, idx:i})).filter(p=>p.img);
-      if(validPhotos.length > 0){
+      // ===== 호기별 페이지 =====
+      allUnits.forEach(u => {
+        // 페이지 A: 검토 결과
         bodyHTML += `<div class="page">`;
-        bodyHTML += `<div class="unit-title">${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기 <span class="page-tag">[현장 사진]</span></div>`;
-        bodyHTML += `<div class="unit-sub">총 ${validPhotos.length}장의 현장 사진</div>`;
-        bodyHTML += `<div class="section-h">📸 현장 사진</div>`;
-        bodyHTML += `<div class="photo-grid">`;
-        validPhotos.forEach(p=>{
-          bodyHTML += `<div class="photo-card">`;
-          bodyHTML += `<div class="photo-desc">📷 사진${p.idx+1}: ${escapeHtml(p.desc)||'-'}</div>`;
-          bodyHTML += `<img class="photo-img" src="${p.img}" alt="사진${p.idx+1}">`;
-          bodyHTML += `</div>`;
+        bodyHTML += `<div class="unit-title">${meta.icon} ${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기 <span class="page-tag">[검토 결과]</span></div>`;
+        const scoreInfo = u.score !== null ? ` (${u.score}점)` : '';
+        bodyHTML += `<div class="unit-sub">상태: ${escapeHtml(u.statusText)} | 종합 등급: <strong class="grade-${u.grade}">${u.grade}${scoreInfo}</strong></div>`;
+
+        bodyHTML += `<div class="section-h">🔍 1차 진단 Check-list</div>`;
+        bodyHTML += `<table class="data-table check-table"><thead><tr>`;
+        bodyHTML += `<th style="width:32px;">번호</th><th style="width:140px;">인자 (가중치)</th><th style="width:46px;">평가</th><th>주요 내용</th><th style="width:90px;">조사 대상</th></tr></thead><tbody>`;
+        diagItems.forEach((it, idx)=>{
+          const d = u.diag[it.key] || {};
+          const r = d.rate || '-';
+          const cls = r==='A'?'rate-A':r==='B'?'rate-B':r==='C'?'rate-C':'';
+          // 🆕 <br> → 공백 (PDF에서 깔끔하게)
+          const factorText = it.factor.replace(/<br>/g, ' ');
+          bodyHTML += `<tr>`;
+          bodyHTML += `<td>${idx+1}</td>`;
+          bodyHTML += `<td class="left factor-cell"><strong>${escapeHtml(factorText)}</strong> <span class="weight-tag">(${Math.round(it.weight*100)}%)</span></td>`;
+          bodyHTML += `<td class="${cls}"><strong>${r}</strong></td>`;
+          bodyHTML += `<td class="left content-cell">${escapeHtml(d.content||'')}</td>`;
+          bodyHTML += `<td class="target-cell">${escapeHtml(it.target)}</td>`;
+          bodyHTML += `</tr>`;
         });
+        bodyHTML += `</tbody></table>`;
+
+        bodyHTML += `<div class="section-h">📝 주요 검토 의견</div>`;
+        bodyHTML += `<div class="opinion-box-large">${escapeHtml(u.opinion)||'(미입력)'}</div>`;
         bodyHTML += `</div>`;
-        bodyHTML += `</div>`;
-      }
+
+        // 페이지 B: 현장 사진
+        const validPhotos = (u.photos||[]).map((p,i)=>({...p, idx:i})).filter(p=>p.img);
+        if(validPhotos.length > 0){
+          bodyHTML += `<div class="page">`;
+          bodyHTML += `<div class="unit-title">${meta.icon} ${escapeHtml(u.subtypeLabel)} - ${u.unitNum}호기 <span class="page-tag">[현장 사진]</span></div>`;
+          bodyHTML += `<div class="unit-sub">총 ${validPhotos.length}장의 현장 사진</div>`;
+          bodyHTML += `<div class="section-h">📸 현장 사진</div>`;
+          bodyHTML += `<div class="photo-grid">`;
+          validPhotos.forEach(p=>{
+            bodyHTML += `<div class="photo-card">`;
+            bodyHTML += `<div class="photo-desc">📷 사진${p.idx+1}: ${escapeHtml(p.desc)||'-'}</div>`;
+            bodyHTML += `<img class="photo-img" src="${p.img}" alt="사진${p.idx+1}">`;
+            bodyHTML += `</div>`;
+          });
+          bodyHTML += `</div>`;
+          bodyHTML += `</div>`;
+        }
+      });
     });
 
     const fullHTML = `<!DOCTYPE html>
@@ -132,11 +169,19 @@ function exportToPDF(){
   .cover-box { width: 100%; }
   .cover-title { font-size: 26px; font-weight: 800; color: #1f2937; margin-bottom: 6px; }
   .cover-sub { font-size: 14px; color: #6b7280; margin-bottom: 30px; }
-  .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+  .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
   .info-table th, .info-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
   .info-table tr:last-child th, .info-table tr:last-child td { border-bottom: none; }
   .info-table th { background: #f3f4f6; color: #374151; font-weight: 700; text-align: left; width: 130px; }
   .info-table td { color: #111827; }
+  
+  /* 🆕 표지 진단 대상 박스 */
+  .cover-equipment-list { 
+    background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; 
+    padding: 14px 18px; font-size: 13px; font-weight: 600; color: #1e40af; 
+    margin-bottom: 20px; 
+  }
+  
   .unit-title { font-size: 22px; font-weight: 800; color: #1f2937; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
   .unit-sub { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
   .page-tag { font-size: 14px; font-weight: 600; color: #2563eb; background: #dbeafe; padding: 4px 10px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
@@ -152,18 +197,19 @@ function exportToPDF(){
   .summary-table th, .summary-table td { padding: 8px 6px; line-height: 1.4; }
   .summary-table th { font-size: 11px; word-break: keep-all; }
   
-  /* 종류/호기 통합 셀 */
+  /* 종류/호기 통합 셀 (가운데 정렬, 두 줄 표시) */
   .summary-table .unit-info { padding: 8px 4px; line-height: 1.4; text-align: center; vertical-align: middle; }
   .summary-table .unit-info .unit-type { font-size: 11px; font-weight: 700; color: #1f2937; word-break: keep-all; }
   .summary-table .unit-info .unit-num { font-size: 10.5px; color: #4b5563; font-weight: 600; margin-top: 2px; }
 
   /* 호기별 진단 체크리스트 표 */
-  .check-table { font-size: 11px; }
-  .check-table th, .check-table td { padding: 7px 8px; line-height: 1.4; }
-  .check-table .factor-cell { font-size: 11px; word-break: keep-all; }
-  .check-table .factor-cell strong { font-size: 11px; }
-  .check-table .content-cell { font-size: 10.5px; line-height: 1.4; word-break: keep-all; }
-  .check-table .target-cell { font-size: 10.5px; color: #4b5563; line-height: 1.4; word-break: keep-all; }
+  .check-table { font-size: 10.5px; }
+  .check-table th, .check-table td { padding: 6px 7px; line-height: 1.4; }
+  .check-table .factor-cell { font-size: 10.5px; word-break: keep-all; }
+  .check-table .factor-cell strong { font-size: 10.5px; }
+  .check-table .weight-tag { color: #6b7280; font-size: 9.5px; font-weight: 500; }
+  .check-table .content-cell { font-size: 10px; line-height: 1.4; word-break: keep-all; }
+  .check-table .target-cell { font-size: 10px; color: #4b5563; line-height: 1.35; word-break: keep-all; }
 
   .rate-A { background: #d1fae5; color: #059669; font-weight: 700; }
   .rate-B { background: #fed7aa; color: #d97706; font-weight: 700; }
@@ -171,7 +217,19 @@ function exportToPDF(){
   .grade-A { color: #059669; }
   .grade-B { color: #d97706; }
   .grade-C { color: #dc2626; }
-  .grade-criteria-info { margin-top: 18px; padding: 14px 16px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; font-size: 12px; line-height: 1.8; }
+  
+  /* 🆕 가중치 안내 박스 */
+  .weight-info-box { 
+    margin-top: 14px; padding: 12px 14px; 
+    background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; 
+    font-size: 11px; line-height: 1.7; 
+  }
+  .weight-info-box .weight-info-title { 
+    font-weight: 700; color: #075985; margin-bottom: 4px; font-size: 12px; 
+  }
+  .weight-info-box .weight-info-content { color: #0c4a6e; word-break: keep-all; }
+  
+  .grade-criteria-info { margin-top: 14px; padding: 14px 16px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; font-size: 12px; line-height: 1.8; }
   .grade-criteria-info .grade-criteria-title { font-weight: 700; color: #92400e; margin-bottom: 6px; font-size: 13px; }
   .opinion-box-large { background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; padding: 18px; font-size: 13px; color: #111827; line-height: 1.8; min-height: 280px; white-space: pre-wrap; border-radius: 0 0 6px 6px; }
   .photo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
@@ -203,7 +261,7 @@ ${bodyHTML}
     printWindow.document.close();
 
     hideLoading();
-    showToast(`✅ PDF 미리보기 창이 열렸습니다 (${allUnits.length}개 호기)`);
+    showToast(`✅ PDF 미리보기 창이 열렸습니다 (${totalUnits}개 호기, ${allCollected.length}개 설비유형)`);
   }catch(e){
     hideLoading();
     console.error(e);
