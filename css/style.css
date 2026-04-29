@@ -1219,3 +1219,246 @@ input[type="number"]{
   border-color:#ef4444;
   color:#b91c1c;
 }
+
+/* ========== 🆕 플로팅 빠른이동 버튼 (FAB) ========== */
+.fab-container{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  z-index:900;
+}
+
+/* 메인 버튼 */
+.fab-btn{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#2563eb,#3b82f6);
+  color:#fff;
+  border:none;
+  font-size:24px;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(37,99,235,.4);
+  transition:all .25s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  z-index:2;
+}
+.fab-btn:hover{
+  transform:translateY(-3px) scale(1.05);
+  box-shadow:0 12px 28px rgba(37,99,235,.5);
+}
+.fab-btn:active{
+  transform:translateY(-1px) scale(1.02);
+}
+
+/* 메뉴 패널 */
+.fab-menu{
+  display:none;
+  position:absolute;
+  right:0;
+  bottom:70px;
+  width:300px;
+  max-height:65vh;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,.18);
+  border:1px solid #e5e7eb;
+  overflow:hidden;
+  flex-direction:column;
+  animation:fabSlideUp .2s ease-out;
+}
+.fab-menu.active{
+  display:flex;
+}
+@keyframes fabSlideUp{
+  from{opacity:0;transform:translateY(10px) scale(.98);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+
+/* 메뉴 헤더 */
+.fab-menu-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  background:linear-gradient(135deg,#1f2937,#374151);
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+  flex-shrink:0;
+  letter-spacing:.3px;
+}
+.fab-menu-close{
+  background:transparent;
+  border:none;
+  color:#fff;
+  font-size:14px;
+  cursor:pointer;
+  padding:4px 8px;
+  border-radius:6px;
+  transition:background .15s;
+  font-weight:700;
+}
+.fab-menu-close:hover{
+  background:rgba(255,255,255,.15);
+}
+
+/* 메뉴 리스트 */
+.fab-menu-list{
+  flex:1;
+  overflow-y:auto;
+  padding:8px;
+  scrollbar-width:thin;
+  scrollbar-color:#cbd5e1 transparent;
+}
+.fab-menu-list::-webkit-scrollbar{
+  width:6px;
+}
+.fab-menu-list::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:3px;
+}
+.fab-menu-list::-webkit-scrollbar-thumb:hover{
+  background:#94a3b8;
+}
+
+/* 섹션 타이틀 (냉열원 / 온열원 등) */
+.fab-menu-section-title{
+  font-size:11px;
+  font-weight:700;
+  color:#6b7280;
+  padding:10px 12px 6px;
+  letter-spacing:.5px;
+  background:#f9fafb;
+  border-radius:6px;
+  margin:6px 4px 4px;
+}
+.fab-menu-section-title:first-child{
+  margin-top:0;
+}
+
+/* 호기 아이템 */
+.fab-menu-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+  color:#374151;
+  transition:all .15s;
+  border:1px solid transparent;
+  margin:0 4px 3px;
+}
+.fab-menu-item:hover{
+  background:#eff6ff;
+  border-color:#bfdbfe;
+  color:#1e40af;
+  transform:translateX(2px);
+}
+.fab-menu-item:active{
+  transform:translateX(0);
+}
+.fab-menu-item .fab-icon{
+  font-size:15px;
+  flex-shrink:0;
+  width:22px;
+  text-align:center;
+}
+.fab-menu-item .fab-name{
+  flex:1;
+  font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* 운전 상태 칩 (메뉴 내부) */
+.fab-menu-item .fab-status{
+  flex-shrink:0;
+  font-size:10px;
+  font-weight:700;
+  padding:3px 8px;
+  border-radius:999px;
+  letter-spacing:.3px;
+}
+.fab-menu-item .fab-status.use{
+  background:#d1fae5;
+  color:#059669;
+}
+.fab-menu-item .fab-status.fail{
+  background:#fecaca;
+  color:#dc2626;
+}
+.fab-menu-item .fab-status.unused{
+  background:#e5e7eb;
+  color:#6b7280;
+}
+.fab-menu-item .fab-status.empty{
+  background:#f3f4f6;
+  color:#9ca3af;
+}
+
+/* 빈 상태 */
+.fab-menu-empty{
+  padding:30px 16px;
+  text-align:center;
+  font-size:13px;
+  color:#6b7280;
+  line-height:1.6;
+}
+
+/* 액션 버튼 영역 (모두 접기 / 맨 위로) */
+.fab-menu-actions{
+  display:flex;
+  gap:6px;
+  padding:10px;
+  background:#f9fafb;
+  border-top:1px solid #e5e7eb;
+  flex-shrink:0;
+}
+.fab-menu-actions button{
+  flex:1;
+  padding:9px 8px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:8px;
+  font-size:12px;
+  font-weight:700;
+  color:#4b5563;
+  cursor:pointer;
+  transition:all .15s;
+  font-family:inherit;
+}
+.fab-menu-actions button:hover{
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
+  transform:translateY(-1px);
+}
+.fab-menu-actions button:active{
+  transform:translateY(0);
+}
+
+/* 모바일 대응 */
+@media (max-width:600px){
+  .fab-container{
+    right:16px;
+    bottom:16px;
+  }
+  .fab-btn{
+    width:50px;
+    height:50px;
+    font-size:20px;
+  }
+  .fab-menu{
+    width:calc(100vw - 32px);
+    max-width:300px;
+    bottom:62px;
+  }
+}
+
