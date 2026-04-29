@@ -78,11 +78,12 @@ function renderCard(type, id){
     });
   }
 
-  // 진단 섹션
+  // 🔧 진단 섹션 - 🆕 getDiagItems(type)로 동적 항목 사용 (공조기 지원)
   let diagSection = '';
   if(diagApplyTypes.includes(type)){
+    const diagItems = getDiagItems(type);  // 🆕 타입별 진단 항목
     let diagRows = '';
-    turboDiagItems.forEach((item, idx)=>{
+    diagItems.forEach((item, idx)=>{
       const base = `${type}_${id}_diag_${item.key}`;
       diagRows += `
         <tr>
@@ -95,7 +96,7 @@ function renderCard(type, id){
             </div>
           </td>
           <td class="content-cell"><input type="text" id="${base}_content" placeholder="주요 내용 입력"></td>
-          <td class="info-cell"><button class="info-btn" onclick="showCriteria('${item.key}')" title="진단 기준 보기">?</button></td>
+          <td class="info-cell"><button class="info-btn" onclick="showCriteria('${item.key}','${type}')" title="진단 기준 보기">?</button></td>
           <td class="target">${item.target}</td>
           <td class="note-cell"><input type="text" id="${base}_note" placeholder="비고"></td>
         </tr>
@@ -120,7 +121,6 @@ function renderCard(type, id){
   if(type === 'coldSource'){
     if(isAbsorptionLike){
       // 🔥 흡수식 명판 (냉동기 + 냉온수기 공통)
-      // 냉온수기는 온수 유량 / 난방능력 2필드 추가
       const hcExtraNameplate = isAbsorptionHC ? `
             <div class="field"><label>온수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_hwflow" placeholder="0"><span class="unit">LPM</span></div></div>
             <div class="field"><label>난방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_heating" placeholder="0"><span class="unit">kcal/h</span></div></div>
@@ -232,7 +232,6 @@ function renderCard(type, id){
   let measureBlock;
   if(type === 'coldSource' && isAbsorptionLike){
     // 🔥 흡수식: 냉수(또는 냉수/온수) / 냉각수 / 가열원
-    // 냉온수기는 좌측 컬럼에 냉수+온수 둘 다 두고 모드별로 토글 (데이터는 양쪽 보존)
     const leftCol = isAbsorptionHC ? `
           <div class="meas-col">
             <div class="meas-col-title hcmode-title-cooling">💧 냉수</div>
@@ -551,10 +550,8 @@ function onHeatSourceChange(type, id){
 // 🆕 흡수식 냉온수기 - 냉방/난방 모드 전환 (데이터 보존, 화면만 토글)
 function onOperationModeChange(type, id){
   const checked = document.querySelector(`input[name="${type}_${id}_opmode"]:checked`);
-  // 미선택 시 기본값 = cooling (냉방 화면)
   const mode = checked ? checked.value : 'cooling';
 
-  // segment active 효과
   const segment = document.querySelector(`.opmode-segment[data-unit="${type}_${id}_op"]`);
   if(segment){
     segment.querySelectorAll('label').forEach(l=>l.classList.remove('active'));
@@ -567,7 +564,6 @@ function onOperationModeChange(type, id){
   const card = document.getElementById(`${type}_${id}_card`);
   if(!card) return;
 
-  // 냉방/난방 필드 표시 토글 (DOM에 둘 다 존재 → 데이터 보존됨)
   const showCooling = (mode === 'cooling');
   card.querySelectorAll('.hcmode-cooling, .hcmode-title-cooling').forEach(el=>{
     el.style.display = showCooling ? '' : 'none';
@@ -582,12 +578,9 @@ function onOperationModeChange(type, id){
 
 // =====================================
 // 🆕 라디오 재클릭 시 선택 해제
-// (status-segment, heatsrc-segment, opmode-segment 공통)
-// ※ opmode-segment는 status-segment 클래스를 함께 가지므로 자동 적용됨
 // =====================================
 (function setupRadioToggle(){
   document.addEventListener('click', function(e){
-    // ⭐ input 자체의 click은 무시 (label 클릭 시 자동 전파되는 중복 이벤트 방지)
     if(e.target.tagName === 'INPUT') return;
 
     const label = e.target.closest('label');
@@ -597,10 +590,7 @@ function onOperationModeChange(type, id){
     const radio = label.querySelector('input[type="radio"]');
     if(!radio) return;
 
-    // click 핸들러는 default action(checked 변경) 전에 실행됨
-    // → 이 시점의 radio.checked는 클릭 직전 상태
     if(radio.checked){
-      // 이미 체크된 라디오를 다시 클릭 → 해제
       e.preventDefault();
       radio.checked = false;
       radio.dispatchEvent(new Event('change', {bubbles:true}));
