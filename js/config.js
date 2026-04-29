@@ -67,7 +67,7 @@ const turboDiagItems = [
   {key:'appearance', factor:'외관', short:'외관', weight:0.10, A:'초기 상태 유지, 약간의 오염', B:'심한 오염, 부분 부식', C:'심한 부식 또는 누수 및 파손', target:'육안, 안전부'},
   {key:'temp_measure', factor:'온도 계측', short:'온도계측', weight:0.15, A:'정격 온도 유지', B:'정격 온도보다 2~4℃ 벗어나 운전', C:'정격 온도보다 5℃ 이상 상이', target:'운전일지'},
   {key:'piping_conn', factor:'주위배관 및 연결부', short:'배관/연결부', weight:0.05, A:'초기와 유사한 상태, 일부 부분적 변형 또는 부식 확인', B:'변형, 부식이 외부에서 쉽게 확인됨', C:'손상·변형·누수 상태가 심하여 파괴 위험성을 느끼거나 부식으로 인한 고착으로 작동 불가', target:'육안, 안전부'},
-  {key:'mcc_panel', factor:'MCC 및 현장 패널(마이컴)', short:'MCC 패널', weight:0.05, A:'계측값 양호', B:'기기 성능은 정상, 계측값만 이상', C:'고장', target:'육안, 안전부'}
+  {key:'mcc_panel', factor:'MCC 및 현장 패널<br>(마이컴)', short:'MCC 패널', weight:0.05, A:'계측값 양호', B:'기기 성능은 정상, 계측값만 이상', C:'고장', target:'육안, 안전부'}
 ];
 
 // 진단을 적용할 설비 타입
