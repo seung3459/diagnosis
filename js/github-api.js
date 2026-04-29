@@ -1,6 +1,10 @@
 // =====================================
 // 🐙 GitHub API 통신 라이브러리
 // =====================================
+//  - SHA 캐시: 매 저장 후 응답 SHA를 캐시에 보관 → 다음 저장 시 GET 호출 생략
+//  - 409 충돌 시 자동 재시도 (최대 2회)
+//  - CORS 안전한 헤더만 사용
+// =====================================
 
 const GITHUB_CONFIG = {
   owner: 'seung3459',
@@ -13,10 +17,12 @@ const GITHUB_CONFIG = {
 
 const GH_API = 'https://api.github.com';
 
+// 🆕 SHA 캐시 (path별 최신 SHA 메모리 보관)
+const _shaCache = {};
+
 // =====================================
 // 🔐 인증 헤더 생성
 // =====================================
-
 function getAuthHeaders(){
   const token = getStoredToken();
   if(!token) return null;
@@ -30,7 +36,6 @@ function getAuthHeaders(){
 // =====================================
 // 👤 현재 사용자 정보 가져오기
 // =====================================
-
 async function ghGetCurrentUser(){
   const headers = getAuthHeaders();
   if(!headers) throw new Error('토큰이 없습니다');
@@ -44,9 +49,8 @@ async function ghGetCurrentUser(){
 }
 
 // =====================================
-// 📥 파일 가져오기
+// 📥 파일 가져오기 (SHA 캐시 갱신)
 // =====================================
-
 async function ghGetFile(path){
   const headers = getAuthHeaders();
   if(!headers) throw new Error('인증 필요');
@@ -55,44 +59,60 @@ async function ghGetFile(path){
   
   try{
     const res = await fetch(url, { headers });
-    if(res.status === 404) return null; // 파일 없음
+    
+    if(res.status === 404){
+      delete _shaCache[path];  // 캐시 제거
+      return null;
+    }
     if(!res.ok) throw new Error(`파일 로드 실패: ${res.status}`);
     
     const data = await res.json();
     // base64 디코딩 (한글 처리 위해 UTF-8로)
     const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+    
+    // 🆕 SHA 캐시 갱신
+    _shaCache[path] = data.sha;
+    
     return {
       content: JSON.parse(content),
       sha: data.sha
     };
   } catch(e){
-    if(e.message.includes('404')) return null;
+    if(e.message && e.message.includes('404')) return null;
     throw e;
   }
 }
 
 // =====================================
 // 📤 파일 저장/업데이트
+//  - SHA 캐시 우선 사용 → 없으면 GET으로 조회
+//  - 409 충돌 시 캐시 비우고 자동 재시도 (최대 2회)
+//  - PUT 응답의 새 SHA를 캐시에 저장
 // =====================================
-
-async function ghSaveFile(path, content, commitMessage){
+async function ghSaveFile(path, content, commitMessage, _retryCount = 0){
   const headers = getAuthHeaders();
   if(!headers) throw new Error('인증 필요');
   
-  // 1. 기존 파일 확인 (sha 가져오기)
-  let sha = null;
-  try{
-    const existing = await ghGetFile(path);
-    if(existing) sha = existing.sha;
-  } catch(e){
-    // 파일이 없으면 새로 생성
+  // 1. SHA 결정 - 캐시 우선, 없으면 GET으로 조회
+  let sha = _shaCache[path] || null;
+  
+  if(!sha){
+    try{
+      const existing = await ghGetFile(path);
+      if(existing){
+        sha = existing.sha;
+        // ghGetFile 내부에서 이미 캐시 갱신됨
+      }
+    } catch(e){
+      // 파일이 없으면 새로 생성
+    }
   }
   
   // 2. content를 base64로 인코딩 (UTF-8 한글 처리)
   const jsonStr = JSON.stringify(content, null, 2);
   const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
   
-  // 3. 파일 저장
+  // 3. 파일 저장 (PUT)
   const url = `${GH_API}/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`;
   const body = {
     message: commitMessage || `Update ${path}`,
@@ -107,27 +127,47 @@ async function ghSaveFile(path, content, commitMessage){
     body: JSON.stringify(body)
   });
   
+  // 🆕 409 (SHA 충돌) 시 자동 재시도 - 최대 2회
+  if(res.status === 409 && _retryCount < 2){
+    console.warn(`[ghSaveFile] SHA 충돌 감지, 재시도 (${_retryCount + 1}/2): ${path}`);
+    
+    // 캐시 무효화 후 200ms 대기 (GitHub 캐시 갱신 시간)
+    delete _shaCache[path];
+    await new Promise(r => setTimeout(r, 200));
+    
+    return ghSaveFile(path, content, commitMessage, _retryCount + 1);
+  }
+  
   if(!res.ok){
     const err = await res.json().catch(() => ({}));
     throw new Error(`저장 실패: ${res.status} - ${err.message || 'Unknown'}`);
   }
   
-  return await res.json();
+  // 🆕 응답에서 새 SHA를 받아 캐시 업데이트
+  const result = await res.json();
+  if(result.content && result.content.sha){
+    _shaCache[path] = result.content.sha;
+  }
+  
+  return result;
 }
 
 // =====================================
 // 🗑️ 파일 삭제
+//  - 409 충돌 시 자동 재시도
 // =====================================
-
-async function ghDeleteFile(path, commitMessage){
+async function ghDeleteFile(path, commitMessage, _retryCount = 0){
   const headers = getAuthHeaders();
   if(!headers) throw new Error('인증 필요');
   
-  // 1. sha 가져오기
+  // 1. sha 가져오기 (삭제는 항상 최신 SHA 필요 → GET으로 강제 조회)
   const existing = await ghGetFile(path);
-  if(!existing) return; // 이미 없음
+  if(!existing){
+    delete _shaCache[path];
+    return; // 이미 없음
+  }
   
-  // 2. 삭제 요청
+  // 2. 삭제 요청 (DELETE)
   const url = `${GH_API}/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`;
   const res = await fetch(url, {
     method: 'DELETE',
@@ -139,10 +179,21 @@ async function ghDeleteFile(path, commitMessage){
     })
   });
   
+  // 🆕 409 (SHA 충돌) 시 자동 재시도 - 최대 2회
+  if(res.status === 409 && _retryCount < 2){
+    console.warn(`[ghDeleteFile] SHA 충돌 감지, 재시도 (${_retryCount + 1}/2): ${path}`);
+    delete _shaCache[path];
+    await new Promise(r => setTimeout(r, 200));
+    return ghDeleteFile(path, commitMessage, _retryCount + 1);
+  }
+  
   if(!res.ok){
     const err = await res.json().catch(() => ({}));
     throw new Error(`삭제 실패: ${res.status} - ${err.message || 'Unknown'}`);
   }
+  
+  // 🆕 삭제 성공 시 캐시 제거
+  delete _shaCache[path];
   
   return await res.json();
 }
@@ -150,7 +201,6 @@ async function ghDeleteFile(path, commitMessage){
 // =====================================
 // 📋 프로젝트 목록 (projects.json)
 // =====================================
-
 async function ghLoadProjectsList(){
   const result = await ghGetFile(`${GITHUB_CONFIG.dataPath}/projects.json`);
   if(!result) return { projects: [] };
@@ -168,7 +218,6 @@ async function ghSaveProjectsList(data){
 // =====================================
 // 📦 개별 프로젝트 데이터
 // =====================================
-
 async function ghLoadProjectData(projectId){
   const result = await ghGetFile(`${GITHUB_CONFIG.dataPath}/${projectId}.json`);
   if(!result) return null;
@@ -188,4 +237,13 @@ async function ghDeleteProjectData(projectId){
     `${GITHUB_CONFIG.dataPath}/${projectId}.json`,
     `프로젝트 삭제: ${projectId} (by ${currentUser?.login || 'unknown'})`
   );
+}
+
+// =====================================
+// 🛠️ 디버깅용 - 캐시 강제 초기화
+//  콘솔에서 ghClearShaCache() 실행 가능
+// =====================================
+function ghClearShaCache(){
+  Object.keys(_shaCache).forEach(k => delete _shaCache[k]);
+  console.log('[ghClearShaCache] SHA 캐시가 초기화되었습니다');
 }
