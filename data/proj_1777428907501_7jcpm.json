@@ -6,13 +6,11 @@
   "units": {
     "coldSource": [
       {
-        "subtype": "turbo",
+        "subtype": "abs_hw",
         "status": "",
-        "inverter": false,
         "f1": "",
         "f2": "",
         "f3": "",
-        "f4": "",
         "nameplate": {
           "maker": "",
           "date": "",
@@ -20,7 +18,6 @@
           "flow": "",
           "power": ""
         },
-        "inverterValue": "",
         "diag": {
           "usage_years": {
             "rate": null,
@@ -109,6 +106,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-29T02:49:10.689Z",
+  "lastModified": "2026-04-29T05:48:41.349Z",
   "lastModifiedBy": "seung3459"
 }
