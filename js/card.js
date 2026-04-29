@@ -16,7 +16,6 @@ function showPage(id){
     }
   }
   
-  // 🆕 FAB 표시/숨김 (intro/projects에서는 숨김)
   const fab = document.getElementById('fabContainer');
   if(fab){
     if(id === 'intro' || id === 'projects'){
@@ -42,7 +41,6 @@ function showAirType(id, btn){ ['ahuSection','fanSection'].forEach(s=>document.g
 function showPumpType(id, btn){ ['chilledPumpSection','hotPumpSection','coolingPumpSection'].forEach(s=>document.getElementById(s).style.display='none'); document.getElementById(id).style.display='block'; setActiveSubTab(btn); }
 function setActiveSubTab(btn){ if(!btn) return; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
 
-// 호기 추가 (🆕 기본 접힘 상태로 생성)
 function addUnit(type){
   if(!unitCount[type]) unitCount[type]=0;
   unitCount[type]++;
@@ -57,20 +55,17 @@ function addUnit(type){
   renderGroupSummary(type);
 }
 
-// 카드 HTML 생성
 function renderCard(type, id){
   const displayName = getDisplayName(type, id);
   const icon = getDisplayIcon(type, id);
 
-  // ⭐ coldSource subtype 판별 (터보 / 흡수식냉동기 / 흡수식냉온수기)
   const csSubtype = (type === 'coldSource')
     ? (unitSubtype[`${type}_${id}`] || (subtypeMap[type] && subtypeMap[type][0].key) || 'turbo')
     : null;
-  const isAbsorption   = csSubtype === 'absorption';     // 흡수식 냉동기
-  const isAbsorptionHC = csSubtype === 'abs_hw';         // 흡수식 냉온수기
+  const isAbsorption   = csSubtype === 'absorption';
+  const isAbsorptionHC = csSubtype === 'abs_hw';
   const isAbsorptionLike = isAbsorption || isAbsorptionHC;
 
-  // 일반 측정값 (coldSource 아닐 때 사용)
   let measureFields = '';
   if(fieldConfig[type]){
     fieldConfig[type].forEach((lbl,i)=>{
@@ -78,10 +73,10 @@ function renderCard(type, id){
     });
   }
 
-  // 🔧 진단 섹션 - 🆕 getDiagItems(type)로 동적 항목 사용 (공조기 지원)
+  // 진단 섹션
   let diagSection = '';
   if(diagApplyTypes.includes(type)){
-    const diagItems = getDiagItems(type);  // 🆕 타입별 진단 항목
+    const diagItems = getDiagItems(type);
     let diagRows = '';
     diagItems.forEach((item, idx)=>{
       const base = `${type}_${id}_diag_${item.key}`;
@@ -116,11 +111,10 @@ function renderCard(type, id){
     diagSection = renderPhotoSection(type, id);
   }
 
-  // ⭐ 명판사항 (subtype별 분기)
+  // ⭐ 명판사항
   let nameplateSection = '';
   if(type === 'coldSource'){
     if(isAbsorptionLike){
-      // 🔥 흡수식 명판 (냉동기 + 냉온수기 공통)
       const hcExtraNameplate = isAbsorptionHC ? `
             <div class="field"><label>온수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_hwflow" placeholder="0"><span class="unit">LPM</span></div></div>
             <div class="field"><label>난방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_heating" placeholder="0"><span class="unit">kcal/h</span></div></div>
@@ -143,7 +137,6 @@ function renderCard(type, id){
         </div>
       `;
     } else {
-      // ❄️ 터보냉동기 명판
       nameplateSection = `
         <div class="section-title">📋 명판사항</div>
         <div class="cs-sub-card">
@@ -158,9 +151,30 @@ function renderCard(type, id){
         </div>
       `;
     }
-  }
+} else if(type === 'ahu'){
+  // 🆕 💨 공조기 명판 - 2열 레이아웃 (좌4 / 우4)
+  nameplateSection = `
+    <div class="section-title">📋 명판사항</div>
+    <div class="cs-sub-card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="field"><label>공조기 번호</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_no" placeholder="예: AHU-01"></div></div>
+          <div class="field"><label>설치일자</label><div class="input-wrap"><input type="month" id="${type}_${id}_np_date"></div></div>
+          <div class="field"><label>풍량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_flow" placeholder="0"><span class="unit">㎥/h</span></div></div>
+          <div class="field"><label>정압</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_staticp" placeholder="0"><span class="unit">mmAq</span></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="field"><label>냉방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cooling" placeholder="0"><span class="unit">kcal/h</span></div></div>
+          <div class="field"><label>난방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_heating" placeholder="0"><span class="unit">kcal/h</span></div></div>
+          <div class="field"><label>동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_power" placeholder="0"><span class="unit">HP</span></div></div>
+          <div class="field"><label>가습</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_humid" placeholder="0"><span class="unit">kg/h</span></div></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
-  // ⭐ 운전상태 부가옵션 (인버터 / 온열원 / 냉방·난방 / AHU팬)
+  // ⭐ 운전상태 부가옵션
   let inverterCheckbox = '';
   let heatSourceRadio = '';
   if(type === 'coldSource'){
@@ -171,7 +185,6 @@ function renderCard(type, id){
           <label data-val="hotwater"><input type="radio" name="${type}_${id}_heatsrc" value="hotwater" onchange="onHeatSourceChange('${type}',${id})">💦 중온수</label>
         </div>
       `;
-      // 🆕 흡수식 냉온수기만: 냉방/난방 모드 토글
       if(isAbsorptionHC){
         heatSourceRadio += `
           <div class="status-segment opmode-segment" data-unit="${type}_${id}_op">
@@ -185,14 +198,19 @@ function renderCard(type, id){
     }
   }
 
-  let ahuExtraCheck = '';
-  if(type === 'ahu'){
-    ahuExtraCheck = `<label><input type="checkbox" id="${type}_${id}_supplyFan"> 급기팬</label><label><input type="checkbox" id="${type}_${id}_exhaustFan"> 배기팬</label>`;
-  }
+  // 🆕 공조기 - 운전 모드 segment + 급기/배기팬 체크
+let ahuExtraCheck = '';
+if(type === 'ahu'){
+  // 🆕 급기팬 / 배기팬 / 환기모드 체크박스
+  ahuExtraCheck = `
+    <label><input type="checkbox" id="${type}_${id}_supplyFan"> 급기팬</label>
+    <label><input type="checkbox" id="${type}_${id}_exhaustFan"> 배기팬</label>
+    <label><input type="checkbox" id="${type}_${id}_ventMode"> 환기모드</label>
+  `;
+}
 
-  const extraRowContent = `${inverterCheckbox}${heatSourceRadio}${ahuExtraCheck}`;
+const extraRowContent = `${inverterCheckbox}${heatSourceRadio}${ahuExtraCheck}`;
 
-  // 운전 상태 블록
   const stateBlock = `
     <div class="state-field">
       <label class="state-label">📊 운전 상태</label>
@@ -207,7 +225,6 @@ function renderCard(type, id){
     </div>
   `;
 
-  // 상단 카드: subtype 있으면 2열, 없으면 1열
   let topCard = '';
   if(hasSubtype(type)){
     const options = subtypeMap[type].map(s=>`<option value="${s.key}">${s.icon} ${s.label}</option>`).join('');
@@ -228,21 +245,16 @@ function renderCard(type, id){
     topCard = `<div class="type-select-card">${stateBlock}</div>`;
   }
 
-  // ⭐ 측정값 (subtype별 분기)
+  // 측정값
   let measureBlock;
   if(type === 'coldSource' && isAbsorptionLike){
-    // 🔥 흡수식: 냉수(또는 냉수/온수) / 냉각수 / 가열원
     const leftCol = isAbsorptionHC ? `
           <div class="meas-col">
             <div class="meas-col-title hcmode-title-cooling">💧 냉수</div>
             <div class="meas-col-title hcmode-title-heating" style="display:none;">🌡️ 온수</div>
-
-            <!-- ❄️ 냉방 모드 필드 -->
             <div class="field hcmode-cooling"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
             <div class="field hcmode-cooling"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">℃</span></div></div>
             <div class="field hcmode-cooling"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">LPM</span></div></div>
-
-            <!-- 🔥 난방 모드 필드 -->
             <div class="field hcmode-heating" style="display:none;"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f15" placeholder="0"><span class="unit">℃</span></div></div>
             <div class="field hcmode-heating" style="display:none;"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f16" placeholder="0"><span class="unit">℃</span></div></div>
             <div class="field hcmode-heating" style="display:none;"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f17" placeholder="0"><span class="unit">LPM</span></div></div>
@@ -284,7 +296,6 @@ function renderCard(type, id){
       </div>
     `;
   } else if(type === 'coldSource'){
-    // ❄️ 터보냉동기
     measureBlock = `
       <div class="section-title">📊 운전 측정값</div>
       <div class="cs-sub-card">
@@ -310,6 +321,19 @@ function renderCard(type, id){
         </div>
       </div>
     `;
+  } else if(type === 'ahu'){
+    // 🆕 공조기 측정값: 급기온도 / 환기온도 / 풍량 / 주파수
+    measureBlock = `
+      <div class="section-title">📊 운전 측정값</div>
+      <div class="cs-sub-card">
+        <div class="grid grid-2">
+          <div class="field"><label>급기온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>환기온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>풍량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">㎥/h</span></div></div>
+          <div class="field"><label>주파수</label><div class="input-wrap"><input type="number" id="${type}_${id}_f4" placeholder="0"><span class="unit">Hz</span></div></div>
+        </div>
+      </div>
+    `;
   } else {
     measureBlock = `
       <div class="section-title">📊 운전 측정값</div>
@@ -319,17 +343,28 @@ function renderCard(type, id){
     `;
   }
 
-  // 본문 배치: coldSource는 좌(명판) 2 : 우(측정값) 3
-  const bodyMain = (type === 'coldSource')
-    ? `
-      <div class="np-meas-grid">
-        <div class="np-meas-col np-col">${nameplateSection}</div>
-        <div class="np-meas-col meas-col-wrap">${measureBlock}</div>
-      </div>
-    `
-    : `${nameplateSection}${measureBlock}`;
+// 🆕 본문 배치
+// - coldSource: 좌(명판) 2 : 우(측정값) 3 (기존 .np-meas-grid 비율 유지)
+// - ahu: 좌(명판) 5 : 우(측정값) 5
+let bodyMain;
+if(type === 'ahu'){
+  bodyMain = `
+    <div class="np-meas-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="np-meas-col np-col">${nameplateSection}</div>
+      <div class="np-meas-col meas-col-wrap">${measureBlock}</div>
+    </div>
+  `;
+} else if(type === 'coldSource'){
+  bodyMain = `
+    <div class="np-meas-grid">
+      <div class="np-meas-col np-col">${nameplateSection}</div>
+      <div class="np-meas-col meas-col-wrap">${measureBlock}</div>
+    </div>
+  `;
+} else {
+  bodyMain = `${nameplateSection}${measureBlock}`;
+}
 
-  // 🆕 카드는 기본 접힘 상태로 생성 (expanded 클래스 제거)
   return `
     <div class="card" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
       <div class="card-header" onclick="toggleCard('${type}_${id}_card', event)">
@@ -352,7 +387,6 @@ function renderCard(type, id){
   `;
 }
 
-// 카드 라벨 갱신
 function refreshCardLabels(type){
   const container = document.getElementById(type+'Units');
   if(!container) return;
@@ -383,7 +417,6 @@ function onStatusChange(type, id){
 function getUnitStatus(type, id){ const checked = document.querySelector(`input[name="${type}_${id}_status"]:checked`); return checked ? checked.value : ''; }
 function setUnitStatus(type, id, status){ const radios = document.getElementsByName(`${type}_${id}_status`); radios.forEach(r=>{ r.checked = (r.value === status); }); onStatusChange(type, id); }
 
-// ⭐ subtype 변경 - coldSource는 구조가 달라지므로 재렌더 (입력값 보존)
 function changeSubtype(type, id){
   const sel = document.getElementById(`${type}_${id}_subtype`);
   if(!sel) return;
@@ -397,7 +430,6 @@ function changeSubtype(type, id){
       return;
     }
 
-    // 입력값 백업
     const backup = { values:{}, checks:{}, radios:{} };
     card.querySelectorAll('input, textarea').forEach(el=>{
       if(el.type === 'radio'){
@@ -412,18 +444,15 @@ function changeSubtype(type, id){
     const wasExpanded = card.classList.contains('expanded');
     unitSubtype[`${type}_${id}`] = newSubtype;
 
-    // 재렌더
     card.outerHTML = renderCard(type, id);
 
     const newCard = document.getElementById(`${type}_${id}_card`);
     if(newCard){
-      // 🆕 기본이 접힘이므로, 이전에 펼쳐져 있었다면 펼친 상태로 복원
       if(wasExpanded) newCard.classList.add('expanded');
 
       const newSel = document.getElementById(`${type}_${id}_subtype`);
       if(newSel) newSel.value = newSubtype;
 
-      // 입력값 복원 (같은 ID/name이 있을 때만)
       Object.keys(backup.values).forEach(k=>{
         const el = document.getElementById(k);
         if(el) el.value = backup.values[k];
@@ -442,7 +471,6 @@ function changeSubtype(type, id){
         }
       });
 
-      // 흡수식 온열원 / 운전 모드 동기화
       onHeatSourceChange(type, id);
       if(typeof onOperationModeChange === 'function'){
         onOperationModeChange(type, id);
@@ -500,7 +528,7 @@ function updateSummary(type, id){
 
   if(diagApplyTypes.includes(type)){
     const diagData = collectDiagFromForm(type, id);
-    const result = calculateGrade(diagData);
+    const result = calculateGrade(diagData, type);
     if(result.score !== null){
       chips.push(`<span class="status-chip chip-grade">종합 ${result.grade} (${result.score}점)</span>`);
     }
@@ -517,15 +545,10 @@ function updateRatingStyle(radio){
   if(selectedLabel) selectedLabel.classList.add('sel-'+radio.value);
 }
 
-function toggleInverter(type, id){
-  // 인버터 주파수 입력 필드 제거됨 - 체크 상태만 저장
-}
+function toggleInverter(type, id){}
 
-// 🆕 흡수식 - 온열원 선택에 따라 입력 필드 토글
 function onHeatSourceChange(type, id){
   const checked = document.querySelector(`input[name="${type}_${id}_heatsrc"]:checked`);
-
-  // segment active 효과
   const segment = document.querySelector(`.heatsrc-segment[data-unit="${type}_${id}_hs"]`);
   if(segment){
     segment.querySelectorAll('label').forEach(l=>l.classList.remove('active'));
@@ -534,24 +557,18 @@ function onHeatSourceChange(type, id){
       if(lab) lab.classList.add('active');
     }
   }
-
-  // 필드 표시 토글
   const emptyEl = document.getElementById(`${type}_${id}_heatsrc_empty`);
   const steamEl = document.getElementById(`${type}_${id}_heatsrc_steam`);
   const hotEl   = document.getElementById(`${type}_${id}_heatsrc_hot`);
-
   if(emptyEl) emptyEl.style.display = checked ? 'none' : 'block';
   if(steamEl) steamEl.style.display = (checked && checked.value === 'steam') ? 'contents' : 'none';
   if(hotEl)   hotEl.style.display   = (checked && checked.value === 'hotwater') ? 'contents' : 'none';
-
   updateSummary(type, id);
 }
 
-// 🆕 흡수식 냉온수기 - 냉방/난방 모드 전환 (데이터 보존, 화면만 토글)
 function onOperationModeChange(type, id){
   const checked = document.querySelector(`input[name="${type}_${id}_opmode"]:checked`);
   const mode = checked ? checked.value : 'cooling';
-
   const segment = document.querySelector(`.opmode-segment[data-unit="${type}_${id}_op"]`);
   if(segment){
     segment.querySelectorAll('label').forEach(l=>l.classList.remove('active'));
@@ -560,10 +577,8 @@ function onOperationModeChange(type, id){
       if(lab) lab.classList.add('active');
     }
   }
-
   const card = document.getElementById(`${type}_${id}_card`);
   if(!card) return;
-
   const showCooling = (mode === 'cooling');
   card.querySelectorAll('.hcmode-cooling, .hcmode-title-cooling').forEach(el=>{
     el.style.display = showCooling ? '' : 'none';
@@ -571,25 +586,17 @@ function onOperationModeChange(type, id){
   card.querySelectorAll('.hcmode-heating, .hcmode-title-heating').forEach(el=>{
     el.style.display = showCooling ? 'none' : '';
   });
-
   updateSummary(type, id);
 }
 
-
-// =====================================
-// 🆕 라디오 재클릭 시 선택 해제
-// =====================================
 (function setupRadioToggle(){
   document.addEventListener('click', function(e){
     if(e.target.tagName === 'INPUT') return;
-
     const label = e.target.closest('label');
     if(!label) return;
     if(!label.closest('.status-segment, .heatsrc-segment')) return;
-
     const radio = label.querySelector('input[type="radio"]');
     if(!radio) return;
-
     if(radio.checked){
       e.preventDefault();
       radio.checked = false;
