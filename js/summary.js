@@ -1,5 +1,6 @@
 // =====================================
 // 📊 진단 요약 테이블
+// 🆕 타입별 진단 항목 지원 (turbo / ahu)
 // =====================================
 
 function renderGroupSummary(type){
@@ -15,6 +16,9 @@ function renderGroupSummary(type){
   const withSub = hasSubtype(type);
   const ordered = [];
   
+  // 🆕 타입에 맞는 진단 항목 가져오기
+  const diagItems = showDiag ? getDiagItems(type) : [];
+  
   if(withSub){ 
     subtypeMap[type].forEach(st=>{ 
       cards.forEach(card=>{ 
@@ -29,7 +33,7 @@ function renderGroupSummary(type){
   if(withSub) headers += '<th style="width:160px;">종류</th>';
   headers += '<th style="width:70px;">호기</th><th style="width:90px;">상태</th>';
   if(showDiag){ 
-    turboDiagItems.forEach(item=>{ headers += `<th>${item.short}</th>`; }); 
+    diagItems.forEach(item=>{ headers += `<th>${item.short}</th>`; });  // 🆕 diagItems 사용
     headers += '<th style="width:90px;">종합</th>'; 
   }
   
@@ -57,7 +61,7 @@ function renderGroupSummary(type){
     
     let diagCells = '', gradeCell = '';
     if(showDiag){
-      turboDiagItems.forEach(item=>{
+      diagItems.forEach(item=>{  // 🆕 diagItems 사용
         const rateEl = document.querySelector(`input[name="${type}_${id}_diag_${item.key}_rate"]:checked`);
         if(rateEl){ 
           const v=rateEl.value; 
@@ -67,7 +71,7 @@ function renderGroupSummary(type){
       });
       
       const diagData = collectDiagFromForm(type, id);
-      const result = calculateGrade(diagData);
+      const result = calculateGrade(diagData, type);  // 🆕 type 인자 추가
       const scoreText = result.score !== null ? `<span class="score-text">${result.score}점</span>` : '';
       gradeCell = `<td class="grade-cell ${result.gradeCls}">${result.grade}${scoreText}</td>`;
     }
