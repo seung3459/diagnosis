@@ -105,9 +105,15 @@ function renderCard(type, id){
 
   // ⭐ 명판사항 (subtype별 분기)
   let nameplateSection = '';
-  if(type === 'coldSource'){
+if(type === 'coldSource'){
     if(isAbsorptionLike){
-      // 🔥 흡수식 냉동기 명판
+      // 🔥 흡수식 명판 (냉동기 + 냉온수기 공통)
+      // 냉온수기는 온수 유량 / 난방능력 2필드 추가
+      const hcExtraNameplate = isAbsorptionHC ? `
+            <div class="field"><label>온수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_hwflow" placeholder="0"><span class="unit">LPM</span></div></div>
+            <div class="field"><label>난방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_heating" placeholder="0"><span class="unit">kcal/h</span></div></div>
+      ` : '';
+
       nameplateSection = `
         <div class="section-title">📋 명판사항</div>
         <div class="cs-sub-card">
@@ -116,6 +122,7 @@ function renderCard(type, id){
             <div class="field"><label>설치일자</label><div class="input-wrap"><input type="month" id="${type}_${id}_np_date"></div></div>
             <div class="field"><label>냉수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_flow" placeholder="0"><span class="unit">LPM</span></div></div>
             <div class="field"><label>냉방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cooling" placeholder="0"><span class="unit">RT</span></div></div>
+            ${hcExtraNameplate}
             <div class="field"><label>냉각수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cwflow" placeholder="0"><span class="unit">LPM</span></div></div>
             <div class="field"><label>정격 동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_power" placeholder="0"><span class="unit">kW</span></div></div>
             <div class="field"><label>연료 종류</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_fueltype" placeholder="예: LNG"></div></div>
@@ -124,6 +131,7 @@ function renderCard(type, id){
         </div>
       `;
     } else {
+
       // ❄️ 터보냉동기 명판
       nameplateSection = `
         <div class="section-title">📋 명판사항</div>
@@ -144,7 +152,7 @@ function renderCard(type, id){
   // ⭐ 운전상태 부가옵션 (인버터 / 온열원 / AHU팬)
   let inverterCheckbox = '';
   let heatSourceRadio = '';
-  if(type === 'coldSource'){
+if(type === 'coldSource'){
     if(isAbsorptionLike){
       heatSourceRadio = `
         <div class="status-segment heatsrc-segment" data-unit="${type}_${id}_hs">
@@ -152,6 +160,15 @@ function renderCard(type, id){
           <label data-val="hotwater"><input type="radio" name="${type}_${id}_heatsrc" value="hotwater" onchange="onHeatSourceChange('${type}',${id})">💦 중온수</label>
         </div>
       `;
+      // 🆕 흡수식 냉온수기만: 냉방/난방 모드 토글
+      if(isAbsorptionHC){
+        heatSourceRadio += `
+          <div class="status-segment opmode-segment" data-unit="${type}_${id}_op">
+            <label data-val="cooling"><input type="radio" name="${type}_${id}_opmode" value="cooling" onchange="onOperationModeChange('${type}',${id})">❄️ 냉방</label>
+            <label data-val="heating"><input type="radio" name="${type}_${id}_opmode" value="heating" onchange="onOperationModeChange('${type}',${id})">🔥 난방</label>
+          </div>
+        `;
+      }
     } else {
       inverterCheckbox = `<label><input type="checkbox" id="${type}_${id}_inverter" onchange="toggleInverter('${type}',${id});updateSummary('${type}',${id});"> 인버터 여부</label>`;
     }
@@ -202,18 +219,38 @@ function renderCard(type, id){
 
   // ⭐ 측정값 (subtype별 분기)
   let measureBlock;
-  if(type === 'coldSource' && isAbsorptionLike){
-    // 🔥 흡수식: 냉수 / 냉각수 / 가열원
-    measureBlock = `
-      <div class="section-title">📊 운전 측정값</div>
-      <div class="cs-sub-card">
-        <div class="meas-3col">
+if(type === 'coldSource' && isAbsorptionLike){
+    // 🔥 흡수식: 냉수(또는 냉수/온수) / 냉각수 / 가열원
+    // 냉온수기는 좌측 컬럼에 냉수+온수 둘 다 두고 모드별로 토글 (데이터는 양쪽 보존)
+    const leftCol = isAbsorptionHC ? `
+          <div class="meas-col">
+            <div class="meas-col-title hcmode-title-cooling">💧 냉수</div>
+            <div class="meas-col-title hcmode-title-heating" style="display:none;">🌡️ 온수</div>
+
+            <!-- ❄️ 냉방 모드 필드 -->
+            <div class="field hcmode-cooling"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
+            <div class="field hcmode-cooling"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">℃</span></div></div>
+            <div class="field hcmode-cooling"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">LPM</span></div></div>
+
+            <!-- 🔥 난방 모드 필드 -->
+            <div class="field hcmode-heating" style="display:none;"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f15" placeholder="0"><span class="unit">℃</span></div></div>
+            <div class="field hcmode-heating" style="display:none;"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f16" placeholder="0"><span class="unit">℃</span></div></div>
+            <div class="field hcmode-heating" style="display:none;"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f17" placeholder="0"><span class="unit">LPM</span></div></div>
+          </div>
+    ` : `
           <div class="meas-col">
             <div class="meas-col-title">💧 냉수</div>
             <div class="field"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
             <div class="field"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">℃</span></div></div>
             <div class="field"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">LPM</span></div></div>
           </div>
+    `;
+
+    measureBlock = `
+      <div class="section-title">📊 운전 측정값</div>
+      <div class="cs-sub-card">
+        <div class="meas-3col">
+          ${leftCol}
           <div class="meas-col">
             <div class="meas-col-title">❄️ 냉각수</div>
             <div class="field"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f5" placeholder="0"><span class="unit">℃</span></div></div>
@@ -393,8 +430,11 @@ function changeSubtype(type, id){
         }
       });
 
-      // 흡수식 온열원 라벨/필드 동기화
+// 흡수식 온열원 / 운전 모드 동기화
       onHeatSourceChange(type, id);
+      if(typeof onOperationModeChange === 'function'){
+        onOperationModeChange(type, id);
+      }
     }
   } else {
     unitSubtype[`${type}_${id}`] = newSubtype;
@@ -492,6 +532,38 @@ function onHeatSourceChange(type, id){
 
   updateSummary(type, id);
 }
+
+// 🆕 흡수식 냉온수기 - 냉방/난방 모드 전환 (데이터 보존, 화면만 토글)
+function onOperationModeChange(type, id){
+  const checked = document.querySelector(`input[name="${type}_${id}_opmode"]:checked`);
+  // 미선택 시 기본값 = cooling (냉방 화면)
+  const mode = checked ? checked.value : 'cooling';
+
+  // segment active 효과
+  const segment = document.querySelector(`.opmode-segment[data-unit="${type}_${id}_op"]`);
+  if(segment){
+    segment.querySelectorAll('label').forEach(l=>l.classList.remove('active'));
+    if(checked){
+      const lab = checked.closest('label');
+      if(lab) lab.classList.add('active');
+    }
+  }
+
+  const card = document.getElementById(`${type}_${id}_card`);
+  if(!card) return;
+
+  // 냉방/난방 필드 표시 토글 (DOM에 둘 다 존재 → 데이터 보존됨)
+  const showCooling = (mode === 'cooling');
+  card.querySelectorAll('.hcmode-cooling, .hcmode-title-cooling').forEach(el=>{
+    el.style.display = showCooling ? '' : 'none';
+  });
+  card.querySelectorAll('.hcmode-heating, .hcmode-title-heating').forEach(el=>{
+    el.style.display = showCooling ? 'none' : '';
+  });
+
+  updateSummary(type, id);
+}
+
 
 // =====================================
 // 🆕 라디오 재클릭 시 선택 해제 (status-segment, heatsrc-segment 공통)
