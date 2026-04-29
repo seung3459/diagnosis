@@ -611,7 +611,7 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
 /* ⭐ 설비 종류 + 운전 상태 2열 그리드 (type-select-card 내부) */
 .select-state-grid{
   display:grid;
-  grid-template-columns:2fr 3fr;   /* ⭐ 우측을 더 넓게 */
+  grid-template-columns:2fr 3fr;
   gap:14px;
   align-items:start;
 }
@@ -634,16 +634,16 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
 }
 .state-controls{
   display:flex;
-  flex-wrap:nowrap;       /* ⭐ 줄바꿈 방지 */
+  flex-wrap:nowrap;
   align-items:center;
   gap:10px;
   min-height:44px;
 }
 .state-controls .status-segment{
-  flex-shrink:0;          /* 라디오는 줄어들지 않음 */
+  flex-shrink:0;
 }
 .state-controls .extra-check-row{
-  flex-wrap:nowrap;       /* 체크박스도 한 줄 유지 */
+  flex-wrap:nowrap;
 }
 
 /* 모바일에서만 자연스럽게 줄바꿈 허용 */
@@ -653,8 +653,6 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
     flex-wrap:wrap;
   }
 }
-
-
 
 /* 상태 세그먼트 (밝은 배경용) */
 .status-segment{
@@ -693,21 +691,6 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   font-weight:600;
   font-size:13px;
   flex-wrap:wrap;
-}
-.extra-check-row label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  white-space:nowrap;
-  cursor:pointer;
-  background:#fff;
-  padding:9px 14px;          /* ⭐ 6px 12px → 9px 14px */
-  border-radius:10px;        /* ⭐ 8px → 10px (라디오 그룹과 동일) */
-  border:1.5px solid #cbd5e1;
-  color:#475569;
-  font-size:13px;            /* ⭐ 명시적으로 13px */
-  font-weight:700;           /* ⭐ 600 → 700 (라디오와 동일) */
-  transition:all .15s;
 }
 
 .extra-check-row label:hover{
@@ -751,7 +734,7 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   .np-meas-grid{grid-template-columns:1fr;gap:8px;}
 }
 
-/* ⭐ 운전 측정값 3열 그룹 (냉수/냉각수/전기) */
+/* ⭐ 운전 측정값 3열 그룹 (냉수/냉각수/전기 또는 가열원) */
 .meas-3col{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -941,7 +924,7 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
 
 /* ========== 🆕 GitHub 인증 UI ========== */
 
-/* topbar 인증 상태 표시 - ⭐ 우측 절대 고정 (메인 버튼 중앙정렬 유지) */
+/* topbar 인증 상태 표시 - ⭐ 우측 절대 고정 */
 .auth-status{
   position:absolute;
   right:12px;
@@ -1148,13 +1131,12 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   .topbar{
     gap:4px;
     padding:8px;
-    padding-bottom:48px; /* auth-status 공간 확보 */
+    padding-bottom:48px;
   }
   .topbar button{
     padding:8px 10px;
     font-size:11px;
   }
-  /* ⭐ 모바일에서는 absolute 풀고 자연스럽게 아래로 */
   .auth-status{
     position:absolute;
     right:8px;
@@ -1184,7 +1166,6 @@ pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:10px;font-size:1
   }
 }
 
-
 /* ⭐ number input의 위/아래 화살표(스피너) 제거 */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button{
@@ -1196,3 +1177,33 @@ input[type="number"]{
   appearance:textfield;
 }
 
+/* ========== 🔥 흡수식 냉동기 - 온열원 / 가열원 ========== */
+
+/* 온열원 segment - 운전상태에 위치 (증기/중온수) */
+.heatsrc-segment label[data-val="steam"].active{
+  background:#fef3c7;
+  border-color:#f59e0b;
+  color:#b45309;
+}
+.heatsrc-segment label[data-val="hotwater"].active{
+  background:#dbeafe;
+  border-color:#3b82f6;
+  color:#1e40af;
+}
+
+/* 가열원 컬럼 - 미선택 시 안내 메시지 */
+.heatsrc-empty{
+  text-align:center;
+  color:#9ca3af;
+  font-size:11px;
+  line-height:1.5;
+  padding:24px 8px;
+  background:#f9fafb;
+  border-radius:6px;
+  border:1px dashed #d1d5db;
+}
+
+/* 가열원 컬럼이 좁아도 잘 보이도록 라벨 살짝 축소 */
+.heatsrc-meas-col .field > label{
+  font-size:11px;
+}
