@@ -405,7 +405,7 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
   ws.mergeCells(`F${headerRow}:G${headerRow}`);
   
   const headers = [
-    {col:'A', text:'번호'}, {col:'B', text:'인자 (가중치)'}, {col:'C', text:'평가'},
+    {col:'A', text:'번호'}, {col:'B', text:'인자'}, {col:'C', text:'평가'},
     {col:'D', text:'주요 내용'}, {col:'F', text:'조사 대상'}
   ];
   headers.forEach(h => {
@@ -439,8 +439,8 @@ function buildUnitSheet(wb, sheetName, u, projectInfo){
 
     const factorCell = ws.getCell(`B${r}`);
     // 🆕 <br> 태그 제거
-    const factorText = item.factor.replace(/<br>/g, ' ');
-    factorCell.value = `${factorText} (${Math.round(item.weight*100)}%)`;
+    const factorText = item.factor.replace(/<br>/g, '\n');
+    factorCell.value = factorText;
     factorCell.font = { name:'맑은 고딕', bold:true, size:10 };
     factorCell.alignment = { vertical:'middle', horizontal:'left', indent:1, wrapText:true };
     factorCell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF9FAFB'} };
