@@ -18,7 +18,8 @@
           "date": "",
           "cooling": "",
           "flow": "",
-          "power": ""
+          "power": "",
+          "cwflow": ""
         },
         "diag": {
           "usage_years": {
@@ -104,11 +105,23 @@
     "ahu": [
       {
         "status": "",
-        "supplyFan": false,
+        "supplyFan": true,
         "exhaustFan": false,
+        "ventMode": false,
         "f1": "",
         "f2": "",
         "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "",
+          "date": "",
+          "flow": "",
+          "staticp": "",
+          "cooling": "",
+          "heating": "",
+          "power": "",
+          "humid": ""
+        },
         "diag": {
           "usage_years": {
             "rate": null,
@@ -121,7 +134,7 @@
             "note": ""
           },
           "inspection_state": {
-            "rate": null,
+            "rate": "A",
             "content": "",
             "note": ""
           },
@@ -188,12 +201,52 @@
         ]
       }
     ],
-    "fan": [],
+    "fan": [
+      {
+        "status": "",
+        "f1": "",
+        "f2": "",
+        "photos": [
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          }
+        ]
+      }
+    ],
     "chilled_pump": [],
     "hot_pump": [],
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-29T07:06:53.136Z",
+  "lastModified": "2026-04-29T07:41:43.148Z",
   "lastModifiedBy": "seung3459"
 }
