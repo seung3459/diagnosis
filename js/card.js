@@ -91,22 +91,22 @@ function renderCard(type, id){
     diagSection = renderPhotoSection(type, id);
   }
 
-  let nameplateSection = '';
-  if(type === 'coldSource'){
-    nameplateSection = `
-      <div class="section-title">📋 명판사항</div>
-      <div class="cs-sub-card">
-        <div class="grid grid-2">
-          <div class="field"><label>제조사</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_maker" placeholder="예: 캐리어"></div></div>
-          <div class="field"><label>모델명</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_model" placeholder="예: 19XR"></div></div>
-          <div class="field"><label>설치일자</label><div class="input-wrap"><input type="month" id="${type}_${id}_np_date"></div></div>
-          <div class="field"><label>냉방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cooling" placeholder="0"><span class="unit">RT</span></div></div>
-          <div class="field"><label>정격 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_flow" placeholder="0"><span class="unit">LPM</span></div></div>
-          <div class="field"><label>정격 동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_power" placeholder="0"><span class="unit">kW</span></div></div>
-        </div>
+let nameplateSection = '';
+if(type === 'coldSource'){
+  nameplateSection = `
+    <div class="section-title">📋 명판사항</div>
+    <div class="cs-sub-card">
+      <div class="grid grid-2">
+        <div class="field"><label>제조사</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_maker" placeholder="예: 캐리어"></div></div>
+        <div class="field"><label>설치일자</label><div class="input-wrap"><input type="month" id="${type}_${id}_np_date"></div></div>
+        <div class="field"><label>냉수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_flow" placeholder="0"><span class="unit">LPM</span></div></div>
+        <div class="field"><label>냉방능력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cooling" placeholder="0"><span class="unit">RT</span></div></div>
+        <div class="field"><label>냉각수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cwflow" placeholder="0"><span class="unit">LPM</span></div></div>
+        <div class="field"><label>정격 동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_power" placeholder="0"><span class="unit">kW</span></div></div>
       </div>
-    `;
-  }
+    </div>
+  `;
+}
 
   let inverterCheckbox = '', inverterField = '';
   if(type === 'coldSource'){
@@ -156,24 +156,54 @@ const stateBlock = `
     topCard = `<div class="type-select-card">${stateBlock}</div>`;
   }
 
-  // 측정값 섹션 HTML (재사용)
-  const measureBlock = `
+// ⭐ 측정값 섹션 - coldSource는 3열(냉수/냉각수/전기), 그 외는 기존 grid-2
+let measureBlock;
+if(type === 'coldSource'){
+  measureBlock = `
+    <div class="section-title">📊 운전 측정값</div>
+    <div class="cs-sub-card">
+      <div class="meas-3col">
+        <div class="meas-col">
+          <div class="meas-col-title">💧 냉수</div>
+          <div class="field"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">LPM</span></div></div>
+        </div>
+        <div class="meas-col">
+          <div class="meas-col-title">❄️ 냉각수</div>
+          <div class="field"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f5" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f6" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f7" placeholder="0"><span class="unit">LPM</span></div></div>
+        </div>
+        <div class="meas-col">
+          <div class="meas-col-title">⚡ 전기</div>
+          <div class="field"><label>동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_f8" placeholder="0"><span class="unit">kW</span></div></div>
+          <div class="field"><label>전류</label><div class="input-wrap"><input type="number" id="${type}_${id}_f4" placeholder="0"><span class="unit">A</span></div></div>
+          <div class="field"><label>주파수</label><div class="input-wrap"><input type="number" id="${type}_${id}_f9" placeholder="0"><span class="unit">Hz</span></div></div>
+        </div>
+      </div>
+      ${inverterField}
+    </div>
+  `;
+} else {
+  measureBlock = `
     <div class="section-title">📊 운전 측정값</div>
     <div class="cs-sub-card">
       <div class="grid grid-2">${measureFields}</div>
       ${inverterField}
     </div>
   `;
+}
 
-  // coldSource(명판 있음)는 명판/측정값 2열, 그 외는 기존대로
-  const bodyMain = (type === 'coldSource')
-    ? `
-      <div class="np-meas-grid">
-        <div class="np-meas-col">${nameplateSection}</div>
-        <div class="np-meas-col">${measureBlock}</div>
-      </div>
-    `
-    : `${nameplateSection}${measureBlock}`;
+// ⭐ 본문: coldSource는 명판/측정값을 좌우 2:3 배치
+const bodyMain = (type === 'coldSource')
+  ? `
+    <div class="np-meas-grid">
+      <div class="np-meas-col np-col">${nameplateSection}</div>
+      <div class="np-meas-col meas-col-wrap">${measureBlock}</div>
+    </div>
+  `
+  : `${nameplateSection}${measureBlock}`;
 
   return `
     <div class="card expanded" id="${type}_${id}_card" data-type="${type}" data-id="${id}">
