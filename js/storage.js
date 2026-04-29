@@ -1,5 +1,6 @@
 // =====================================
 // 💾 데이터 저장/복원 (GitHub 연동)
+// 🆕 타입별 진단 항목 지원 (turbo / ahu)
 // =====================================
 
 function collectUnitData(type, id){
@@ -25,7 +26,9 @@ function collectUnitData(type, id){
   }
   if(diagApplyTypes.includes(type)){
     data.diag = {};
-    turboDiagItems.forEach(item=>{
+    // 🆕 타입별 진단 항목 사용
+    const diagItems = (typeof getDiagItems === 'function') ? getDiagItems(type) : turboDiagItems;
+    diagItems.forEach(item=>{
       const baseKey = `${type}_${id}_diag_${item.key}`;
       const rateEl = document.querySelector(`input[name="${baseKey}_rate"]:checked`);
       const contentEl = document.getElementById(`${baseKey}_content`);
@@ -77,7 +80,9 @@ function applyUnitData(type, id, data){
     toggleInverter(type, id);
   }
   if(diagApplyTypes.includes(type) && data.diag){
-    turboDiagItems.forEach(item=>{
+    // 🆕 타입별 진단 항목 사용
+    const diagItems = (typeof getDiagItems === 'function') ? getDiagItems(type) : turboDiagItems;
+    diagItems.forEach(item=>{
       const d = data.diag[item.key];
       if(!d) return;
       const baseKey = `${type}_${id}_diag_${item.key}`;
