@@ -7,7 +7,7 @@
     "coldSource": [
       {
         "subtype": "turbo",
-        "status": "",
+        "status": "use",
         "inverter": false,
         "f1": "",
         "f2": "",
@@ -23,22 +23,22 @@
         },
         "diag": {
           "usage_years": {
-            "rate": null,
+            "rate": "B",
             "content": "",
             "note": ""
           },
           "maint_history": {
-            "rate": null,
+            "rate": "B",
             "content": "",
             "note": ""
           },
           "inspection_state": {
-            "rate": null,
+            "rate": "C",
             "content": "",
             "note": ""
           },
           "install_env": {
-            "rate": null,
+            "rate": "A",
             "content": "",
             "note": ""
           },
@@ -53,12 +53,12 @@
             "note": ""
           },
           "piping_conn": {
-            "rate": null,
+            "rate": "A",
             "content": "",
             "note": ""
           },
           "mcc_panel": {
-            "rate": null,
+            "rate": "A",
             "content": "",
             "note": ""
           }
@@ -109,6 +109,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T05:01:22.833Z",
+  "lastModified": "2026-04-30T05:01:45.017Z",
   "lastModifiedBy": "seung3459"
 }
