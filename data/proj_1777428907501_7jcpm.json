@@ -296,103 +296,6 @@
             "desc": ""
           }
         ]
-      },
-      {
-        "status": "",
-        "supplyFan": false,
-        "exhaustFan": false,
-        "ventMode": false,
-        "f1": "",
-        "f2": "",
-        "f3": "",
-        "f4": "",
-        "nameplate": {
-          "no": "",
-          "date": "",
-          "flow": "",
-          "staticp": "",
-          "cooling": "",
-          "heating": "",
-          "power": "",
-          "humid": ""
-        },
-        "diag": {
-          "usage_years": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "maint_history": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "inspection_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "install_env": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "external_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "internal_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "fan_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "control_state": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          }
-        },
-        "opinion": "",
-        "photos": [
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          }
-        ]
       }
     ],
     "fan": [],
@@ -401,6 +304,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T05:06:13.419Z",
+  "lastModified": "2026-04-30T05:06:16.198Z",
   "lastModifiedBy": "seung3459"
 }
