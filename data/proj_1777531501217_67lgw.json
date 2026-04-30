@@ -54,16 +54,16 @@
           },
           "piping_conn": {
             "rate": "A",
-            "content": "양호",
+            "content": "양호 : 밸브류 맟 표면 부식없음",
             "note": ""
           },
           "mcc_panel": {
             "rate": "A",
-            "content": "상태 양호",
+            "content": "상태 양호 : 아날로그 온도계 vs 마이컴 온도계 일치, 설정온도 대비 양호",
             "note": ""
           }
         },
-        "opinion": "- 사용연수에 따른 외관 노후\n- 냉동일지 기준 평균 토출온도 12℃로 높음\n- 진공도 의심",
+        "opinion": "- 사용연수에 따른 외관 노후\n- 냉동일지 기준 평균 토출온도 12℃로 높음(설정온도 대비 높음 약 3도)\n- 진공도 비정상(정상 범위 외 운전)",
         "photos": [
           {
             "img": null,
@@ -974,6 +974,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T08:34:53.949Z",
+  "lastModified": "2026-04-30T09:04:47.121Z",
   "lastModifiedBy": "seung3459"
 }
