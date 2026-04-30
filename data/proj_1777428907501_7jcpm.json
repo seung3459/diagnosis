@@ -1,0 +1,114 @@
+{
+  "projectName": "영락교회 노후진단",
+  "buildingName": "",
+  "projectStartDate": "",
+  "dateRange": "",
+  "units": {
+    "coldSource": [
+      {
+        "subtype": "turbo",
+        "status": "",
+        "inverter": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "maker": "",
+          "date": "",
+          "cooling": "",
+          "flow": "",
+          "power": "",
+          "cwflow": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "install_env": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "appearance": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "temp_measure": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "piping_conn": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "mcc_panel": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          }
+        },
+        "opinion": "",
+        "photos": [
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          }
+        ]
+      }
+    ],
+    "heatSource": [],
+    "coolingTower": [],
+    "ahu": [],
+    "fan": [],
+    "chilled_pump": [],
+    "hot_pump": [],
+    "cooling_pump": [],
+    "pipe": []
+  },
+  "lastModified": "2026-04-30T05:01:22.833Z",
+  "lastModifiedBy": "seung3459"
+}
