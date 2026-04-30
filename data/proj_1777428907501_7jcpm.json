@@ -104,6 +104,103 @@
             "desc": "점검공간 협소"
           }
         ]
+      },
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-06",
+          "date": "1996-11",
+          "flow": "19020",
+          "staticp": "71",
+          "cooling": "184000",
+          "heating": "135000",
+          "power": "10",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "",
+            "note": ""
+          },
+          "external_state": {
+            "rate": "B",
+            "content": "",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": "B",
+            "content": "",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "",
+            "note": ""
+          }
+        },
+        "opinion": "",
+        "photos": [
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          }
+        ]
       }
     ],
     "fan": [],
@@ -112,6 +209,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T02:37:03.099Z",
+  "lastModified": "2026-04-30T02:40:20.852Z",
   "lastModifiedBy": "seung3459"
 }
