@@ -30,46 +30,46 @@
         "diag": {
           "usage_years": {
             "rate": "C",
-            "content": "",
+            "content": "사용연수 30년",
             "note": ""
           },
           "maint_history": {
             "rate": "B",
-            "content": "",
+            "content": "경미한 고장",
             "note": ""
           },
           "inspection_state": {
             "rate": "B",
-            "content": "",
+            "content": "간헐 점검",
             "note": ""
           },
           "install_env": {
             "rate": "B",
-            "content": "",
+            "content": "설치환경 협소",
             "note": ""
           },
           "external_state": {
             "rate": "A",
-            "content": "",
+            "content": "주위 밸브류 노후 및 부식",
             "note": ""
           },
           "internal_state": {
             "rate": "B",
-            "content": "",
+            "content": "노후로 인한 코일부 파손, 필터 먼지 고착",
             "note": ""
           },
           "fan_state": {
             "rate": "A",
-            "content": "",
+            "content": "급/배기팬 상태 양호",
             "note": ""
           },
           "control_state": {
             "rate": "B",
-            "content": "",
+            "content": "제어부 노후",
             "note": ""
           }
         },
-        "opinion": "",
+        "opinion": "- 사용연수 대비, 외관, 장비기초 및 급/배기팬 등 상태 양호\n- 사용연수에 따른 주위 밸브류 및 제어부 노후\n- 내부 증기코일 파손 및 보수, 코일 및 드레인판 부식\n- 필터 먼지 고착",
         "photos": [
           {
             "img": null,
@@ -112,6 +112,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T02:31:20.438Z",
+  "lastModified": "2026-04-30T02:32:16.212Z",
   "lastModifiedBy": "seung3459"
 }
