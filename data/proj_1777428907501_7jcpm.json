@@ -7,13 +7,111 @@
     "coldSource": [],
     "heatSource": [],
     "coolingTower": [],
-    "ahu": [],
+    "ahu": [
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-03",
+          "date": "1996-11",
+          "flow": "24540",
+          "staticp": "98",
+          "cooling": "89000",
+          "heating": "90000",
+          "power": "20",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "install_env": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "external_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "control_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          }
+        },
+        "opinion": "",
+        "photos": [
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          }
+        ]
+      }
+    ],
     "fan": [],
     "chilled_pump": [],
     "hot_pump": [],
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T02:27:53.799Z",
+  "lastModified": "2026-04-30T02:29:05.477Z",
   "lastModifiedBy": "seung3459"
 }
