@@ -61,21 +61,16 @@ async function ghGetFile(path){
     const res = await fetch(url, { headers });
     
     if(res.status === 404){
-      delete _shaCache[path];
+      delete _shaCache[path];  // 캐시 제거
       return null;
     }
     if(!res.ok) throw new Error(`파일 로드 실패: ${res.status}`);
     
     const data = await res.json();
-    
-    // 🚨 여기서 파일 내용이 비어있거나 읽을 수 없는 경우 처리
-    if (!data.content) return null; 
-    
+    // base64 디코딩 (한글 처리 위해 UTF-8로)
     const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
     
-    // 🚨 파일 내용이 비어있으면 null 반환 (JSON.parse 에러 방지)
-    if (!content.trim()) return null; 
-    
+    // 🆕 SHA 캐시 갱신
     _shaCache[path] = data.sha;
     
     return {
@@ -83,23 +78,37 @@ async function ghGetFile(path){
       sha: data.sha
     };
   } catch(e){
-    console.error(`[ghGetFile] 에러 발생 (${path}):`, e); // 에러를 콘솔에만 출력
-    return null; // 실패해도 null을 반환해서 앱이 죽지 않게 함
+    if(e.message && e.message.includes('404')) return null;
+    throw e;
   }
 }
 
 // =====================================
-// 📤 파일 저장/업데이트 (수정된 버전)
+// 📤 파일 저장/업데이트
+//  - SHA 캐시 우선 사용 → 없으면 GET으로 조회
+//  - 409 충돌 시 캐시 비우고 자동 재시도 (최대 2회)
+//  - PUT 응답의 새 SHA를 캐시에 저장
 // =====================================
 async function ghSaveFile(path, content, commitMessage, _retryCount = 0){
   const headers = getAuthHeaders();
   if(!headers) throw new Error('인증 필요');
   
-  // 1. 기존 데이터 조회 (SHA 확보)
-  delete _shaCache[path]; 
-  const existing = await ghGetFile(path); 
+  // 1. SHA 결정 - 캐시 우선, 없으면 GET으로 조회
+  let sha = _shaCache[path] || null;
   
-  // 2. 데이터 인코딩
+  if(!sha){
+    try{
+      const existing = await ghGetFile(path);
+      if(existing){
+        sha = existing.sha;
+        // ghGetFile 내부에서 이미 캐시 갱신됨
+      }
+    } catch(e){
+      // 파일이 없으면 새로 생성
+    }
+  }
+  
+  // 2. content를 base64로 인코딩 (UTF-8 한글 처리)
   const jsonStr = JSON.stringify(content, null, 2);
   const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
   
@@ -110,7 +119,7 @@ async function ghSaveFile(path, content, commitMessage, _retryCount = 0){
     content: base64Content,
     branch: GITHUB_CONFIG.branch
   };
-  if(existing && existing.sha) body.sha = existing.sha;
+  if(sha) body.sha = sha;
   
   const res = await fetch(url, {
     method: 'PUT',
@@ -118,31 +127,31 @@ async function ghSaveFile(path, content, commitMessage, _retryCount = 0){
     body: JSON.stringify(body)
   });
   
-  // 409 충돌 처리
+  // 🆕 409 (SHA 충돌) 시 자동 재시도 - 최대 2회
   if(res.status === 409 && _retryCount < 2){
-    await new Promise(r => setTimeout(r, 500));
+    console.warn(`[ghSaveFile] SHA 충돌 감지, 재시도 (${_retryCount + 1}/2): ${path}`);
+    
+    // 캐시 무효화 후 200ms 대기 (GitHub 캐시 갱신 시간)
+    delete _shaCache[path];
+    await new Promise(r => setTimeout(r, 200));
+    
     return ghSaveFile(path, content, commitMessage, _retryCount + 1);
   }
   
-  // 4. 응답 확인 (JSON 파싱 에러 방지)
-  const text = await res.text(); // json() 대신 text()로 먼저 읽음
-  let result = {};
-  try {
-    result = text ? JSON.parse(text) : {};
-  } catch(e) {
-    console.error("JSON 파싱 에러:", text);
-  }
-  
   if(!res.ok){
-    throw new Error(`저장 실패: ${res.status} - ${result.message || 'Unknown'}`);
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`저장 실패: ${res.status} - ${err.message || 'Unknown'}`);
   }
   
+  // 🆕 응답에서 새 SHA를 받아 캐시 업데이트
+  const result = await res.json();
   if(result.content && result.content.sha){
     _shaCache[path] = result.content.sha;
   }
   
   return result;
 }
+
 // =====================================
 // 🗑️ 파일 삭제
 //  - 409 충돌 시 자동 재시도
