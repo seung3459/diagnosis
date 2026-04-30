@@ -61,16 +61,21 @@ async function ghGetFile(path){
     const res = await fetch(url, { headers });
     
     if(res.status === 404){
-      delete _shaCache[path];  // 캐시 제거
+      delete _shaCache[path];
       return null;
     }
     if(!res.ok) throw new Error(`파일 로드 실패: ${res.status}`);
     
     const data = await res.json();
-    // base64 디코딩 (한글 처리 위해 UTF-8로)
+    
+    // 🚨 여기서 파일 내용이 비어있거나 읽을 수 없는 경우 처리
+    if (!data.content) return null; 
+    
     const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
     
-    // 🆕 SHA 캐시 갱신
+    // 🚨 파일 내용이 비어있으면 null 반환 (JSON.parse 에러 방지)
+    if (!content.trim()) return null; 
+    
     _shaCache[path] = data.sha;
     
     return {
@@ -78,8 +83,8 @@ async function ghGetFile(path){
       sha: data.sha
     };
   } catch(e){
-    if(e.message && e.message.includes('404')) return null;
-    throw e;
+    console.error(`[ghGetFile] 에러 발생 (${path}):`, e); // 에러를 콘솔에만 출력
+    return null; // 실패해도 null을 반환해서 앱이 죽지 않게 함
   }
 }
 
