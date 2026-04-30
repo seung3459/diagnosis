@@ -4,102 +4,7 @@
   "projectStartDate": "",
   "dateRange": "",
   "units": {
-    "coldSource": [
-      {
-        "subtype": "turbo",
-        "status": "use",
-        "inverter": false,
-        "f1": "",
-        "f2": "",
-        "f3": "",
-        "f4": "",
-        "nameplate": {
-          "maker": "",
-          "date": "",
-          "cooling": "",
-          "flow": "",
-          "power": "",
-          "cwflow": ""
-        },
-        "diag": {
-          "usage_years": {
-            "rate": "B",
-            "content": "",
-            "note": ""
-          },
-          "maint_history": {
-            "rate": "B",
-            "content": "",
-            "note": ""
-          },
-          "inspection_state": {
-            "rate": "C",
-            "content": "",
-            "note": ""
-          },
-          "install_env": {
-            "rate": "A",
-            "content": "",
-            "note": ""
-          },
-          "appearance": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "temp_measure": {
-            "rate": null,
-            "content": "",
-            "note": ""
-          },
-          "piping_conn": {
-            "rate": "A",
-            "content": "",
-            "note": ""
-          },
-          "mcc_panel": {
-            "rate": "A",
-            "content": "",
-            "note": ""
-          }
-        },
-        "opinion": "",
-        "photos": [
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          },
-          {
-            "img": null,
-            "desc": ""
-          }
-        ]
-      }
-    ],
+    "coldSource": [],
     "heatSource": [],
     "coolingTower": [],
     "ahu": [],
@@ -109,6 +14,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T05:06:20.102Z",
+  "lastModified": "2026-04-30T05:06:22.957Z",
   "lastModifiedBy": "seung3459"
 }
