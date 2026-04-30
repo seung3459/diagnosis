@@ -196,18 +196,18 @@
       {
         "subtype": "absorption",
         "status": "use",
+        "inverter": false,
         "f1": "",
         "f2": "",
         "f3": "",
+        "f4": "",
         "nameplate": {
           "maker": "LG",
           "date": "1996-11",
           "cooling": "200",
           "flow": "2117",
           "power": "",
-          "cwflow": "3467",
-          "fueltype": "",
-          "fuelheat": ""
+          "cwflow": "3467"
         },
         "diag": {
           "usage_years": {
@@ -290,18 +290,18 @@
       {
         "subtype": "absorption",
         "status": "use",
+        "inverter": false,
         "f1": "",
         "f2": "",
         "f3": "",
+        "f4": "",
         "nameplate": {
           "maker": "LG",
           "date": "1996-11",
           "cooling": "200",
           "flow": "2117",
           "power": "",
-          "cwflow": "3467",
-          "fueltype": "",
-          "fuelheat": ""
+          "cwflow": "3467"
         },
         "diag": {
           "usage_years": {
@@ -772,6 +772,200 @@
             "desc": "필터 먼지 고착"
           }
         ]
+      },
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-15",
+          "date": "1996-11",
+          "flow": "9780",
+          "staticp": "69",
+          "cooling": "71000",
+          "heating": "49000",
+          "power": "4",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "경미한 고장",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "점검공간 협소",
+            "note": ""
+          },
+          "external_state": {
+            "rate": "A",
+            "content": "주위 밸브류 노후 및 부식",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": "B",
+            "content": "노후로 인한 코일부 부식, 필터 먼지 고착",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "급기팬 상태양호",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "제어부 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수 대비, 외관, 장비기초 및 급/배기팬 등 상태 양호\n- 사용연수에 따른 주위 밸브류 및 제어부 노후\n- 내부 코일 및 드레인판 부식\n- 필터부 먼지 고착",
+        "photos": [
+          {
+            "img": null,
+            "desc": "공조기 및 팬 현황"
+          },
+          {
+            "img": null,
+            "desc": "주위 배관 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "급기팬 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "증기코일 부식"
+          },
+          {
+            "img": null,
+            "desc": "주벽 덕트 및 캔버스 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "덕트 등 제어부 노후"
+          },
+          {
+            "img": null,
+            "desc": "방진 상태양호"
+          },
+          {
+            "img": null,
+            "desc": "주위 밸브류 노후"
+          }
+        ]
+      },
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-16",
+          "date": "1996-11",
+          "flow": "16080",
+          "staticp": "80",
+          "cooling": "112000",
+          "heating": "114000",
+          "power": "5",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "경미한 고장",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "점검공간 협소",
+            "note": ""
+          },
+          "external_state": {
+            "rate": "B",
+            "content": "주위 밸브류 노후 및 부식",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": "B",
+            "content": "노후로 인한 코일부 부식, 필터 먼지 고착",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "급기팬 상태 양호",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "제어부 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수 대비, 외관, 장비기초 및 급/배기팬 등 상태 양호\n- 사용연수에 따른 주위 밸브류 및 제어부 노후\n- 내부 코일 및 드레인판 부식\n- 필터부 먼지 고착",
+        "photos": [
+          {
+            "img": null,
+            "desc": "공조기 및 팬 현황"
+          },
+          {
+            "img": null,
+            "desc": "주위 배관 및 밸브류 노후"
+          },
+          {
+            "img": null,
+            "desc": "급기팬 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "증기 및 냉수코일 부식"
+          },
+          {
+            "img": null,
+            "desc": "드레인판 부식"
+          },
+          {
+            "img": null,
+            "desc": "밸브류 제어부 노후"
+          },
+          {
+            "img": null,
+            "desc": "필터 먼지 고착"
+          },
+          {
+            "img": null,
+            "desc": "점검공간 협소"
+          }
+        ]
       }
     ],
     "fan": [],
@@ -780,6 +974,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T07:25:02.671Z",
+  "lastModified": "2026-04-30T07:36:41.863Z",
   "lastModifiedBy": "seung3459"
 }
