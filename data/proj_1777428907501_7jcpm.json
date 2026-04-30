@@ -29,42 +29,42 @@
         },
         "diag": {
           "usage_years": {
-            "rate": null,
+            "rate": "C",
             "content": "",
             "note": ""
           },
           "maint_history": {
-            "rate": null,
+            "rate": "B",
             "content": "",
             "note": ""
           },
           "inspection_state": {
-            "rate": null,
+            "rate": "B",
             "content": "",
             "note": ""
           },
           "install_env": {
-            "rate": null,
+            "rate": "B",
             "content": "",
             "note": ""
           },
           "external_state": {
-            "rate": null,
+            "rate": "A",
             "content": "",
             "note": ""
           },
           "internal_state": {
-            "rate": null,
+            "rate": "B",
             "content": "",
             "note": ""
           },
           "fan_state": {
-            "rate": null,
+            "rate": "A",
             "content": "",
             "note": ""
           },
           "control_state": {
-            "rate": null,
+            "rate": "B",
             "content": "",
             "note": ""
           }
@@ -112,6 +112,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T02:29:05.477Z",
+  "lastModified": "2026-04-30T02:31:20.438Z",
   "lastModifiedBy": "seung3459"
 }
