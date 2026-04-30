@@ -384,13 +384,499 @@
     ],
     "heatSource": [],
     "coolingTower": [],
-    "ahu": [],
+    "ahu": [
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-03",
+          "date": "1996-11",
+          "flow": "24540",
+          "staticp": "98",
+          "cooling": "89000",
+          "heating": "90000",
+          "power": "20",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "경미한 고장",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "설치환경 협소",
+            "note": ""
+          },
+          "external_state": {
+            "rate": "A",
+            "content": "주위 밸브류 노후 및 부식",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": "B",
+            "content": "노후로 인한 코일부 파손, 필터 먼지 고착",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "급/배기팬 상태 양호",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "제어부 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수 대비, 외관, 장비기초 및 급/배기팬 등 상태 양호\n- 사용연수에 따른 주위 밸브류 및 제어부 노후\n- 내부 증기코일 파손 및 보수, 코일 및 드레인판 부식\n- 필터 먼지 고착",
+        "photos": [
+          {
+            "img": null,
+            "desc": "공조기 및 팬 현황"
+          },
+          {
+            "img": null,
+            "desc": "증기 코일 파손 및 보수"
+          },
+          {
+            "img": null,
+            "desc": "드레인판 부식"
+          },
+          {
+            "img": null,
+            "desc": "급기팬 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "필터 먼지 고착"
+          },
+          {
+            "img": null,
+            "desc": "주변 덕트 및 제어부 노후"
+          },
+          {
+            "img": null,
+            "desc": "배기팬 방진 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "점검공간 협소"
+          }
+        ]
+      },
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-06",
+          "date": "1996-11",
+          "flow": "19020",
+          "staticp": "71",
+          "cooling": "184000",
+          "heating": "135000",
+          "power": "10",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "경미한 고장",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "설치환경 양호",
+            "note": ""
+          },
+          "external_state": {
+            "rate": "B",
+            "content": "주위 밸브류 노후 및 부식",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": "B",
+            "content": "노후로 인한 코일부 부식, 필터 먼지 고착",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "급/배기팬 상태 양호",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "제어부 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수 대비, 외관, 장비기초 및 급/배기팬 등 상태 양호\n- 사용연수에 따른 주위 밸브류 및 제어부 노후\n- 코일, 드레인판 및 주위 입상 냉수배관/신축이음 부식\n- 필터 먼지 고착",
+        "photos": [
+          {
+            "img": null,
+            "desc": "공조기 및 팬 현황"
+          },
+          {
+            "img": null,
+            "desc": "코일부 및 드레인판 부식"
+          },
+          {
+            "img": null,
+            "desc": "급기팬 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "주변 덕트 및 캔버스 노후"
+          },
+          {
+            "img": null,
+            "desc": "필터 먼지 고착"
+          },
+          {
+            "img": null,
+            "desc": "제어부 노후"
+          },
+          {
+            "img": null,
+            "desc": "방진 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "주변 입상 냉수배관 부식"
+          }
+        ]
+      },
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-11",
+          "date": "1996-11",
+          "flow": "30000",
+          "staticp": "70",
+          "cooling": "244000",
+          "heating": "182000",
+          "power": "15",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "경미한 고장",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "점검공간 협소",
+            "note": ""
+          },
+          "external_state": {
+            "rate": "B",
+            "content": "주위 밸브류 노후 및 부식",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": "B",
+            "content": "노후로 인한 코일부 부식, 필터 먼지 고착",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "급기팬 상태 양호",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "제어부 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수 대비, 외관, 장비기초 및 급/배기팬 등 상태 양호\n- 사용연수에 따른 주위 밸브류 및 제어부 노후\n- 내부 코일 및 드레인판 부식\n- 필터부 먼지 고착",
+        "photos": [
+          {
+            "img": null,
+            "desc": "주위 밸브류 노후"
+          },
+          {
+            "img": null,
+            "desc": "코일부 및 드레인판 상태 부식"
+          },
+          {
+            "img": null,
+            "desc": "급기팬 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "급기팬 덕트 및 캔버스 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "필터 먼지 고착"
+          },
+          {
+            "img": null,
+            "desc": "제어부 노후"
+          },
+          {
+            "img": null,
+            "desc": "주위 배관 보온 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "점검공간 협소"
+          }
+        ]
+      },
+      {
+        "status": "use",
+        "supplyFan": true,
+        "exhaustFan": true,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "AHU-12",
+          "date": "1996-11",
+          "flow": "30000",
+          "staticp": "70",
+          "cooling": "244000",
+          "heating": "184000",
+          "power": "11",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "경미한 고장",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "A",
+            "content": "설치환경 양호",
+            "note": ""
+          },
+          "external_state": {
+            "rate": "B",
+            "content": "주위 밸브류 노후 및 부식",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": "B",
+            "content": "노후로 인한 코일부 부식, 필터먼지 고착",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "급기팬 상태 양호",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "제어부 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수 대비, 외관, 장비기초 및 급/배기팬 등 상태 양호\n- 사용연수에 따른 주위 밸브류 및 제어부 노후\n- 내부 코일 및 드레인판 부식\n- 필터부 먼지 고착",
+        "photos": [
+          {
+            "img": null,
+            "desc": "공조기 및 팬 현황"
+          },
+          {
+            "img": null,
+            "desc": "주위 배관 상태양호"
+          },
+          {
+            "img": null,
+            "desc": "급기팬 상태양호"
+          },
+          {
+            "img": null,
+            "desc": "코일부 및 드레인판 부식"
+          },
+          {
+            "img": null,
+            "desc": "주변 덕트 및 캔버스 상태양호 "
+          },
+          {
+            "img": null,
+            "desc": "제어부 노후"
+          },
+          {
+            "img": null,
+            "desc": "방진 상태양호"
+          },
+          {
+            "img": null,
+            "desc": "필터 먼지 고착"
+          }
+        ]
+      },
+      {
+        "status": "",
+        "supplyFan": false,
+        "exhaustFan": false,
+        "ventMode": false,
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "nameplate": {
+          "no": "",
+          "date": "",
+          "flow": "",
+          "staticp": "",
+          "cooling": "",
+          "heating": "",
+          "power": "",
+          "humid": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "install_env": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "external_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "internal_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          },
+          "control_state": {
+            "rate": null,
+            "content": "",
+            "note": ""
+          }
+        },
+        "opinion": "",
+        "photos": [
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          },
+          {
+            "img": null,
+            "desc": ""
+          }
+        ]
+      }
+    ],
     "fan": [],
     "chilled_pump": [],
     "hot_pump": [],
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T07:12:02.369Z",
+  "lastModified": "2026-04-30T07:24:09.104Z",
   "lastModifiedBy": "seung3459"
 }
