@@ -9,10 +9,10 @@
         "subtype": "turbo",
         "status": "use",
         "inverter": false,
-        "f1": "12",
-        "f2": "7",
+        "f1": "",
+        "f2": "",
         "f3": "",
-        "f4": "21.46",
+        "f4": "",
         "nameplate": {
           "maker": "LG",
           "date": "1996-10",
@@ -101,95 +101,283 @@
       },
       {
         "subtype": "turbo",
-        "status": "",
+        "status": "use",
         "inverter": false,
         "f1": "",
         "f2": "",
         "f3": "",
         "f4": "",
         "nameplate": {
-          "maker": "",
-          "date": "",
-          "cooling": "",
-          "flow": "",
+          "maker": "센추리",
+          "date": "2024-10",
+          "cooling": "200",
+          "flow": "2017",
           "power": "",
-          "cwflow": ""
+          "cwflow": "2383"
         },
         "diag": {
           "usage_years": {
-            "rate": null,
-            "content": "",
+            "rate": "A",
+            "content": "사용연수 2년",
             "note": ""
           },
           "maint_history": {
-            "rate": null,
-            "content": "",
+            "rate": "A",
+            "content": "24년 9월 신설",
             "note": ""
           },
           "inspection_state": {
-            "rate": null,
-            "content": "",
+            "rate": "B",
+            "content": "간헐점검",
             "note": ""
           },
           "install_env": {
-            "rate": null,
-            "content": "",
+            "rate": "A",
+            "content": "점검공간 양호",
             "note": ""
           },
           "appearance": {
-            "rate": null,
-            "content": "",
+            "rate": "A",
+            "content": "24년 9월 신설 상태 양호",
             "note": ""
           },
           "temp_measure": {
-            "rate": null,
-            "content": "",
+            "rate": "A",
+            "content": "상태 양호",
             "note": ""
           },
           "piping_conn": {
-            "rate": null,
-            "content": "",
+            "rate": "A",
+            "content": "24년 9월 신설 상태 양호",
             "note": ""
           },
           "mcc_panel": {
-            "rate": null,
-            "content": "",
+            "rate": "A",
+            "content": "상태양호",
             "note": ""
           }
         },
-        "opinion": "",
+        "opinion": "- 24.09 신설에 따른 상태 양호",
         "photos": [
           {
             "img": null,
-            "desc": ""
+            "desc": "냉동기 현황"
           },
           {
             "img": null,
-            "desc": ""
+            "desc": "설치가대 상태양호"
           },
           {
             "img": null,
-            "desc": ""
+            "desc": "전동기 측 상태 양호"
           },
           {
             "img": null,
-            "desc": ""
+            "desc": "냉수 및 냉각수 배관 상태 양호"
           },
           {
             "img": null,
-            "desc": ""
+            "desc": "계측기기류 상태 양호"
           },
           {
             "img": null,
-            "desc": ""
+            "desc": "냉수 및 냉각수 배관 연결부 상태 양호"
           },
           {
             "img": null,
-            "desc": ""
+            "desc": "컨트롤 판넬 상태 양호"
           },
           {
             "img": null,
-            "desc": ""
+            "desc": "점검 공간 양호"
+          }
+        ]
+      },
+      {
+        "subtype": "absorption",
+        "status": "use",
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "nameplate": {
+          "maker": "LG",
+          "date": "1996-11",
+          "cooling": "200",
+          "flow": "2117",
+          "power": "",
+          "cwflow": "3467",
+          "fueltype": "",
+          "fuelheat": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "A",
+            "content": "매년 냉동기 세관 진행",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "점검공간 협소",
+            "note": ""
+          },
+          "appearance": {
+            "rate": "B",
+            "content": "사용연수로 인한 노후",
+            "note": ""
+          },
+          "temp_measure": {
+            "rate": "C",
+            "content": "24년 8월 기준 평균 토출 온도 약 7~15℃로 높음",
+            "note": ""
+          },
+          "piping_conn": {
+            "rate": "B",
+            "content": "주위 배관 케이싱 및 배관 연결부 사용연수에 따른 노후",
+            "note": ""
+          },
+          "mcc_panel": {
+            "rate": "B",
+            "content": "사용연수에 따른 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수에 따른 노후\n- 24년 8월 냉동일지 기준 평균 토출 온도 약 12℃로 높음",
+        "photos": [
+          {
+            "img": null,
+            "desc": "냉동기 현황"
+          },
+          {
+            "img": null,
+            "desc": "냉각수측 온도계 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "보온재 케이싱 노후"
+          },
+          {
+            "img": null,
+            "desc": "밸브류 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "설치 가대 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "오일펌프 및 추기장치 사용연수에 따른 노후"
+          },
+          {
+            "img": null,
+            "desc": "압력계 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "제어부 노후"
+          }
+        ]
+      },
+      {
+        "subtype": "absorption",
+        "status": "use",
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "nameplate": {
+          "maker": "LG",
+          "date": "1996-11",
+          "cooling": "200",
+          "flow": "2117",
+          "power": "",
+          "cwflow": "3467",
+          "fueltype": "",
+          "fuelheat": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "A",
+            "content": "매년 냉동기 세관 진행",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "점검공간 협소",
+            "note": ""
+          },
+          "appearance": {
+            "rate": "B",
+            "content": "사용연수로 인한 노후",
+            "note": ""
+          },
+          "temp_measure": {
+            "rate": "C",
+            "content": "24년 8월 기준 평균 토출온도 약8~14℃로 높음",
+            "note": ""
+          },
+          "piping_conn": {
+            "rate": "B",
+            "content": "주위 배관 케이싱 및 배관 연결부 사용연수에 따른 노후",
+            "note": ""
+          },
+          "mcc_panel": {
+            "rate": "B",
+            "content": "사용연수에 따른 노후",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수에 따른 노후\n- 24년 8월 냉동일지 기준 평균 토출 온도 약 12℃로 높음",
+        "photos": [
+          {
+            "img": null,
+            "desc": "냉동기 현황"
+          },
+          {
+            "img": null,
+            "desc": "온도계 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "보온재 노후"
+          },
+          {
+            "img": null,
+            "desc": "밸브 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "설치 가대 부식"
+          },
+          {
+            "img": null,
+            "desc": "오일펌프 및 추기장치 사용연수에 따른 노후"
+          },
+          {
+            "img": null,
+            "desc": "압력계 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "사용연수에 따른 제어부 노후"
           }
         ]
       }
@@ -203,6 +391,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-04-30T06:58:17.297Z",
+  "lastModified": "2026-04-30T07:12:02.369Z",
   "lastModifiedBy": "seung3459"
 }
