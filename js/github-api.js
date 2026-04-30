@@ -90,11 +90,11 @@ async function ghSaveFile(path, content, commitMessage, _retryCount = 0){
   const headers = getAuthHeaders();
   if(!headers) throw new Error('인증 필요');
   
-  // 1. 최신 상태 강제 조회
+  // 1. 기존 데이터 조회 (SHA 확보)
   delete _shaCache[path]; 
-  const existing = await ghGetFile(path); // 기존 데이터 조회
+  const existing = await ghGetFile(path); 
   
-  // 2. content 인코딩
+  // 2. 데이터 인코딩
   const jsonStr = JSON.stringify(content, null, 2);
   const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
   
@@ -105,11 +105,7 @@ async function ghSaveFile(path, content, commitMessage, _retryCount = 0){
     content: base64Content,
     branch: GITHUB_CONFIG.branch
   };
-  
-  // 🚨 [핵심 수정] 파일이 존재하면 반드시 sha를 포함해야 함
-  if(existing && existing.sha) {
-    body.sha = existing.sha;
-  }
+  if(existing && existing.sha) body.sha = existing.sha;
   
   const res = await fetch(url, {
     method: 'PUT',
@@ -117,27 +113,31 @@ async function ghSaveFile(path, content, commitMessage, _retryCount = 0){
     body: JSON.stringify(body)
   });
   
-  // 409 충돌 시 재시도
+  // 409 충돌 처리
   if(res.status === 409 && _retryCount < 2){
     await new Promise(r => setTimeout(r, 500));
     return ghSaveFile(path, content, commitMessage, _retryCount + 1);
   }
   
-  // 422 에러(데이터 검증 실패 등) 상세 확인
-  if(!res.ok){
-    const err = await res.json().catch(() => ({}));
-    console.error("GitHub API Error:", err); // 콘솔에서 상세 에러 확인 가능
-    throw new Error(`저장 실패: ${res.status} - ${err.message || 'Unknown'}`);
+  // 4. 응답 확인 (JSON 파싱 에러 방지)
+  const text = await res.text(); // json() 대신 text()로 먼저 읽음
+  let result = {};
+  try {
+    result = text ? JSON.parse(text) : {};
+  } catch(e) {
+    console.error("JSON 파싱 에러:", text);
   }
   
-  const result = await res.json();
+  if(!res.ok){
+    throw new Error(`저장 실패: ${res.status} - ${result.message || 'Unknown'}`);
+  }
+  
   if(result.content && result.content.sha){
     _shaCache[path] = result.content.sha;
   }
   
   return result;
 }
-
 // =====================================
 // 🗑️ 파일 삭제
 //  - 409 충돌 시 자동 재시도
