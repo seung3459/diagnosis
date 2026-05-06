@@ -172,8 +172,21 @@ function renderCard(type, id){
       </div>
     </div>
   `;
+} else if(type === 'coolingTower'){
+  nameplateSection = `
+    <div class="section-title">📋 명판사항</div>
+    <div class="cs-sub-card">
+      <div class="grid grid-2">
+        <div class="field"><label>제조사</label><div class="input-wrap"><input type="text" id="${type}_${id}_np_maker" placeholder="예: BAC"></div></div>
+        <div class="field"><label>설치일자</label><div class="input-wrap"><input type="month" id="${type}_${id}_np_date"></div></div>
+        <div class="field"><label>냉각수 유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_cwflow" placeholder="0"><span class="unit">LPM</span></div></div>
+        <div class="field"><label>냉각탑 용량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_capacity" placeholder="0"><span class="unit">RT</span></div></div>
+        <div class="field"><label>팬 풍량</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_airflow" placeholder="0"><span class="unit">㎥/h</span></div></div>
+        <div class="field"><label>동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_np_power" placeholder="0"><span class="unit">kW</span></div></div>
+      </div>
+    </div>
+  `;
 }
-
   // ⭐ 운전상태 부가옵션
   let inverterCheckbox = '';
   let heatSourceRadio = '';
@@ -321,16 +334,55 @@ const extraRowContent = `${inverterCheckbox}${heatSourceRadio}${ahuExtraCheck}`;
         </div>
       </div>
     `;
-  } else if(type === 'ahu'){
+  } else if(type === 'coolingTower'){
+  measureBlock = `
+    <div class="section-title">📊 운전 측정값</div>
+    <div class="cs-sub-card">
+      <div class="meas-3col">
+        <div class="meas-col">
+          <div class="meas-col-title">💧 냉각수</div>
+          <div class="field"><label>입구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>출구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>유량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">LPM</span></div></div>
+        </div>
+
+        <div class="meas-col">
+          <div class="meas-col-title">🌡️ 외기</div>
+          <div class="field"><label>건구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f4" placeholder="0"><span class="unit">℃</span></div></div>
+          <div class="field"><label>습구온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f5" placeholder="0"><span class="unit">℃</span></div></div>
+        </div>
+
+        <div class="meas-col">
+          <div class="meas-col-title">⚡ 전기</div>
+          <div class="field"><label>동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_f6" placeholder="0"><span class="unit">kW</span></div></div>
+          <div class="field"><label>전류</label><div class="input-wrap"><input type="number" id="${type}_${id}_f7" placeholder="0"><span class="unit">A</span></div></div>
+        </div>
+      </div>
+    </div>
+  `;
+} else if(type === 'ahu'){
     // 🆕 공조기 측정값: 급기온도 / 환기온도 / 풍량 / 주파수
     measureBlock = `
-      <div class="section-title">📊 운전 측정값</div>
+     <div class="section-title">📊 운전 측정값</div>
       <div class="cs-sub-card">
-        <div class="grid grid-2">
-          <div class="field"><label>급기온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
-          <div class="field"><label>환기온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">℃</span></div></div>
-          <div class="field"><label>풍량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">㎥/h</span></div></div>
-          <div class="field"><label>주파수</label><div class="input-wrap"><input type="number" id="${type}_${id}_f4" placeholder="0"><span class="unit">Hz</span></div></div>
+        <div class="meas-3col">
+		  <div class="meas-col">
+		    <div class="meas-col-title">🌡️ 급기팬</div>
+		    <div class="field"><label>급기온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f1" placeholder="0"><span class="unit">℃</span></div></div>
+            <div class="field"><label>급기풍량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f2" placeholder="0"><span class="unit">㎥/h</span></div></div>
+			<div class="field"><label>주파수</label><div class="input-wrap"><input type="number" id="${type}_${id}_f3" placeholder="0"><span class="unit">Hz</span></div></div>
+		  </div>
+		  <div class="meas-col">
+		    <div class="meas-col-title">🌡️ 배기팬</div>
+		    <div class="field"><label>배기온도</label><div class="input-wrap"><input type="number" id="${type}_${id}_f4" placeholder="0"><span class="unit">℃</span></div></div>
+            <div class="field"><label>배기풍량</label><div class="input-wrap"><input type="number" id="${type}_${id}_f5" placeholder="0"><span class="unit">㎥/h</span></div></div>
+			<div class="field"><label>주파수</label><div class="input-wrap"><input type="number" id="${type}_${id}_f6" placeholder="0"><span class="unit">Hz</span></div></div>
+		  </div>
+		  <div class="meas-col">
+            <div class="meas-col-title">⚡ 전기</div>
+            <div class="field"><label>동력</label><div class="input-wrap"><input type="number" id="${type}_${id}_f7" placeholder="0"><span class="unit">kW</span></div></div>
+            <div class="field"><label>전류</label><div class="input-wrap"><input type="number" id="${type}_${id}_f8" placeholder="0"><span class="unit">A</span></div></div>
+		  </div>
         </div>
       </div>
     `;
@@ -354,7 +406,7 @@ if(type === 'ahu'){
       <div class="np-meas-col meas-col-wrap">${measureBlock}</div>
     </div>
   `;
-} else if(type === 'coldSource'){
+} else if(type === 'coldSource' || type === 'coolingTower'){
   bodyMain = `
     <div class="np-meas-grid">
       <div class="np-meas-col np-col">${nameplateSection}</div>
