@@ -36,6 +36,14 @@ if(type === 'ahu'){
   });
 }
 
+if(type === 'coolingTower'){
+  data.nameplate = {};
+  ['maker','date','cwflow','capacity','airflow','power'].forEach(f=>{
+    const el = document.getElementById(`${type}_${id}_np_${f}`);
+    if(el) data.nameplate[f] = el.value;
+  });
+}
+
   if(diagApplyTypes.includes(type)){
     data.diag = {};
     // 🆕 타입별 진단 항목 사용
@@ -97,6 +105,13 @@ if(type === 'coldSource'){
 // 🆕 공조기 명판 복원 (가습 포함)
 if(type === 'ahu' && data.nameplate){
   ['no','date','flow','staticp','cooling','heating','power','humid'].forEach(f=>{
+    const el = document.getElementById(`${type}_${id}_np_${f}`);
+    if(el && data.nameplate[f] !== undefined) el.value = data.nameplate[f];
+  });
+}
+
+if(type === 'coolingTower' && data.nameplate){
+  ['maker','date','cwflow','capacity','airflow','power'].forEach(f=>{
     const el = document.getElementById(`${type}_${id}_np_${f}`);
     if(el && data.nameplate[f] !== undefined) el.value = data.nameplate[f];
   });
