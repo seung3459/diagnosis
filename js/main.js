@@ -40,7 +40,10 @@ window.onload = async function(){
   
   // 5. 캘린더 렌더링
   renderCalendar();
+
+  // 6. HVAC 계통도 초기화
+  if(typeof initHVACDiagram === 'function') initHVACDiagram();
   
-  // 6. 시작 페이지를 intro로 설정
+  // 7. 시작 페이지를 intro로 설정
   showPage('intro');
 };
