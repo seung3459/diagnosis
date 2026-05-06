@@ -18,11 +18,18 @@ function showPage(id){
   
   const fab = document.getElementById('fabContainer');
   if(fab){
-    if(id === 'intro' || id === 'projects'){
+    if(id === 'intro' || id === 'projects' || id === 'hvac'){
       fab.style.display = 'none';
       document.getElementById('fabMenu')?.classList.remove('active');
     } else {
       fab.style.display = 'block';
+    }
+  }
+
+  if(id === 'hvac' && typeof initHVACDiagram === 'function'){
+    initHVACDiagram();
+    if(typeof updateHVACConnections === 'function'){
+      setTimeout(() => updateHVACConnections(), 30);
     }
   }
   
