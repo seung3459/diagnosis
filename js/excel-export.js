@@ -13,10 +13,11 @@ function dataURLToArrayBuffer(dataURL){
 
 // 🆕 타입별 라벨/이모지 매핑
 function getTypeMeta(type){
-  const meta = {
-    coldSource: { label:'냉열원',   icon:'❄️', sheetTitle:'냉열원 진단 요약',   defaultName:'냉열원진단' },
-    ahu:        { label:'공조기',   icon:'💨', sheetTitle:'공조기 진단 요약',   defaultName:'공조기진단' }
-  };
+const meta = {
+  coldSource:   { label:'냉열원',   icon:'❄️', sheetTitle:'냉열원 진단 요약',   defaultName:'냉열원진단' },
+  ahu:          { label:'공조기',   icon:'💨', sheetTitle:'공조기 진단 요약',   defaultName:'공조기진단' },
+  coolingTower: { label:'냉각탑',   icon:'🗼', sheetTitle:'냉각탑 진단 요약',   defaultName:'냉각탑진단' }
+};
   return meta[type] || { label: labelKor(type) || type, icon:'🔧', sheetTitle:`${labelKor(type)||type} 진단 요약`, defaultName:`${type}진단` };
 }
 
