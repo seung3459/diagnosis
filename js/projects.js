@@ -163,6 +163,10 @@ function applyProjectData(data){
   if(data.dateRange) document.getElementById('dateRange').value = data.dateRange;
   updateHeroBadge();
   renderCalendar();
+
+  if(typeof applyHVACDiagramData === 'function'){
+    applyHVACDiagramData(data.hvacDiagram || null);
+  }
   
   if(data.units){
     Object.keys(data.units).forEach(type => {
@@ -211,6 +215,8 @@ function resetAllUnits(){
   });
   
   updateHeroBadge();
+
+  if(typeof resetHVACDiagram === 'function') resetHVACDiagram();
 }
 
 // =====================================
@@ -223,6 +229,7 @@ function collectCurrentProjectData(){
     buildingName: document.getElementById('buildingName')?.value || '',
     projectStartDate: document.getElementById('projectStartDate')?.value || '',
     dateRange: document.getElementById('dateRange')?.value || '',
+    hvacDiagram: (typeof collectHVACDiagramData === 'function') ? collectHVACDiagramData() : null,
     units: {},
     lastModified: new Date().toISOString(),
     lastModifiedBy: currentUser?.login || 'unknown'
