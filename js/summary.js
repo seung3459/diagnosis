@@ -80,7 +80,7 @@ function renderGroupSummary(type){
   });
   
   // 진단 적용 타입에는 등급 산정 기준 모달 버튼 추가
-  const helpBtn = showDiag ? `<button class="grade-info-btn" onclick="showGradeInfo()" title="종합 등급 산정 기준 보기">?</button>` : '';
+  const helpBtn = showDiag ? `<button class="grade-info-btn" onclick="showGradeInfo('${type}')" title="종합 등급 산정 기준 보기">?</button>` : '';
   
   wrap.innerHTML = `<div class="summary-section-title">📊 ${labelKor(type)} 진단 요약${helpBtn}</div><div class="summary-table-wrap"><table class="summary-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div><div style="font-size:11px;color:#9ca3af;margin-top:6px;padding:0 4px;">💡 호기 번호를 클릭하면 해당 카드로 이동합니다.</div>`;
 }
