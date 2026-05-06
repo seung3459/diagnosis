@@ -3,6 +3,12 @@
   "buildingName": "",
   "projectStartDate": "",
   "dateRange": "",
+  "hvacDiagram": {
+    "nodeSeq": 1,
+    "lineSeq": 1,
+    "nodes": [],
+    "links": []
+  },
   "units": {
     "coldSource": [
       {
@@ -383,7 +389,412 @@
       }
     ],
     "heatSource": [],
-    "coolingTower": [],
+    "coolingTower": [
+      {
+        "subtype": "open",
+        "status": "use",
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "f5": "",
+        "f6": "",
+        "f7": "",
+        "nameplate": {
+          "maker": "경인기계",
+          "date": "1996-11",
+          "cwflow": "3900",
+          "capacity": "300",
+          "airflow": "146400",
+          "power": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "소모품 교체",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "건헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "주변 외벽에 의한 공기흐름 방해",
+            "note": ""
+          },
+          "fill_state": {
+            "rate": "B",
+            "content": "부분적 오염 고착",
+            "note": ""
+          },
+          "casing_ladder_hatch": {
+            "rate": "A",
+            "content": "양호",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "B",
+            "content": "축 노후화",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "사용연수에 따른 자동제어 노후",
+            "note": ""
+          },
+          "piping_accessory": {
+            "rate": "B",
+            "content": "외부 환경과 사용연수로 인한 밸브 및 주위 배관 부식 진행중",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수에 따른 내외부의 부식 확인(방진가대, 밸브류, 부속류 등)\n- 외부 외벽으로 인한 외기 유입불량, 열교환 효율 저하 예상",
+        "photos": [
+          {
+            "img": null,
+            "desc": "냉각탑 현황"
+          },
+          {
+            "img": null,
+            "desc": "내부 설치 가대 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "팬 및 블레이드 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "외부 설치에 따른 밸브류 부식"
+          },
+          {
+            "img": null,
+            "desc": "하부 수조 부식"
+          },
+          {
+            "img": null,
+            "desc": "외부 설치에 따른 방진 부식"
+          },
+          {
+            "img": null,
+            "desc": "충진재 오염물질 고착"
+          },
+          {
+            "img": null,
+            "desc": "주변 외벽으로 열교환 효율 저하 예상"
+          }
+        ]
+      },
+      {
+        "subtype": "open",
+        "status": "use",
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "f5": "",
+        "f6": "",
+        "f7": "",
+        "nameplate": {
+          "maker": "경인기계",
+          "date": "1996-11",
+          "cwflow": "3900",
+          "capacity": "300",
+          "airflow": "146400",
+          "power": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "소모품 교체",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "주변 외벽에 의한 공기 흐름 방해",
+            "note": ""
+          },
+          "fill_state": {
+            "rate": "B",
+            "content": "부분적 오염 고착",
+            "note": ""
+          },
+          "casing_ladder_hatch": {
+            "rate": "A",
+            "content": "양호",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "B",
+            "content": "축 노후화",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "사용연수에 따른 자동제어 노후",
+            "note": ""
+          },
+          "piping_accessory": {
+            "rate": "B",
+            "content": "외부 환경과 사용연수로 인한 밸브 및 주위 배관 부식 진행중",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수에 따른 내외부의 부식 확인(방진가대, 밸브류, 부속류 등)\n- 외부 외벽으로 인한 외기 유입불량, 열교환 효율 저하 예상",
+        "photos": [
+          {
+            "img": null,
+            "desc": "냉각탑 현황"
+          },
+          {
+            "img": null,
+            "desc": "내부 설치 가대 부식"
+          },
+          {
+            "img": null,
+            "desc": "팬 및 블레이드 상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "외부 설치에 따른 밸브류 부식"
+          },
+          {
+            "img": null,
+            "desc": "하부 수조 부식"
+          },
+          {
+            "img": null,
+            "desc": "외부 설치에 따른 방진 부식"
+          },
+          {
+            "img": null,
+            "desc": "충진재 오염물질 고착"
+          },
+          {
+            "img": null,
+            "desc": "주변 외벽을 열교환 효율 저하 예상"
+          }
+        ]
+      },
+      {
+        "subtype": "open",
+        "status": "use",
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "f5": "",
+        "f6": "",
+        "f7": "",
+        "nameplate": {
+          "maker": "경인기계",
+          "date": "1996-11",
+          "cwflow": "2600",
+          "capacity": "200",
+          "airflow": "87060",
+          "power": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "C",
+            "content": "사용연수 30년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "B",
+            "content": "소모품 교체",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "주변 외벽에 의한 공기 흐름 방해",
+            "note": ""
+          },
+          "fill_state": {
+            "rate": "B",
+            "content": "부분적 오염 고착",
+            "note": ""
+          },
+          "casing_ladder_hatch": {
+            "rate": "A",
+            "content": "양호",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "B",
+            "content": "축 노후화",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "B",
+            "content": "사용연수에 따른 자동제어 노후",
+            "note": ""
+          },
+          "piping_accessory": {
+            "rate": "B",
+            "content": "외부 환경과 사용연수로 인한 밸브 및 주위 배관 부식 진행중",
+            "note": ""
+          }
+        },
+        "opinion": "- 사용연수에 따른 내외부의 부식 확인(방진가대, 밸브류, 부속류 등)\n- 외부 외벽으로 인한 외기 유입불량, 열교환 효율 저하 예상",
+        "photos": [
+          {
+            "img": null,
+            "desc": "냉각탑 현황"
+          },
+          {
+            "img": null,
+            "desc": "내부 설치 가대 상태 부식"
+          },
+          {
+            "img": null,
+            "desc": "팬 및 블레이드 축 양호"
+          },
+          {
+            "img": null,
+            "desc": "외부 설치에 따른 냉각수 밸브류 부식"
+          },
+          {
+            "img": null,
+            "desc": "하부 수조 부식"
+          },
+          {
+            "img": null,
+            "desc": "외부 설치에 따른 방진 부식"
+          },
+          {
+            "img": null,
+            "desc": "충진재 오염물질 고착"
+          },
+          {
+            "img": null,
+            "desc": "주변 외벽으로 열교환 효율 저하 예상"
+          }
+        ]
+      },
+      {
+        "subtype": "open",
+        "status": "use",
+        "f1": "",
+        "f2": "",
+        "f3": "",
+        "f4": "",
+        "f5": "",
+        "f6": "",
+        "f7": "",
+        "nameplate": {
+          "maker": "센추리",
+          "date": "2024-02",
+          "cwflow": "3250",
+          "capacity": "250",
+          "airflow": "99480",
+          "power": ""
+        },
+        "diag": {
+          "usage_years": {
+            "rate": "A",
+            "content": "사용연수 2년",
+            "note": ""
+          },
+          "maint_history": {
+            "rate": "A",
+            "content": "양호",
+            "note": ""
+          },
+          "inspection_state": {
+            "rate": "B",
+            "content": "간헐 점검",
+            "note": ""
+          },
+          "install_env": {
+            "rate": "B",
+            "content": "주변 외벽에 의한 공기 흐름 방해",
+            "note": ""
+          },
+          "fill_state": {
+            "rate": "A",
+            "content": "충진재 부분적 오염",
+            "note": ""
+          },
+          "casing_ladder_hatch": {
+            "rate": "A",
+            "content": "양호",
+            "note": ""
+          },
+          "fan_state": {
+            "rate": "A",
+            "content": "양호",
+            "note": ""
+          },
+          "control_state": {
+            "rate": "A",
+            "content": "자동제어 양호",
+            "note": ""
+          },
+          "piping_accessory": {
+            "rate": "A",
+            "content": "양호",
+            "note": ""
+          }
+        },
+        "opinion": "- 외부 유입물(오염물, 깃털 등)에 따른 충진재 오염\n- 외부 외벽으로 인한 외기 유입불량, 열교환 효율 저하 예상",
+        "photos": [
+          {
+            "img": null,
+            "desc": "냉각탑 현황"
+          },
+          {
+            "img": null,
+            "desc": "내부 설치 가대 양호"
+          },
+          {
+            "img": null,
+            "desc": "팬 및 블레이드 축 양호"
+          },
+          {
+            "img": null,
+            "desc": "외부 설치에 따른 밸브류 부식"
+          },
+          {
+            "img": null,
+            "desc": "하부 수조 양호"
+          },
+          {
+            "img": null,
+            "desc": "최근 교체에 따른 방진상태 양호"
+          },
+          {
+            "img": null,
+            "desc": "외부 오염물 유입에 따른 충진재 오염"
+          },
+          {
+            "img": null,
+            "desc": "주변 외벽으로 열교환 효율 저하 예상"
+          }
+        ]
+      }
+    ],
     "ahu": [
       {
         "status": "use",
@@ -974,6 +1385,6 @@
     "cooling_pump": [],
     "pipe": []
   },
-  "lastModified": "2026-05-05T12:09:17.964Z",
+  "lastModified": "2026-05-06T01:58:11.440Z",
   "lastModifiedBy": "seung3459"
 }
